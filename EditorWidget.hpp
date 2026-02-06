@@ -7,6 +7,9 @@ using Names = QVector<QString>;
 using Tileset = QHash<QString, QImage>;
 using SelectedTiles = QVector<QVector<QString>>;
 
+using TileReference = QString;
+using MapLayer = QVector<QVector<TileReference>>;
+
 class EditorWidget: public QWidget
 {
     Q_OBJECT
@@ -18,6 +21,7 @@ public:
     void setTilesOrderPointer(QSharedPointer<Names> ptr) { tiles_order = ptr; }
     void setTilesetPointer(QSharedPointer<Tileset> ptr) { tileset = ptr; }
     void setSelectedTilesPointer(QSharedPointer<SelectedTiles> ptr) { selected_tiles = ptr; }
+    void setMapLayersPointer(QSharedPointer<MapLayer> ptr) { map_layers = ptr; }
 
     virtual void resize();
 
@@ -34,6 +38,7 @@ protected:
     QSharedPointer<Names> tiles_order;
     QSharedPointer<Tileset> tileset;
     QSharedPointer<SelectedTiles> selected_tiles;
+    QSharedPointer<MapLayer> map_layers;
 
     QRect getWidgetRect() const { return {QPoint(0, 0), grid_aspect * tilesize * zoom}; }
 //  TODO: find a better name (widget coordinates to grid coordinate rect)

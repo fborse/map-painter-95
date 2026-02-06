@@ -11,6 +11,9 @@ using Names = QVector<QString>;
 using Tileset = QHash<QString, QImage>;
 using SelectedTiles = QVector<QVector<QString>>;
 
+using TileReference = QString;
+using MapLayer = QVector<QVector<TileReference>>;
+
 class MainWindow: public QMainWindow
 {
     Q_OBJECT
@@ -39,6 +42,7 @@ private:
     QSharedPointer<Names> tiles_order;
     QSharedPointer<Tileset> tileset;
     QSharedPointer<SelectedTiles> selected_tiles;
+    QSharedPointer<MapLayer> map_layers;
 
 //  the user could choose cancel or save could fail => returns bool
 //  true -> caller shall keep proceeding

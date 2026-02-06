@@ -303,16 +303,15 @@ void TilesetView::mousePressEvent(QMouseEvent *event)
 
 void TilesetView::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (click_origin)
+    if (event->button() == Qt::LeftButton)
     {
         if (drag_mode == SELECTION_MODE)
             handleTilesSelected();
         else
             handleTileModifications();
-    }
 
-    if (event->button() == Qt::LeftButton)
         click_origin = {};
+    }
 
     update();
 }

@@ -27,18 +27,27 @@ MainWindow::MainWindow(QWidget *parent):
     selected_tiles = QSharedPointer<SelectedTiles>::create();
     for (auto *editor: editors)
         editor->setSelectedTilesPointer(selected_tiles);
+    map_layers = QSharedPointer<MapLayer>::create();
+    for (auto *editor: editors)
+        editor->setMapLayersPointer(map_layers);
 
     {
-        QImage img(32, 32, QImage::Format_ARGB32_Premultiplied);
-        QColor colors[] = {{0, 128, 255}, {0, 128, 0}, {128, 64, 0}};
+        map_layers->resize(16);
+        for (auto &row: *map_layers)
+            row.resize(20, "");
 
-        for (auto &color: colors)
         {
-            const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-            tiles_order->push_back(id);
+            QImage img(32, 32, QImage::Format_ARGB32_Premultiplied);
+            QColor colors[] = {{0, 128, 255}, {0, 128, 0}, {128, 64, 0}};
 
-            img.fill(color);
-            tileset->insert(id, img);
+            for (auto &color: colors)
+            {
+                const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                tiles_order->push_back(id);
+
+                img.fill(color);
+                tileset->insert(id, img);
+            }
         }
     }
 
