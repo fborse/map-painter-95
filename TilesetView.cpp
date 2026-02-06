@@ -3,6 +3,77 @@
 #include <QPainter>
 #include <QMouseEvent>
 
+class TilesetCommand
+{
+public:
+    TilesetCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset):
+        tiles_order_ptr{tiles_order}, tileset_ptr{tileset}
+    {}
+
+protected:
+    QSharedPointer<Names> lockTilesOrder()
+    {
+        auto ptr = tiles_order_ptr.toStrongRef();
+        Q_ASSERT(!ptr.isNull());
+
+        return ptr;
+    }
+
+    QSharedPointer<Tileset> lockTileset()
+    {
+        auto ptr = tileset_ptr.toStrongRef();
+        Q_ASSERT(!ptr.isNull());
+
+        return ptr;
+    }
+
+private:
+    QWeakPointer<Names> tiles_order_ptr;
+    QWeakPointer<Tileset> tileset_ptr;
+};
+
+class MoveTileCommand final: public QUndoCommand, public TilesetCommand
+{
+public:
+    MoveTileCommand(QWeakPointer<Names> ptr, const int origin, const int target):
+        QUndoCommand(), TilesetCommand(ptr, {}), origin{origin}, target{target}
+    {}
+
+    void undo() final override
+    {
+        lockTilesOrder()->insert(origin, lockTilesOrder()->takeAt(target));
+    }
+
+    void redo() final override
+    {
+        lockTilesOrder()->insert(target, lockTilesOrder()->takeAt(origin));
+    }
+
+private:
+    int origin, target;
+};
+
+class SwapTilesCommand final: public QUndoCommand, public TilesetCommand
+{
+public:
+    SwapTilesCommand(QWeakPointer<Names> ptr, const int index1, const int index2):
+        QUndoCommand(), TilesetCommand(ptr, {}), index1{index1}, index2{index2}
+    {}
+
+    void undo() final override
+    {
+        lockTilesOrder()->swapItemsAt(index1, index2);
+    }
+
+    void redo() final override
+    {
+        lockTilesOrder()->swapItemsAt(index1, index2);
+    }
+
+private:
+    int index1, index2;
+};
+
 TilesetView::TilesetView(QWidget *parent):
     EditorWidget(parent),
     n_columns{8}, drag_mode{SELECTION_MODE},
@@ -54,6 +125,12 @@ std::optional<int> TilesetView::toIndex(const QPoint &ij) const
         return idx - 1;
 }
 
+//  QPoint's division rounds ; we DON'T want that
+static inline QPoint divide(const QPoint &p, const int a)
+{
+    return {int(p.x() / a), int(p.y() / a)};
+}
+
 void TilesetView::paintTileset(QPainter &painter)
 {
     if (!(tiles_order && tileset))
@@ -61,10 +138,25 @@ void TilesetView::paintTileset(QPainter &painter)
 
     const int n = tiles_order->length();
 
+    Names displayed = *tiles_order;
+    if (click_origin)
+    {
+        const auto origin = toIndex(divide(*click_origin, tilesize));
+        const auto target = toIndex(divide(mouse_cursor, tilesize));
+
+        if (origin && *origin != -1 && target && *target != -1)
+        {
+            if (drag_mode == MOVE_MODE)
+                displayed.insert(*target, displayed.takeAt(*origin));
+            else if (drag_mode == SWAP_MODE)
+                displayed.swapItemsAt(*origin, *target);
+        }
+    }
+
 //  toIJ will take care of the empty tile shift
     for (int i = 0; i < n; ++i)
     {
-        const QString id = tiles_order->at(i);
+        const QString id = displayed[i];
         const auto p = toIJ(i);
         painter.drawImage(*p * tilesize, tileset->value(id));
     }
@@ -95,12 +187,6 @@ void TilesetView::paintSelectionCursors(QPainter &painter)
             painter.drawRect(inner);
         }
     }
-}
-
-//  QPoint's division rounds ; we DON'T want that
-static inline QPoint divide(const QPoint &p, const int a)
-{
-    return {int(p.x() / a), int(p.y() / a)};
 }
 
 void TilesetView::paintCursor(QPainter &painter)
@@ -165,6 +251,22 @@ void TilesetView::handleTilesSelected()
     }
 }
 
+void TilesetView::handleTileModifications()
+{
+    const auto origin = toIndex(divide(*click_origin, tilesize));
+    const auto target = toIndex(divide(mouse_cursor, tilesize));
+
+    if (origin && *origin != -1 && target && *target != -1)
+    {
+        if (drag_mode == MOVE_MODE)
+            undo_stack->push(new MoveTileCommand(tiles_order, *origin, *target));
+//            displayed.insert(*target, displayed.takeAt(*origin));
+        else if (drag_mode == SWAP_MODE)
+            undo_stack->push(new SwapTilesCommand(tiles_order, *origin, *target));
+//            displayed.swapItemsAt(*origin, *target);
+    }
+}
+
 static inline int clamp(const int lower, const int x, const int upper)
 {
     if (x < lower)
@@ -195,6 +297,8 @@ void TilesetView::mousePressEvent(QMouseEvent *event)
     if (event->button() == Qt::LeftButton)
         if (getWidgetRect().contains(event->pos()))
             click_origin = event->pos();
+
+    update();
 }
 
 void TilesetView::mouseReleaseEvent(QMouseEvent *event)
@@ -203,8 +307,12 @@ void TilesetView::mouseReleaseEvent(QMouseEvent *event)
     {
         if (drag_mode == SELECTION_MODE)
             handleTilesSelected();
+        else
+            handleTileModifications();
     }
 
     if (event->button() == Qt::LeftButton)
         click_origin = {};
+
+    update();
 }

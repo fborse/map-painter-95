@@ -425,6 +425,9 @@
    <extends>QWidget</extends>
    <header>TilesetView.hpp</header>
    <container>1</container>
+   <slots>
+    <slot>setDragMode(int)</slot>
+   </slots>
   </customwidget>
   <customwidget>
    <class>MapEditorWidget</class>
@@ -550,6 +553,22 @@
     <hint type="destinationlabel">
      <x>399</x>
      <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>dragModeComboBox</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>tilesetView</receiver>
+   <slot>setDragMode(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>685</x>
+     <y>120</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>687</x>
+     <y>218</y>
     </hint>
    </hints>
   </connection>

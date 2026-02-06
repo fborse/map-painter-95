@@ -39,6 +39,7 @@ private:
     void paintEvent(QPaintEvent *) override;
 
     void handleTilesSelected();
+    void handleTileModifications();
 
     void mouseMoveEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;

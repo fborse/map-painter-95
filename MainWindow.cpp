@@ -42,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent):
         }
     }
 
-    connect(undo_stack.get(), &QUndoStack::cleanChanged, [&] (bool clean) { ui->actionSave->setEnabled(!clean); });
+    connect(undo_stack.get(), &QUndoStack::cleanChanged, ui->actionSave, &QAction::setDisabled);
     connect(undo_stack.get(), &QUndoStack::canUndoChanged, ui->actionUndo, &QAction::setEnabled);
     connect(undo_stack.get(), &QUndoStack::canRedoChanged, ui->actionRedo, &QAction::setEnabled);
 
