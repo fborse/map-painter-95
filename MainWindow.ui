@@ -84,7 +84,7 @@
             <item>
              <widget class="QScrollArea" name="mapViewScrollArea">
               <property name="widgetResizable">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
               <property name="alignment">
                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
@@ -176,7 +176,7 @@
             <item>
              <widget class="QScrollArea" name="tilesetScrollArea">
               <property name="widgetResizable">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
               <property name="alignment">
                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
@@ -268,7 +268,7 @@
            <item>
             <widget class="QScrollArea" name="mapPainterScrollArea">
              <property name="widgetResizable">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="alignment">
               <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
@@ -427,6 +427,7 @@
    <container>1</container>
    <slots>
     <slot>setDragMode(int)</slot>
+    <slot>setNumberOfColumns(int)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -569,6 +570,22 @@
     <hint type="destinationlabel">
      <x>687</x>
      <y>218</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>nColumnsSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>tilesetView</receiver>
+   <slot>setNumberOfColumns(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>614</x>
+     <y>123</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>615</x>
+     <y>210</y>
     </hint>
    </hints>
   </connection>

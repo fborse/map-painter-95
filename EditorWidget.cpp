@@ -5,20 +5,13 @@
 EditorWidget::EditorWidget(QWidget *parent):
     QWidget(parent),
     grid_aspect{20, 16}, tilesize{32}, zoom{1},
-    undo_stack{nullptr},
-    parent_size{parent->size()}
+    undo_stack{nullptr}
 {
 }
 
 void EditorWidget::resize()
 {
-    const auto &[w, h] = grid_aspect * tilesize * zoom;
-    const auto &[pw, ph] = parent_size;
-
-    setFixedSize(
-        (w < pw)? pw : w,
-        (h < ph)? ph : h
-    );
+    setFixedSize(grid_aspect * tilesize * zoom);
 
     update();
 }

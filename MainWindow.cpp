@@ -50,9 +50,6 @@ MainWindow::MainWindow(QWidget *parent):
     ui->actionUndo->setEnabled(false);
     ui->actionRedo->setEnabled(false);
 
-    ui->splitter->setStretchFactor(0, 2);
-    ui->splitter->setStretchFactor(1, 1);
-
     refreshViews();
 }
 

@@ -41,7 +41,4 @@ protected:
 
     void paintBackground(QPainter &painter) const;
     void paintGrid(QPainter &painter) const;
-
-private:
-    QSize parent_size;
 };
