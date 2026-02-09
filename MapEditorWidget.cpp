@@ -114,6 +114,8 @@ void MapEditorWidget::handleTileSelection()
         for (int i = x1; i <= x2; ++i)
             selected_tiles->back().push_back(map_layers->at(j).at(i));
     }
+
+    emit tileSelected();
 }
 
 static inline int clamp(const int lower, const int x, const int upper)

@@ -9,6 +9,10 @@ public:
     explicit MapEditorWidget(QWidget *parent = nullptr);
     virtual ~MapEditorWidget() final override = default;
 
+signals:
+//  only purpose is to tell MainWindow to refresh the tileset editor
+    void tileSelected();
+
 private:
     QPoint mouse_cursor;
     std::optional<QPoint> left_click, right_click;

@@ -94,7 +94,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>464</width>
+                 <width>357</width>
                  <height>595</height>
                 </rect>
                </property>
@@ -186,7 +186,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>464</width>
+                 <width>571</width>
                  <height>595</height>
                 </rect>
                </property>
@@ -435,6 +435,9 @@
    <extends>QWidget</extends>
    <header>MapEditorWidget.hpp</header>
    <container>1</container>
+   <slots>
+    <signal>tileSelected()</signal>
+   </slots>
   </customwidget>
   <customwidget>
    <class>MapPainterWidget</class>
@@ -564,8 +567,8 @@
    <slot>setDragMode(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>685</x>
-     <y>120</y>
+     <x>629</x>
+     <y>130</y>
     </hint>
     <hint type="destinationlabel">
      <x>687</x>
@@ -580,12 +583,28 @@
    <slot>setNumberOfColumns(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>614</x>
-     <y>123</y>
+     <x>528</x>
+     <y>131</y>
     </hint>
     <hint type="destinationlabel">
      <x>615</x>
      <y>210</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mapEditor</sender>
+   <signal>tileSelected()</signal>
+   <receiver>tilesetView</receiver>
+   <slot>update()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>301</x>
+     <y>409</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>644</x>
+     <y>449</y>
     </hint>
    </hints>
   </connection>
