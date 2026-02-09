@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="mainTabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="mapEditorTab">
        <attribute name="title">
@@ -222,13 +222,6 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_6">
              <item>
-              <widget class="QCheckBox" name="showGridCheckBox">
-               <property name="text">
-                <string>Show Grid</string>
-               </property>
-              </widget>
-             </item>
-             <item>
               <spacer name="horizontalSpacer_3">
                <property name="orientation">
                 <enum>Qt::Orientation::Horizontal</enum>
@@ -240,6 +233,20 @@
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="showGridCheckBox">
+               <property name="text">
+                <string>Show Grid</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="Line" name="line">
+               <property name="orientation">
+                <enum>Qt::Orientation::Vertical</enum>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QLabel" name="zoomMapPainterLabel">
@@ -413,6 +420,57 @@
             <property name="title">
              <string>Tools</string>
             </property>
+            <layout class="QVBoxLayout" name="verticalLayout_9">
+             <item>
+              <widget class="QComboBox" name="drawToolComboBox">
+               <item>
+                <property name="text">
+                 <string>Pen</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Line</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Brush</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Shape</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Fill</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Eraser</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Shader</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Pipette</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Selection</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
           <item>
@@ -575,9 +633,12 @@
    <container>1</container>
    <slots>
     <signal>zoomSet(double)</signal>
+    <signal>colorChanged(QColor)</signal>
     <slot>setZoom(double)</slot>
     <slot>setShowGrid(bool)</slot>
     <slot>setDrawColor(QColor)</slot>
+    <slot>setDrawTool(int)</slot>
+    <slot>setPenSize(int)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -902,11 +963,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>911</x>
-     <y>205</y>
+     <y>239</y>
     </hint>
     <hint type="destinationlabel">
      <x>959</x>
-     <y>213</y>
+     <y>247</y>
     </hint>
    </hints>
   </connection>
@@ -918,11 +979,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>940</x>
-     <y>211</y>
+     <y>245</y>
     </hint>
     <hint type="destinationlabel">
      <x>919</x>
-     <y>211</y>
+     <y>245</y>
     </hint>
    </hints>
   </connection>
@@ -934,11 +995,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>957</x>
-     <y>204</y>
+     <y>238</y>
     </hint>
     <hint type="destinationlabel">
-     <x>990</x>
-     <y>204</y>
+     <x>989</x>
+     <y>238</y>
     </hint>
    </hints>
   </connection>
@@ -949,12 +1010,12 @@
    <slot>setHue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>990</x>
+     <x>989</x>
      <y>152</y>
     </hint>
     <hint type="destinationlabel">
-     <x>990</x>
-     <y>204</y>
+     <x>989</x>
+     <y>238</y>
     </hint>
    </hints>
   </connection>
@@ -969,8 +1030,8 @@
      <y>144</y>
     </hint>
     <hint type="destinationlabel">
-     <x>989</x>
-     <y>204</y>
+     <x>990</x>
+     <y>238</y>
     </hint>
    </hints>
   </connection>
@@ -985,8 +1046,8 @@
      <y>144</y>
     </hint>
     <hint type="destinationlabel">
-     <x>989</x>
-     <y>204</y>
+     <x>990</x>
+     <y>238</y>
     </hint>
    </hints>
   </connection>
@@ -997,7 +1058,7 @@
    <slot>setHue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>989</x>
+     <x>990</x>
      <y>144</y>
     </hint>
     <hint type="destinationlabel">
@@ -1013,8 +1074,8 @@
    <slot>selectColor(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>989</x>
-     <y>204</y>
+     <x>990</x>
+     <y>238</y>
     </hint>
     <hint type="destinationlabel">
      <x>891</x>
@@ -1029,8 +1090,8 @@
    <slot>addColor(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>989</x>
-     <y>204</y>
+     <x>990</x>
+     <y>238</y>
     </hint>
     <hint type="destinationlabel">
      <x>891</x>
@@ -1049,8 +1110,8 @@
      <y>336</y>
     </hint>
     <hint type="destinationlabel">
-     <x>989</x>
-     <y>254</y>
+     <x>990</x>
+     <y>238</y>
     </hint>
    </hints>
   </connection>
@@ -1061,8 +1122,8 @@
    <slot>setDrawColor(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>989</x>
-     <y>254</y>
+     <x>990</x>
+     <y>238</y>
     </hint>
     <hint type="destinationlabel">
      <x>396</x>
@@ -1078,11 +1139,43 @@
    <hints>
     <hint type="sourcelabel">
      <x>891</x>
-     <y>285</y>
+     <y>270</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>990</x>
+     <y>238</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>drawToolComboBox</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setDrawTool(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>815</x>
+     <y>419</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>712</x>
+     <y>420</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mapPainter</sender>
+   <signal>colorChanged(QColor)</signal>
+   <receiver>colorSelectionWidget</receiver>
+   <slot>setColor(QColor)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>396</x>
+     <y>437</y>
     </hint>
     <hint type="destinationlabel">
      <x>989</x>
-     <y>254</y>
+     <y>238</y>
     </hint>
    </hints>
   </connection>
