@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="mainTabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="mapEditorTab">
        <attribute name="title">
@@ -212,7 +212,7 @@
        <attribute name="title">
         <string>Map Painter</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="4,1">
+       <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="1,0">
         <item>
          <widget class="QGroupBox" name="mapPainterGroupBox">
           <property name="title">
@@ -221,6 +221,13 @@
           <layout class="QVBoxLayout" name="verticalLayout_5">
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_6">
+             <item>
+              <widget class="QCheckBox" name="showGridCheckBox">
+               <property name="text">
+                <string>Show Grid</string>
+               </property>
+              </widget>
+             </item>
              <item>
               <spacer name="horizontalSpacer_3">
                <property name="orientation">
@@ -278,7 +285,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>756</width>
+                <width>728</width>
                 <height>595</height>
                </rect>
               </property>
@@ -298,11 +305,130 @@
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="drawingToolsGroupBox">
-          <property name="title">
-           <string>Drawing Tools</string>
-          </property>
-         </widget>
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <item>
+           <widget class="QGroupBox" name="colorsGroupBox">
+            <property name="title">
+             <string>Colors</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_7" stretch="1,0,0">
+             <item>
+              <layout class="QGridLayout" name="gridLayout" rowstretch="1,0" columnstretch="0,1">
+               <item row="0" column="0">
+                <widget class="ColorSaturationValueWidget" name="saturationValueWidget" native="true"/>
+               </item>
+               <item row="0" column="1">
+                <widget class="ColorHueWidget" name="hueWidget" native="true"/>
+               </item>
+               <item row="1" column="1">
+                <widget class="ColorSelectionWidget" name="colorSelectionWidget" native="true"/>
+               </item>
+               <item row="1" column="0">
+                <layout class="QHBoxLayout" name="horizontalLayout_7">
+                 <item>
+                  <widget class="QLabel" name="alphaLabel">
+                   <property name="text">
+                    <string>Alpha :</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QSlider" name="alphaSlider">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                   <property name="value">
+                    <number>255</number>
+                   </property>
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QSpinBox" name="alphaSpinBox">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                   <property name="value">
+                    <number>255</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QFrame" name="frame">
+               <property name="frameShape">
+                <enum>QFrame::Shape::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Shadow::Raised</enum>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_10">
+                <item>
+                 <widget class="ColorSelectionWidget" name="leftColorWidget" native="true"/>
+                </item>
+                <item>
+                 <widget class="ColorGradientWidget" name="colorGradientWidget" native="true"/>
+                </item>
+                <item>
+                 <widget class="ColorSelectionWidget" name="rightColorWidget" native="true"/>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QScrollArea" name="colorPaletteScrollArea">
+               <property name="widgetResizable">
+                <bool>true</bool>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+               </property>
+               <widget class="QWidget" name="scrollAreaWidgetContents_5">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>196</width>
+                  <height>68</height>
+                 </rect>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="0">
+                 <item>
+                  <widget class="ColorPaletteWidget" name="colorPaletteWidget" native="true"/>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="drawToolsGroupBox">
+            <property name="title">
+             <string>Tools</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -447,6 +573,67 @@
    <extends>QWidget</extends>
    <header>MapPainterWidget.hpp</header>
    <container>1</container>
+   <slots>
+    <signal>zoomSet(double)</signal>
+    <slot>setZoom(double)</slot>
+    <slot>setShowGrid(bool)</slot>
+    <slot>setDrawColor(QColor)</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>ColorSaturationValueWidget</class>
+   <extends>QWidget</extends>
+   <header>ColorSaturationValueWidget.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>saturationChanged(int)</signal>
+    <signal>valueChanged(int)</signal>
+    <slot>setHue(int)</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>ColorHueWidget</class>
+   <extends>QWidget</extends>
+   <header>ColorHueWidget.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>hueChanged(int)</signal>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>ColorSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>ColorSelectionWidget.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>clicked(QColor)</signal>
+    <signal>colorChanged(QColor)</signal>
+    <slot>setHue(int)</slot>
+    <slot>setSaturation(int)</slot>
+    <slot>setValue(int)</slot>
+    <slot>setAlpha(int)</slot>
+    <slot>setColor(QColor)</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>ColorPaletteWidget</class>
+   <extends>QWidget</extends>
+   <header>ColorPaletteWidget.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>colorSelected(QColor)</signal>
+    <slot>addColor(QColor)</slot>
+    <slot>selectColor(QColor)</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>ColorGradientWidget</class>
+   <extends>QWidget</extends>
+   <header>ColorGradientWidget.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>colorSelected(QColor)</signal>
+   </slots>
   </customwidget>
  </customwidgets>
  <resources/>
@@ -656,6 +843,246 @@
     <hint type="destinationlabel">
      <x>330</x>
      <y>229</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>zoomMapPainterDoubleSpinBox</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setZoom(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>735</x>
+     <y>125</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>729</x>
+     <y>204</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mapPainter</sender>
+   <signal>zoomSet(double)</signal>
+   <receiver>zoomMapPainterDoubleSpinBox</receiver>
+   <slot>setValue(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>751</x>
+     <y>296</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>760</x>
+     <y>131</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>showGridCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setShowGrid(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>114</x>
+     <y>116</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>76</x>
+     <y>238</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>alphaSlider</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>alphaSpinBox</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>911</x>
+     <y>205</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>959</x>
+     <y>213</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>alphaSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>alphaSlider</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>940</x>
+     <y>211</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>919</x>
+     <y>211</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>alphaSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>colorSelectionWidget</receiver>
+   <slot>setAlpha(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>957</x>
+     <y>204</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>990</x>
+     <y>204</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>hueWidget</sender>
+   <signal>hueChanged(int)</signal>
+   <receiver>colorSelectionWidget</receiver>
+   <slot>setHue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>990</x>
+     <y>152</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>990</x>
+     <y>204</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>saturationValueWidget</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>colorSelectionWidget</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>888</x>
+     <y>144</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>989</x>
+     <y>204</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>saturationValueWidget</sender>
+   <signal>saturationChanged(int)</signal>
+   <receiver>colorSelectionWidget</receiver>
+   <slot>setSaturation(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>888</x>
+     <y>144</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>989</x>
+     <y>204</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>hueWidget</sender>
+   <signal>hueChanged(int)</signal>
+   <receiver>saturationValueWidget</receiver>
+   <slot>setHue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>989</x>
+     <y>144</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>888</x>
+     <y>144</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorSelectionWidget</sender>
+   <signal>colorChanged(QColor)</signal>
+   <receiver>colorPaletteWidget</receiver>
+   <slot>selectColor(QColor)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>989</x>
+     <y>204</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>891</x>
+     <y>336</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorSelectionWidget</sender>
+   <signal>clicked(QColor)</signal>
+   <receiver>colorPaletteWidget</receiver>
+   <slot>addColor(QColor)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>989</x>
+     <y>204</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>891</x>
+     <y>336</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorPaletteWidget</sender>
+   <signal>colorSelected(QColor)</signal>
+   <receiver>colorSelectionWidget</receiver>
+   <slot>setColor(QColor)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>891</x>
+     <y>336</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>989</x>
+     <y>254</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorSelectionWidget</sender>
+   <signal>colorChanged(QColor)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setDrawColor(QColor)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>989</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>396</x>
+     <y>437</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorGradientWidget</sender>
+   <signal>colorSelected(QColor)</signal>
+   <receiver>colorSelectionWidget</receiver>
+   <slot>setColor(QColor)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>891</x>
+     <y>285</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>989</x>
+     <y>254</y>
     </hint>
    </hints>
   </connection>

@@ -60,6 +60,17 @@ MainWindow::MainWindow(QWidget *parent):
     ui->actionRedo->setEnabled(false);
 
     refreshViews();
+
+    ui->leftColorWidget->setColor(Qt::black);
+    connect(ui->leftColorWidget, &ColorSelectionWidget::clicked, [&] {
+        ui->leftColorWidget->setColor(ui->mapPainter->getDrawColor());
+        ui->colorGradientWidget->setLeftColor(ui->mapPainter->getDrawColor());
+    });
+    ui->rightColorWidget->setColor(Qt::white);
+    connect(ui->rightColorWidget, &ColorSelectionWidget::clicked, [&] {
+        ui->rightColorWidget->setColor(ui->mapPainter->getDrawColor());
+        ui->colorGradientWidget->setRightColor(ui->mapPainter->getDrawColor());
+    });
 }
 
 MainWindow::~MainWindow()
