@@ -1,6 +1,7 @@
 #include "EditorWidget.hpp"
 
 #include <QPainter>
+#include <QWheelEvent>
 
 EditorWidget::EditorWidget(QWidget *parent):
     QWidget(parent),
@@ -24,8 +25,9 @@ static inline QPoint divide(const QPoint &p, const int a)
 
 QRect EditorWidget::asLocalRect(const QPoint &p1, const QPoint &p2) const
 {
-    const auto &[x1, y1] = divide(p1, tilesize);
-    const auto &[x2, y2] = divide(p2, tilesize);
+    const double unit = tilesize * zoom;
+    const auto &[x1, y1] = divide(p1, unit);
+    const auto &[x2, y2] = divide(p2, unit);
 
     return QRect(
         QPoint(qMin(x1, x2), qMin(y1, y2)),
@@ -68,4 +70,17 @@ void EditorWidget::paintGrid(QPainter &painter) const
         painter.fillRect(0, j * unit - 1, w, 1, white128);
     for (int i = 1; i <= grid_aspect.width(); ++i)
         painter.fillRect(i * unit - 1, 0, 1, h, white128);
+}
+
+void EditorWidget::wheelEvent(QWheelEvent *event)
+{
+    if (event->modifiers() & Qt::ControlModifier)
+    {
+        const double dy = event->angleDelta().y() / 30.0;
+        emit zoomSet(zoom + dy / 10);
+    }
+    else
+    {
+        event->ignore();
+    }
 }

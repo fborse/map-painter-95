@@ -438,6 +438,8 @@
    <slots>
     <signal>tileSelected()</signal>
     <signal>tilesSet()</signal>
+    <signal>zoomSet(double)</signal>
+    <slot>setZoom(double)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -622,6 +624,38 @@
     <hint type="destinationlabel">
      <x>2</x>
      <y>445</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mapEditor</sender>
+   <signal>zoomSet(double)</signal>
+   <receiver>zoomMapViewDoubleSpinBox</receiver>
+   <slot>setValue(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>375</x>
+     <y>174</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>380</x>
+     <y>109</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>zoomMapViewDoubleSpinBox</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>mapEditor</receiver>
+   <slot>setZoom(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>334</x>
+     <y>122</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>330</x>
+     <y>229</y>
     </hint>
    </hints>
   </connection>

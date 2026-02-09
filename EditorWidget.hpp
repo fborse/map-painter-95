@@ -29,6 +29,9 @@ public slots:
     void setTilesize(const int size) { tilesize = size; resize(); }
     void setZoom(const double z) { zoom = z; resize(); }
 
+signals:
+    void zoomSet(const double zoom);
+
 protected:
     QSize grid_aspect;
     int tilesize;
@@ -46,4 +49,6 @@ protected:
 
     void paintBackground(QPainter &painter) const;
     void paintGrid(QPainter &painter) const;
+
+    void wheelEvent(QWheelEvent *event) override;
 };
