@@ -437,6 +437,7 @@
    <container>1</container>
    <slots>
     <signal>tileSelected()</signal>
+    <signal>tilesSet()</signal>
    </slots>
   </customwidget>
   <customwidget>
@@ -608,6 +609,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>mapEditor</sender>
+   <signal>tilesSet()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>refreshViews()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>80</x>
+     <y>450</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2</x>
+     <y>445</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -617,5 +634,6 @@
   <slot>onQuit()</slot>
   <slot>onUndo()</slot>
   <slot>onRedo()</slot>
+  <slot>refreshViews()</slot>
  </slots>
 </ui>

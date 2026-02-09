@@ -32,6 +32,9 @@ public slots:
     void onUndo();
     void onRedo();
 
+//  centralises undo/redo changes
+    void refreshViews();
+
 private:
     Ui::MainWindow *ui;
 
@@ -48,9 +51,6 @@ private:
 //  true -> caller shall keep proceeding
 //  false -> caller shall interrupt the routine
     bool handleUnsavedChanges();
-
-//  centralises undo/redo changes
-    void refreshViews();
 
     void closeEvent(QCloseEvent *event) override;
 };

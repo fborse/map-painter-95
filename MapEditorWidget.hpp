@@ -10,18 +10,22 @@ public:
     virtual ~MapEditorWidget() final override = default;
 
 signals:
-//  only purpose is to tell MainWindow to refresh the tileset editor
+//  only purposes is to tell MainWindow to refresh the relevant editor widgets
     void tileSelected();
+    void tilesSet();
 
 private:
     QPoint mouse_cursor;
-    std::optional<QPoint> left_click, right_click;
+//  right click is really just a desktop thing => names accordingly
+    std::optional<QPoint> click_origin, right_click_origin;
 
     void paintLayers(QPainter &painter);
-    void paintSelectionRect(QPainter &painter);
+    void paintTileRects(QPainter &painter);
+    void paintRectOutlines(QPainter &painter);
 
     void paintEvent(QPaintEvent *) override;
 
+    void handleTileSetting();
     void handleTileSelection();
 
     void mouseMoveEvent(QMouseEvent *event) override;

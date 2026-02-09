@@ -49,7 +49,7 @@ private:
 
 MapEditorWidget::MapEditorWidget(QWidget *parent):
     EditorWidget(parent),
-    mouse_cursor{}, left_click{}, right_click{}
+    mouse_cursor{}, click_origin{}, right_click_origin{}
 {
     resize();
 }
@@ -59,8 +59,6 @@ void MapEditorWidget::paintLayers(QPainter &painter)
     if (!(tileset && map_layers))
         return;
 
-    const int unit = tilesize * zoom;
-
     for (int j = 0; j < map_layers->length(); ++j)
     {
         for (int i = 0; i < map_layers->at(j).length(); ++i)
@@ -68,25 +66,60 @@ void MapEditorWidget::paintLayers(QPainter &painter)
             const auto id = map_layers->at(j).at(i);
 
             if (tileset->contains(id))
-                painter.drawImage(i * unit, j * unit, tileset->value(id));
+                painter.drawImage(i * tilesize, j * tilesize, tileset->value(id));
         }
     }
 }
 
-void MapEditorWidget::paintSelectionRect(QPainter &painter)
+void MapEditorWidget::paintTileRects(QPainter &painter)
+{
+    if (!(selected_tiles && tileset))
+        return;
+
+    const auto click = click_origin? *click_origin : *right_click_origin;
+    const QRect selection = asLocalRect(click, mouse_cursor);
+
+    const auto &[x, y] = selection.topLeft() * tilesize;
+    const auto &[w, h] = selection.size();
+
+    if (click_origin && !selected_tiles->isEmpty())
+    {
+        const int sh = selected_tiles->length();
+        const int sw = selected_tiles->at(0).length();
+
+        for (int j = 0; j < h; ++j)
+        {
+            for (int i = 0; i < w; ++i)
+            {
+                const auto id = selected_tiles->at(j % sh).at(i % sw);
+
+                if (tileset->contains(id))
+                    painter.drawImage(x + i * tilesize, y + j * tilesize, tileset->value(id));
+            }
+        }
+    }
+    else if (right_click_origin)
+    {
+        const QColor white64 = {255, 255, 255, 64};
+        painter.fillRect(QRect(QPoint(x, y), QSize(w, h) * tilesize), white64);
+    }
+}
+
+void MapEditorWidget::paintRectOutlines(QPainter &painter)
 {
     const int unit = tilesize * zoom;
 
-    const QRect selection = asLocalRect(*right_click, mouse_cursor);
+    const QPoint click = click_origin? *click_origin : *right_click_origin;
+    const QRect selection = asLocalRect(click, mouse_cursor);
+
     const QPoint top_left = selection.topLeft() * unit;
     const QSize size = selection.size() * unit;
+
 //  drawRect has a weird way of overshooting by one pixel...
     const QRect draw_rect(top_left, size - QSize(1, 1));
 
     painter.setPen(Qt::white);
     painter.drawRect(draw_rect);
-    const QColor white64 = {255, 255, 255, 64};
-    painter.fillRect(draw_rect, white64);
 }
 
 void MapEditorWidget::paintEvent(QPaintEvent *)
@@ -94,15 +127,47 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
     QPainter painter(this);
 
     paintBackground(painter);
-    paintLayers(painter);
+
+    painter.scale(zoom, zoom);
+    {
+        paintLayers(painter);
+        if (click_origin || right_click_origin)
+            paintTileRects(painter);
+    }
+    painter.resetTransform();
+
     paintGrid(painter);
-    if (right_click)
-        paintSelectionRect(painter);
+    if (click_origin || right_click_origin)
+        paintRectOutlines(painter);
+}
+
+void MapEditorWidget::handleTileSetting()
+{
+    const QRect selection = asLocalRect(*click_origin, mouse_cursor);
+    const auto &[x, y] = selection.topLeft();
+    const auto &[w, h] = selection.size();
+
+    const int sh = selected_tiles->length();
+    const int sw = selected_tiles->at(0).length();
+
+    SetTilesCommand::Changes prev, next;
+    for (int j = 0; j < h; ++j)
+    {
+        for (int i = 0; i < w; ++i)
+        {
+            prev[{x+i, y+j}] = map_layers->at(y+j).at(x+i);
+            next[{x+i, y+j}] = selected_tiles->at(j % sh).at(i % sw);
+        }
+    }
+    if (!next.isEmpty())
+        undo_stack->push(new SetTilesCommand(map_layers, prev, next));
+
+    emit tilesSet();
 }
 
 void MapEditorWidget::handleTileSelection()
 {
-    const QRect selection = asLocalRect(*right_click, mouse_cursor);
+    const QRect selection = asLocalRect(*right_click_origin, mouse_cursor);
     const auto &[x1, y1] = selection.topLeft();
     const auto &[x2, y2] = selection.bottomRight();
 
@@ -148,9 +213,9 @@ void MapEditorWidget::mousePressEvent(QMouseEvent *event)
     if (getWidgetRect().contains(event->pos()))
     {
         if (event->button() == Qt::LeftButton)
-            left_click = event->pos();
+            click_origin = event->pos();
         if (event->button() == Qt::RightButton)
-            right_click = event->pos();
+            right_click_origin = event->pos();
     }
 
     update();
@@ -159,12 +224,16 @@ void MapEditorWidget::mousePressEvent(QMouseEvent *event)
 void MapEditorWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
-        left_click = {};
+    {
+        if (selected_tiles && !selected_tiles->isEmpty())
+            handleTileSetting();
+        click_origin = {};
+    }
 
     if (event->button() == Qt::RightButton)
     {
         handleTileSelection();
-        right_click = {};
+        right_click_origin = {};
     }
 
     update();
