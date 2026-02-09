@@ -19,7 +19,6 @@ private:
 //  right click is really just a desktop thing => names accordingly
     std::optional<QPoint> click_origin, right_click_origin;
 
-    void paintLayers(QPainter &painter);
     void paintTileRects(QPainter &painter);
     void paintRectOutlines(QPainter &painter);
 

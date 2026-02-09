@@ -48,6 +48,7 @@ protected:
     QRect asLocalRect(const QPoint &p1, const QPoint &p2) const;
 
     void paintBackground(QPainter &painter) const;
+    void paintLayers(QPainter &painter) const;
     void paintGrid(QPainter &painter) const;
 
     void wheelEvent(QWheelEvent *event) override;

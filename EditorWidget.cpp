@@ -55,6 +55,23 @@ void EditorWidget::paintBackground(QPainter &painter) const
     }
 }
 
+void EditorWidget::paintLayers(QPainter &painter) const
+{
+    if (!(map_layers && tileset))
+        return;
+
+    for (int j = 0; j < map_layers->length(); ++j)
+    {
+        for (int i = 0; i < map_layers->at(j).length(); ++i)
+        {
+            const auto id = map_layers->at(j).at(i);
+
+            if (tileset->contains(id))
+                painter.drawImage(i * tilesize, j * tilesize, tileset->value(id));
+        }
+    }
+}
+
 void EditorWidget::paintGrid(QPainter &painter) const
 {
     const double unit = tilesize * zoom;

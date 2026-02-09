@@ -54,23 +54,6 @@ MapEditorWidget::MapEditorWidget(QWidget *parent):
     resize();
 }
 
-void MapEditorWidget::paintLayers(QPainter &painter)
-{
-    if (!(tileset && map_layers))
-        return;
-
-    for (int j = 0; j < map_layers->length(); ++j)
-    {
-        for (int i = 0; i < map_layers->at(j).length(); ++i)
-        {
-            const auto id = map_layers->at(j).at(i);
-
-            if (tileset->contains(id))
-                painter.drawImage(i * tilesize, j * tilesize, tileset->value(id));
-        }
-    }
-}
-
 void MapEditorWidget::paintTileRects(QPainter &painter)
 {
     if (!(selected_tiles && tileset))

@@ -10,5 +10,8 @@ public:
     virtual ~MapPainterWidget() final override = default;
 
 private:
+    QPoint mouse_cursor;
+    std::optional<QPoint> click_origin;
+
     void paintEvent(QPaintEvent *) override;
 };
