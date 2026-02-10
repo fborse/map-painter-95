@@ -292,7 +292,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>719</width>
+                <width>709</width>
                 <height>595</height>
                </rect>
               </property>
@@ -400,7 +400,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>205</width>
+                  <width>215</width>
                   <height>68</height>
                  </rect>
                 </property>
@@ -481,6 +481,10 @@
                <layout class="QVBoxLayout" name="verticalLayout_10">
                 <item>
                  <widget class="QStackedWidget" name="toolBox1StackedWidget">
+                  <property name="currentIndex">
+                   <number>1</number>
+                  </property>
+                  <widget class="QWidget" name="emptyPage1"/>
                   <widget class="QWidget" name="penPage">
                    <layout class="QFormLayout" name="formLayout">
                     <item row="0" column="0">
@@ -514,24 +518,81 @@
                      <widget class="QCheckBox" name="antiAliasingCheckBox"/>
                     </item>
                     <item row="2" column="0">
-                     <widget class="QLabel" name="roundCornersLabel">
+                     <widget class="QLabel" name="roundPenCornersLabel">
                       <property name="text">
                        <string>Round Corners :</string>
                       </property>
                      </widget>
                     </item>
                     <item row="2" column="1">
-                     <widget class="QCheckBox" name="roundCornersCheckBox"/>
+                     <widget class="QCheckBox" name="roundPenCornersCheckBox"/>
                     </item>
                    </layout>
                   </widget>
-                  <widget class="QWidget" name="page_2"/>
+                  <widget class="QWidget" name="fillPage"/>
+                  <widget class="QWidget" name="selectionPage"/>
                  </widget>
                 </item>
                 <item>
                  <widget class="QStackedWidget" name="toolBox2StackedWidget">
-                  <widget class="QWidget" name="page_3"/>
-                  <widget class="QWidget" name="page_4"/>
+                  <property name="currentIndex">
+                   <number>0</number>
+                  </property>
+                  <widget class="QWidget" name="emptyPage2"/>
+                  <widget class="QWidget" name="brushPage"/>
+                  <widget class="QWidget" name="shapePage">
+                   <layout class="QFormLayout" name="formLayout_2">
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="shapeLabel">
+                      <property name="text">
+                       <string>Shape :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="shapeComboBox">
+                      <item>
+                       <property name="text">
+                        <string>Rectangle</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>Ellipse</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="fillShapeLabel">
+                      <property name="text">
+                       <string>Fill :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QCheckBox" name="fillShapeCheckBox"/>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="cornerRadiusLabel">
+                      <property name="text">
+                       <string>Corner Radius :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QSpinBox" name="cornerRadiusSpinBox">
+                      <property name="suffix">
+                       <string>px</string>
+                      </property>
+                      <property name="maximum">
+                       <number>256</number>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="shaderPage"/>
                  </widget>
                 </item>
                </layout>
@@ -695,6 +756,10 @@
     <slot>setPenSize(int)</slot>
     <slot>setAntiAliasing(bool)</slot>
     <slot>setRoundPenCorners(bool)</slot>
+    <slot>setBrushPixels(QImage)</slot>
+    <slot>setEllipseShape(int)</slot>
+    <slot>setFillShape(bool)</slot>
+    <slot>setRectRadius(int)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -974,7 +1039,7 @@
      <y>125</y>
     </hint>
     <hint type="destinationlabel">
-     <x>729</x>
+     <x>727</x>
      <y>204</y>
     </hint>
    </hints>
@@ -986,11 +1051,11 @@
    <slot>setValue(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>742</x>
+     <x>727</x>
      <y>426</y>
     </hint>
     <hint type="destinationlabel">
-     <x>751</x>
+     <x>736</x>
      <y>131</y>
     </hint>
    </hints>
@@ -1002,7 +1067,7 @@
    <slot>setShowGrid(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>627</x>
+     <x>612</x>
      <y>129</y>
     </hint>
     <hint type="destinationlabel">
@@ -1018,11 +1083,11 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>917</x>
+     <x>902</x>
      <y>284</y>
     </hint>
     <hint type="destinationlabel">
-     <x>973</x>
+     <x>958</x>
      <y>290</y>
     </hint>
    </hints>
@@ -1034,11 +1099,11 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>973</x>
+     <x>958</x>
      <y>290</y>
     </hint>
     <hint type="destinationlabel">
-     <x>917</x>
+     <x>902</x>
      <y>284</y>
     </hint>
    </hints>
@@ -1050,7 +1115,7 @@
    <slot>setAlpha(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>973</x>
+     <x>958</x>
      <y>290</y>
     </hint>
     <hint type="destinationlabel">
@@ -1194,8 +1259,8 @@
    <slot>setColor(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>916</x>
-     <y>308</y>
+     <x>910</x>
+     <y>309</y>
     </hint>
     <hint type="destinationlabel">
      <x>989</x>
@@ -1268,7 +1333,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>roundCornersCheckBox</sender>
+   <sender>roundPenCornersCheckBox</sender>
    <signal>toggled(bool)</signal>
    <receiver>mapPainter</receiver>
    <slot>setRoundPenCorners(bool)</slot>
@@ -1299,6 +1364,102 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>shapeComboBox</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setEllipseShape(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>907</x>
+     <y>631</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>633</x>
+     <y>631</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>fillShapeCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setFillShape(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>900</x>
+     <y>657</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>653</x>
+     <y>657</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cornerRadiusSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setRectRadius(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>910</x>
+     <y>688</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>679</x>
+     <y>689</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mapPainter</sender>
+   <signal>colorChanged(QColor)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>updateColorWidgets(QColor)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>106</x>
+     <y>430</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>8</x>
+     <y>435</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorPaletteWidget</sender>
+   <signal>colorSelected(QColor)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>updateColorWidgets(QColor)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>968</x>
+     <y>360</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1021</x>
+     <y>361</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorGradientWidget</sender>
+   <signal>colorSelected(QColor)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>updateColorWidgets(QColor)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>882</x>
+     <y>308</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -1310,5 +1471,6 @@
   <slot>onRedo()</slot>
   <slot>refreshViews()</slot>
   <slot>updateDrawOptions(int)</slot>
+  <slot>updateColorWidgets(QColor)</slot>
  </slots>
 </ui>

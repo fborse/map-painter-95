@@ -32,10 +32,11 @@ public slots:
     void setPenSize(const int size) { pen_size = size; }
     void setAntiAliasing(const bool yes) { anti_aliasing = yes; }
     void setRoundPenCorners(const bool yes) { round_pen_corners = yes; }
+    void setBrushPixels(const QImage pixels) { brush_pixels = pixels; }
 //  this one comes from a combo box
     void setEllipseShape(const int yes) { ellipse_shape = (yes == 1); }
     void setFillShape(const bool yes) { fill_shape = yes; }
-    void setRoundRectCorners(const bool yes) { round_rect_corners = yes; }
+    void setRectRadius(const int radius) { rect_radius = radius; }
 
 signals:
     void colorChanged(const QColor color);
@@ -49,9 +50,11 @@ private:
     bool anti_aliasing;
     bool round_pen_corners;
 
+    QImage brush_pixels;
+
     bool ellipse_shape;
     bool fill_shape;
-    bool round_rect_corners;
+    int rect_radius;
 
     QPoint mouse_cursor;
 //  right click is really just a desktop thing => names accordingly

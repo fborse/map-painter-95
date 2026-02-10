@@ -71,11 +71,42 @@ MainWindow::MainWindow(QWidget *parent):
         ui->rightColorWidget->setColor(ui->mapPainter->getDrawColor());
         ui->colorGradientWidget->setRightColor(ui->mapPainter->getDrawColor());
     });
+
+    connect(ui->shapeComboBox, &QComboBox::currentIndexChanged, [&] (const int index) {
+        ui->cornerRadiusSpinBox->setEnabled(index == 0);
+    });
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+static inline void update_hue_widget(ColorHueWidget *widget, const QColor &color)
+{
+    const int hue = color.hsvHue();
+    const int h = widget->height();
+
+    widget->setHueHeight(hue * h / 360);
+}
+
+static inline void update_saturation_value_widget(ColorSaturationValueWidget *widget, const QColor &color)
+{
+    const int hue = color.hsvHue();
+    const int saturation = color.hsvSaturation();
+    const int value = color.value();
+    const auto &[w, h] = widget->size();
+
+    widget->setHue(hue);
+    widget->setSaturation(saturation * w / 255);
+    widget->setValue(h - (value * h / 255));
+}
+
+void MainWindow::updateColorWidgets(const QColor color)
+{
+    update_hue_widget(ui->hueWidget, color);
+    update_saturation_value_widget(ui->saturationValueWidget, color);
+    ui->alphaSpinBox->setValue(color.alpha());
 }
 
 bool MainWindow::handleUnsavedChanges()
@@ -168,8 +199,18 @@ void MainWindow::refreshViews()
 
 void MainWindow::updateDrawOptions(const int draw_tool)
 {
-    Q_ASSERT(0 <= draw_tool && draw_tool < 9);
-//  TODO: actually set the stack widgets indexes
+    const int n = 9;
+    Q_ASSERT(0 <= draw_tool && draw_tool < n);
+
+//  Stack 1 : Empty page, Pen page, Fill page, Selection page
+//  Stack 2 : Empty page, Brush page, Shape page, Shader page
+
+//  pen, line, brush, shape, fill, eraser, shader, pipette, selection
+    int stack1[n] = {1, 1, 1, 1, 2, 1, 1, 0, 3};
+    int stack2[n] = {0, 0, 1, 2, 0, 0, 3, 0, 0};
+
+    ui->toolBox1StackedWidget->setCurrentIndex(stack1[draw_tool]);
+    ui->toolBox2StackedWidget->setCurrentIndex(stack2[draw_tool]);
 }
 
 void MainWindow::onUndo()

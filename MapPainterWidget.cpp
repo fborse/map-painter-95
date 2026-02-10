@@ -61,7 +61,7 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     show_grid{false}, draw_tool{PEN},
     draw_color{Qt::red},
     pen_size{1}, anti_aliasing{false}, round_pen_corners{false},
-    ellipse_shape{false}, fill_shape{false}, round_rect_corners{false},
+    ellipse_shape{false}, fill_shape{false}, rect_radius{false},
     mouse_cursor{}, click_origin{}, right_click{false}
 {}
 
@@ -132,12 +132,14 @@ static inline QRect to_rect(const QPoint &p1, const QPoint &p2)
 void MapPainterWidget::drawShape(QPainter &painter) const
 {
     setPen(painter);
-    const QRect r = to_rect(*click_origin, mouse_cursor);
+    if (fill_shape)
+        painter.setBrush(draw_color);
 
-    if (!ellipse_shape)
-        painter.drawRect(r);
-    else
+    const QRect r = to_rect(*click_origin, mouse_cursor);
+    if (ellipse_shape)
         painter.drawEllipse(r);
+    else
+        painter.drawRoundedRect(r, rect_radius, rect_radius);
 }
 
 void MapPainterWidget::drawFill(QImage &/*original*/) const
