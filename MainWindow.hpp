@@ -35,6 +35,8 @@ public slots:
 //  centralises undo/redo changes
     void refreshViews();
 
+    void updateDrawOptions(const int draw_tool);
+
 private:
     Ui::MainWindow *ui;
 

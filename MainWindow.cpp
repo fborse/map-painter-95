@@ -166,6 +166,12 @@ void MainWindow::refreshViews()
     ui->mapPainter->resize();
 }
 
+void MainWindow::updateDrawOptions(const int draw_tool)
+{
+    Q_ASSERT(0 <= draw_tool && draw_tool < 9);
+//  TODO: actually set the stack widgets indexes
+}
+
 void MainWindow::onUndo()
 {
     undo_stack->undo();

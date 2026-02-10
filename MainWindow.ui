@@ -292,7 +292,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>728</width>
+                <width>719</width>
                 <height>595</height>
                </rect>
               </property>
@@ -367,7 +367,7 @@
               </layout>
              </item>
              <item>
-              <widget class="QFrame" name="frame">
+              <widget class="QFrame" name="colorGradientFrame">
                <property name="frameShape">
                 <enum>QFrame::Shape::StyledPanel</enum>
                </property>
@@ -400,7 +400,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>196</width>
+                  <width>205</width>
                   <height>68</height>
                  </rect>
                 </property>
@@ -470,21 +470,75 @@
                </item>
               </widget>
              </item>
+             <item>
+              <widget class="QFrame" name="toolBoxFrame">
+               <property name="frameShape">
+                <enum>QFrame::Shape::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Shadow::Raised</enum>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_10">
+                <item>
+                 <widget class="QStackedWidget" name="toolBox1StackedWidget">
+                  <widget class="QWidget" name="penPage">
+                   <layout class="QFormLayout" name="formLayout">
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="penSizeLabel">
+                      <property name="text">
+                       <string>Pen Size :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QSpinBox" name="penSizeSpinBox">
+                      <property name="suffix">
+                       <string>px</string>
+                      </property>
+                      <property name="minimum">
+                       <number>1</number>
+                      </property>
+                      <property name="maximum">
+                       <number>256</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="antiAliasingLabel">
+                      <property name="text">
+                       <string>Anti-aliasing :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QCheckBox" name="antiAliasingCheckBox"/>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="roundCornersLabel">
+                      <property name="text">
+                       <string>Round Corners :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QCheckBox" name="roundCornersCheckBox"/>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="page_2"/>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QStackedWidget" name="toolBox2StackedWidget">
+                  <widget class="QWidget" name="page_3"/>
+                  <widget class="QWidget" name="page_4"/>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
             </layout>
            </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
         </item>
@@ -639,6 +693,8 @@
     <slot>setDrawColor(QColor)</slot>
     <slot>setDrawTool(int)</slot>
     <slot>setPenSize(int)</slot>
+    <slot>setAntiAliasing(bool)</slot>
+    <slot>setRoundPenCorners(bool)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -930,11 +986,11 @@
    <slot>setValue(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>751</x>
-     <y>296</y>
+     <x>742</x>
+     <y>426</y>
     </hint>
     <hint type="destinationlabel">
-     <x>760</x>
+     <x>751</x>
      <y>131</y>
     </hint>
    </hints>
@@ -946,8 +1002,8 @@
    <slot>setShowGrid(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>114</x>
-     <y>116</y>
+     <x>627</x>
+     <y>129</y>
     </hint>
     <hint type="destinationlabel">
      <x>76</x>
@@ -962,12 +1018,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>911</x>
-     <y>239</y>
+     <x>917</x>
+     <y>284</y>
     </hint>
     <hint type="destinationlabel">
-     <x>959</x>
-     <y>247</y>
+     <x>973</x>
+     <y>290</y>
     </hint>
    </hints>
   </connection>
@@ -978,12 +1034,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>940</x>
-     <y>245</y>
+     <x>973</x>
+     <y>290</y>
     </hint>
     <hint type="destinationlabel">
-     <x>919</x>
-     <y>245</y>
+     <x>917</x>
+     <y>284</y>
     </hint>
    </hints>
   </connection>
@@ -994,12 +1050,12 @@
    <slot>setAlpha(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>957</x>
-     <y>238</y>
+     <x>973</x>
+     <y>290</y>
     </hint>
     <hint type="destinationlabel">
      <x>989</x>
-     <y>238</y>
+     <y>291</y>
     </hint>
    </hints>
   </connection>
@@ -1015,7 +1071,7 @@
     </hint>
     <hint type="destinationlabel">
      <x>989</x>
-     <y>238</y>
+     <y>291</y>
     </hint>
    </hints>
   </connection>
@@ -1030,8 +1086,8 @@
      <y>144</y>
     </hint>
     <hint type="destinationlabel">
-     <x>990</x>
-     <y>238</y>
+     <x>989</x>
+     <y>291</y>
     </hint>
    </hints>
   </connection>
@@ -1046,8 +1102,8 @@
      <y>144</y>
     </hint>
     <hint type="destinationlabel">
-     <x>990</x>
-     <y>238</y>
+     <x>989</x>
+     <y>291</y>
     </hint>
    </hints>
   </connection>
@@ -1058,8 +1114,8 @@
    <slot>setHue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>990</x>
-     <y>144</y>
+     <x>989</x>
+     <y>241</y>
     </hint>
     <hint type="destinationlabel">
      <x>888</x>
@@ -1074,8 +1130,8 @@
    <slot>selectColor(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>990</x>
-     <y>238</y>
+     <x>989</x>
+     <y>291</y>
     </hint>
     <hint type="destinationlabel">
      <x>891</x>
@@ -1090,8 +1146,8 @@
    <slot>addColor(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>990</x>
-     <y>238</y>
+     <x>989</x>
+     <y>291</y>
     </hint>
     <hint type="destinationlabel">
      <x>891</x>
@@ -1110,8 +1166,8 @@
      <y>336</y>
     </hint>
     <hint type="destinationlabel">
-     <x>990</x>
-     <y>238</y>
+     <x>989</x>
+     <y>291</y>
     </hint>
    </hints>
   </connection>
@@ -1122,8 +1178,8 @@
    <slot>setDrawColor(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>990</x>
-     <y>238</y>
+     <x>989</x>
+     <y>291</y>
     </hint>
     <hint type="destinationlabel">
      <x>396</x>
@@ -1138,28 +1194,28 @@
    <slot>setColor(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>891</x>
-     <y>270</y>
+     <x>916</x>
+     <y>308</y>
     </hint>
     <hint type="destinationlabel">
-     <x>990</x>
-     <y>238</y>
+     <x>989</x>
+     <y>291</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>drawToolComboBox</sender>
    <signal>currentIndexChanged(int)</signal>
-   <receiver>mapPainter</receiver>
-   <slot>setDrawTool(int)</slot>
+   <receiver>MainWindow</receiver>
+   <slot>updateDrawOptions(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>815</x>
-     <y>419</y>
+     <x>990</x>
+     <y>471</y>
     </hint>
     <hint type="destinationlabel">
-     <x>712</x>
-     <y>420</y>
+     <x>511</x>
+     <y>383</y>
     </hint>
    </hints>
   </connection>
@@ -1175,7 +1231,71 @@
     </hint>
     <hint type="destinationlabel">
      <x>989</x>
-     <y>238</y>
+     <y>291</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>penSizeSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setPenSize(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>929</x>
+     <y>509</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>685</x>
+     <y>510</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>antiAliasingCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setAntiAliasing(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>911</x>
+     <y>540</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>681</x>
+     <y>537</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>roundCornersCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setRoundPenCorners(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>914</x>
+     <y>562</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>676</x>
+     <y>560</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>drawToolComboBox</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setDrawTool(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>807</x>
+     <y>459</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>700</x>
+     <y>459</y>
     </hint>
    </hints>
   </connection>
@@ -1189,5 +1309,6 @@
   <slot>onUndo()</slot>
   <slot>onRedo()</slot>
   <slot>refreshViews()</slot>
+  <slot>updateDrawOptions(int)</slot>
  </slots>
 </ui>

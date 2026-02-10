@@ -30,6 +30,12 @@ public slots:
 
     void setDrawColor(const QColor color) { draw_color = color; }
     void setPenSize(const int size) { pen_size = size; }
+    void setAntiAliasing(const bool yes) { anti_aliasing = yes; }
+    void setRoundPenCorners(const bool yes) { round_pen_corners = yes; }
+//  this one comes from a combo box
+    void setEllipseShape(const int yes) { ellipse_shape = (yes == 1); }
+    void setFillShape(const bool yes) { fill_shape = yes; }
+    void setRoundRectCorners(const bool yes) { round_rect_corners = yes; }
 
 signals:
     void colorChanged(const QColor color);
@@ -40,6 +46,12 @@ private:
 
     QColor draw_color;
     int pen_size;
+    bool anti_aliasing;
+    bool round_pen_corners;
+
+    bool ellipse_shape;
+    bool fill_shape;
+    bool round_rect_corners;
 
     QPoint mouse_cursor;
 //  right click is really just a desktop thing => names accordingly
@@ -48,10 +60,27 @@ private:
 
     QVector<QPoint> drag_points;
 
+    QColor getEffectiveDrawColor() const;
+//  the first can be useful for paintCursor (or just could ?)
+    QPen getPen() const;
+    void setPen(QPainter &painter) const;
+
+    void drawPen(QPainter &painter) const;
+    void drawLine(QPainter &painter) const;
+    void drawBrush(QPainter &painter) const;
+    void drawShape(QPainter &painter) const;
+    void drawFill(QImage &original) const;
+    void drawEraser(QPainter &painter) const;
+    void drawShader(QPainter &painter) const;
+
     void paintCursor(QPainter &painter) const;
+    QImage getDrawnLayer() const;
     void paintEvent(QPaintEvent *) override;
 
     QColor getColorAt(const QPoint &p) const;
+
+    void handleRetroactiveDrawing(const QHash<QPoint, QColor> &changed_pixels) const;
+    void handleDrawChanges() const;
 
     void mouseMoveEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;

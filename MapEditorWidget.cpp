@@ -113,7 +113,7 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
 
     painter.scale(zoom, zoom);
     {
-        paintLayers(painter);
+        painter.drawImage(0, 0, getPaintedLayer());
         if (click_origin || right_click_origin)
             paintTileRects(painter);
     }

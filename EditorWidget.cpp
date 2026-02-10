@@ -55,11 +55,15 @@ void EditorWidget::paintBackground(QPainter &painter) const
     }
 }
 
-void EditorWidget::paintLayers(QPainter &painter) const
+QImage EditorWidget::getPaintedLayer() const
 {
     if (!(map_layers && tileset))
-        return;
+        return QImage();
 
+    QImage img(grid_aspect * tilesize, QImage::Format_ARGB32_Premultiplied);
+    img.fill(Qt::transparent);
+
+    QPainter painter(&img);
     for (int j = 0; j < map_layers->length(); ++j)
     {
         for (int i = 0; i < map_layers->at(j).length(); ++i)
@@ -70,6 +74,8 @@ void EditorWidget::paintLayers(QPainter &painter) const
                 painter.drawImage(i * tilesize, j * tilesize, tileset->value(id));
         }
     }
+
+    return img;
 }
 
 void EditorWidget::paintGrid(QPainter &painter) const
