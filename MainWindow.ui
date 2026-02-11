@@ -222,6 +222,16 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_6">
              <item>
+              <widget class="QCheckBox" name="retroactiveChangesCheckBox">
+               <property name="text">
+                <string>Retroactive</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
               <spacer name="horizontalSpacer_3">
                <property name="orientation">
                 <enum>Qt::Orientation::Horizontal</enum>
@@ -760,6 +770,7 @@
     <slot>setEllipseShape(int)</slot>
     <slot>setFillShape(bool)</slot>
     <slot>setRectRadius(int)</slot>
+    <slot>setRetroactive(bool)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -1457,6 +1468,22 @@
     <hint type="destinationlabel">
      <x>511</x>
      <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>retroactiveChangesCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setRetroactive(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>77</x>
+     <y>117</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>82</x>
+     <y>297</y>
     </hint>
    </hints>
   </connection>

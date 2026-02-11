@@ -2,6 +2,7 @@
 
 #include <QPainter>
 #include <QMouseEvent>
+#include <QUuid>
 
 class TilesetCommand
 {
@@ -31,12 +32,12 @@ private:
     QWeakPointer<Tileset> tileset_ptr;
 };
 
-class ReplaceTilesCommand final: public QUndoCommand, public TilesetCommand
+class RetroactiveChangeCommand final: public QUndoCommand, public TilesetCommand
 {
 public:
     using Changes = QHash<TileReference, QImage>;
 
-    ReplaceTilesCommand(QWeakPointer<Tileset> tileset, const Changes &prev, const Changes &next):
+    RetroactiveChangeCommand(QWeakPointer<Tileset> tileset, const Changes &prev, const Changes &next):
         QUndoCommand(), TilesetCommand({}, tileset), prev{prev}, next{next}
     {}
 
@@ -56,9 +57,51 @@ private:
     Changes prev, next;
 };
 
+class ReplaceAddTilesCommand final: public QUndoCommand, public TilesetCommand
+{
+public:
+    struct TileChange { QImage prev, next; };
+    using TileChanges = QHash<TileReference, TileChange>;
+
+    using Added = QVector<QPair<TileReference, QImage>>;
+
+    ReplaceAddTilesCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, const TileChanges &tile_changes, const Added &added):
+        QUndoCommand(), TilesetCommand(tiles_order, tileset), tile_changes{tile_changes}, added{added}
+    {}
+
+    void undo() final override
+    {
+        for (auto &id: tile_changes.keys())
+            (*lockTileset())[id] = tile_changes[id].prev;
+
+    //  they got added at the end, contiguously, and removal order does not matter
+        for (auto &[id, _]: added)
+        {
+            lockTilesOrder()->pop_back();
+            lockTileset()->remove(id);
+        }
+    }
+
+    void redo() final override
+    {
+        for (auto &id: tile_changes.keys())
+            (*lockTileset())[id] = tile_changes[id].next;
+
+        for (auto &[id, img]: added)
+        {
+            lockTilesOrder()->push_back(id);
+            lockTileset()->insert(id, img);
+        }
+    }
+
+private:
+    TileChanges tile_changes;
+    Added added;
+};
+
 MapPainterWidget::MapPainterWidget(QWidget *parent):
     EditorWidget(parent),
-    show_grid{false}, draw_tool{PEN},
+    show_grid{false}, draw_tool{PEN}, retroactive{true},
     draw_color{Qt::red},
     pen_size{1}, anti_aliasing{false}, round_pen_corners{false},
     ellipse_shape{false}, fill_shape{false}, rect_radius{false},
@@ -220,11 +263,11 @@ static inline QPoint divide(const QPoint &p, const int a)
     return {int(p.x() / a), int(p.y() / a)};
 }
 
-static inline auto get_changes(const QImage &original, const QImage &changed)
+static inline auto get_changed_pixels(const QImage &original, const QImage &changed)
 {
     QHash<QPoint, QColor> changes;
 
-//  please be fast (:
+    //  please be fast (:
     for (int j = 0; j < original.height(); ++j)
         for (int i = 0; i < original.width(); ++i)
             if (original.pixelColor(i, j) != changed.pixelColor(i, j))
@@ -235,7 +278,8 @@ static inline auto get_changes(const QImage &original, const QImage &changed)
 
 void MapPainterWidget::handleRetroactiveDrawing(const QHash<QPoint, QColor> &changed_pixels) const
 {
-    ReplaceTilesCommand::Changes prev, next;
+
+    RetroactiveChangeCommand::Changes prev, next;
     for (auto &p: changed_pixels.keys())
     {
         const auto q = divide(p, tilesize);
@@ -253,7 +297,47 @@ void MapPainterWidget::handleRetroactiveDrawing(const QHash<QPoint, QColor> &cha
         }
     }
 
-    undo_stack->push(new ReplaceTilesCommand(tileset, prev, next));
+    undo_stack->push(new RetroactiveChangeCommand(tileset, prev, next));
+}
+
+static inline bool is_tile_unique(const MapLayer &map_layers, const TileReference &id)
+{
+    int found = 0;
+
+    for (auto &row: map_layers)
+        for (auto &tile: row)
+            if (tile == id)
+                if (++found > 1)
+                    return false;
+
+    return true;
+}
+
+void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QColor> &changed_pixels) const
+{
+    ReplaceAddTilesCommand::TileChanges tile_changes;
+    ReplaceAddTilesCommand::Added added;
+
+/*    for (auto &p: changed_pixels.keys())
+    {
+        const auto q = divide(p, tilesize);
+        const auto id = map_layers->at(q.y()).at(q.x());
+
+        if (is_tile_unique(*map_layers, id) && !id.isEmpty())
+        {
+            if (!prev.contains(id))
+            {
+                prev.insert(id, tileset->value(id));
+                next.insert(id, tileset->value(id));
+            }
+        }
+        else
+        {
+//            const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        }
+    }*/
+
+//    undo_stack->push(new ReplaceAddTilesCommand(tiles_order, tileset, prev, next, added));
 }
 
 void MapPainterWidget::handleDrawChanges() const
@@ -261,12 +345,14 @@ void MapPainterWidget::handleDrawChanges() const
     if (!(tileset && map_layers))
         return;
 
-    const auto changed_pixels = get_changes(getPaintedLayer(), getDrawnLayer());
+    const auto changed_pixels = get_changed_pixels(getPaintedLayer(), getDrawnLayer());
     if (changed_pixels.isEmpty())
         return;
 
-    if (true)
+    if (retroactive)
         handleRetroactiveDrawing(changed_pixels);
+    else
+        handleNonRetroactiveDrawing(changed_pixels);
 }
 
 void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)

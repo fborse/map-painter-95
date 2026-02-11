@@ -27,6 +27,7 @@ public:
 public slots:
     void setShowGrid(const bool yes) { show_grid = yes; update(); }
     void setDrawTool(const int index);
+    void setRetroactive(const bool yes) { retroactive = yes; }
 
     void setDrawColor(const QColor color) { draw_color = color; }
     void setPenSize(const int size) { pen_size = size; }
@@ -44,6 +45,7 @@ signals:
 private:
     bool show_grid;
     DrawTool draw_tool;
+    bool retroactive;
 
     QColor draw_color;
     int pen_size;
@@ -83,6 +85,7 @@ private:
     QColor getColorAt(const QPoint &p) const;
 
     void handleRetroactiveDrawing(const QHash<QPoint, QColor> &changed_pixels) const;
+    void handleNonRetroactiveDrawing(const QHash<QPoint, QColor> &changed_pixels) const;
     void handleDrawChanges() const;
 
     void mouseMoveEvent(QMouseEvent *event) override;

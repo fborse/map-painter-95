@@ -23,6 +23,8 @@ public:
     void setSelectedTilesPointer(QSharedPointer<SelectedTiles> ptr) { selected_tiles = ptr; }
     void setMapLayersPointer(QSharedPointer<MapLayer> ptr) { map_layers = ptr; }
 
+    int getTilesize() const { return tilesize; }
+
     virtual void resize();
 
 public slots:

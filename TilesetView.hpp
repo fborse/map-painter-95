@@ -15,6 +15,8 @@ public:
     explicit TilesetView(QWidget *parent = nullptr);
     virtual ~TilesetView() final override = default;
 
+    int getNumberOfColumns() const { return n_columns; }
+
     void resize() final override;
 
 public slots:

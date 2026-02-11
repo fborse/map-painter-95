@@ -17,6 +17,7 @@ SOURCES += \
     EditorWidget.cpp \
     MapEditorWidget.cpp \
     MapPainterWidget.cpp \
+    NewMapDialog.cpp \
     TilesetView.cpp \
     main.cpp \
     MainWindow.cpp
@@ -31,10 +32,12 @@ HEADERS += \
     MainWindow.hpp \
     MapEditorWidget.hpp \
     MapPainterWidget.hpp \
+    NewMapDialog.hpp \
     TilesetView.hpp
 
 FORMS += \
-    MainWindow.ui
+    MainWindow.ui \
+    NewMapDialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -50,10 +50,18 @@ private:
     QSharedPointer<SelectedTiles> selected_tiles;
     QSharedPointer<MapLayer> map_layers;
 
+    void resetPointers();
+    void setTilesize(const int tilesize);
+    void populateTileset(const int tilesize);
+    void setMapSize(const QSize size);
+
 //  the user could choose cancel or save could fail => returns bool
 //  true -> caller shall keep proceeding
 //  false -> caller shall interrupt the routine
     bool handleUnsavedChanges();
 
     void closeEvent(QCloseEvent *event) override;
+
+    bool load(const QString &path);
+    bool save(const QString &path);
 };
