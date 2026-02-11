@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent):
         editor->setMapLayersPointer(map_layers);
 
     {
-        setMapSize({16, 20});
+        setMapSize({20, 16});
         populateTileset(32);
     }
 
