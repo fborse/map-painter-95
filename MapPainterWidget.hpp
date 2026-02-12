@@ -30,16 +30,21 @@ public slots:
     void setRetroactive(const bool yes) { retroactive = yes; }
 
     void setDrawColor(const QColor color) { draw_color = color; }
+
     void setPenSize(const int size) { pen_size = size; }
     void setAntiAliasing(const bool yes) { anti_aliasing = yes; }
     void setRoundPenCorners(const bool yes) { round_pen_corners = yes; }
+
     void setBrushPixels(const QImage pixels) { brush_pixels = pixels; }
 //  this one comes from a combo box
     void setEllipseShape(const int yes) { ellipse_shape = (yes == 1); }
     void setFillShape(const bool yes) { fill_shape = yes; }
     void setRectRadius(const int radius) { rect_radius = radius; }
+
     void setFillTolerance(const double tolerance) { fill_tolerance = tolerance; }
-    void setThisTileOnly(const bool yes) { fill_this_tile_only = yes; }
+    void setFillThisTileOnly(const bool yes) { fill_this_tile_only = yes; }
+
+    void setDarken(const bool yes) { darken = yes; }
 
 signals:
     void colorChanged(const QColor color);
@@ -62,6 +67,8 @@ private:
 
     double fill_tolerance;
     bool fill_this_tile_only;
+
+    bool darken;
 
     QPoint mouse_cursor;
 //  right click is really just a desktop thing => names accordingly

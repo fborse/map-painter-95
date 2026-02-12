@@ -636,7 +636,40 @@
                     </item>
                    </layout>
                   </widget>
-                  <widget class="QWidget" name="shaderPage"/>
+                  <widget class="QWidget" name="shaderPage">
+                   <layout class="QVBoxLayout" name="verticalLayout_11">
+                    <item>
+                     <widget class="QRadioButton" name="darkenRadioButton">
+                      <property name="text">
+                       <string>Darken</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QRadioButton" name="lightenRadioButton">
+                      <property name="text">
+                       <string>Lighten</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="verticalSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Orientation::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>20</width>
+                        <height>40</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </widget>
                  </widget>
                 </item>
                </layout>
@@ -806,7 +839,8 @@
     <slot>setRectRadius(int)</slot>
     <slot>setRetroactive(bool)</slot>
     <slot>setFillTolerance(double)</slot>
-    <slot>setThisTileOnly(bool)</slot>
+    <slot>setFillThisTileOnly(bool)</slot>
+    <slot>setDarken(bool)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -1543,7 +1577,7 @@
    <sender>fillThisTileOnlyCheckBox</sender>
    <signal>toggled(bool)</signal>
    <receiver>mapPainter</receiver>
-   <slot>setThisTileOnly(bool)</slot>
+   <slot>setFillThisTileOnly(bool)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>890</x>
@@ -1552,6 +1586,22 @@
     <hint type="destinationlabel">
      <x>661</x>
      <y>536</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>darkenRadioButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setDarken(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>830</x>
+     <y>645</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>667</x>
+     <y>645</y>
     </hint>
    </hints>
   </connection>

@@ -133,6 +133,7 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     pen_size{1}, anti_aliasing{false}, round_pen_corners{false},
     ellipse_shape{false}, fill_shape{false}, rect_radius{false},
     fill_tolerance{0}, fill_this_tile_only{true},
+    darken{true},
     mouse_cursor{}, click_origin{}, right_click{false}
 {}
 
@@ -152,7 +153,7 @@ QColor MapPainterWidget::getEffectiveDrawColor() const
 
     if (draw_tool != SHADER)
         return draw_color;
-    else if (true)
+    else if (darken)
         return dark32;
     else
         return light32;
