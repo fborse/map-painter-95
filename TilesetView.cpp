@@ -327,7 +327,6 @@ void TilesetView::mouseReleaseEvent(QMouseEvent *event)
     {
         if (drag_mode == SELECTION_MODE)
             handleTileModifications();
-
         right_click_origin = {};
     }
 
