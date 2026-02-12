@@ -138,8 +138,14 @@ void MapEditorWidget::handleTileSetting()
     {
         for (int i = 0; i < w; ++i)
         {
-            prev[{x+i, y+j}] = map_layers->at(y+j).at(x+i);
-            next[{x+i, y+j}] = selected_tiles->at(j % sh).at(i % sw);
+            const auto prev_id = map_layers->at(y+j).at(x+i);
+            const auto next_id = selected_tiles->at(j % sh).at(i % sw);
+
+            if (prev_id != next_id)
+            {
+                prev[{x+i, y+j}] = prev_id;
+                next[{x+i, y+j}] = next_id;
+            }
         }
     }
     if (!next.isEmpty())
