@@ -193,6 +193,17 @@ void MapPainterWidget::paintCursor(QPainter &painter) const
     {
         cursor = QImage(zoom, zoom, QImage::Format_ARGB32_Premultiplied);
         cursor.fill((draw_tool == FILL)? draw_color : Qt::transparent);
+
+        QPainter painter(&cursor);
+        painter.fillRect(0, 0, cursor.width(), 1, Qt::black);
+        painter.fillRect(0, 0, 1, cursor.height(), Qt::black);
+        painter.fillRect(0, cursor.height()-1, cursor.width(), 1, Qt::black);
+        painter.fillRect(cursor.width()-1, 0, 1, cursor.height(), Qt::black);
+
+        painter.fillRect(1, 1, cursor.width()-2, 1, Qt::white);
+        painter.fillRect(1, 1, 1, cursor.height()-2, Qt::white);
+        painter.fillRect(1, cursor.height()-2, cursor.width()-2, 1, Qt::white);
+        painter.fillRect(cursor.width()-2, 1, 1, cursor.height()-2, Qt::white);
     }
     else
     {
@@ -550,7 +561,8 @@ void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
         case BRUSH:
         case ERASER:
         case SHADER:
-            drag_points.push_back(mouse_cursor); break;
+            drag_points.push_back(mouse_cursor);
+            break;
         case PIPETTE:
             emit colorChanged(getColorAt(mouse_cursor));
         default:
