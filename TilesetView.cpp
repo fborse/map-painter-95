@@ -77,7 +77,7 @@ private:
 TilesetView::TilesetView(QWidget *parent):
     EditorWidget(parent),
     n_columns{8}, drag_mode{SELECTION_MODE},
-    mouse_cursor{}, click_origin{}
+    mouse_cursor{}, click_origin{}, right_click_origin{}
 {
     resize();
 }
@@ -139,17 +139,21 @@ void TilesetView::paintTileset(QPainter &painter)
     const int n = tiles_order->length();
 
     Names displayed = *tiles_order;
-    if (click_origin)
+    if (click_origin || right_click_origin)
     {
-        const auto origin = toIndex(divide(*click_origin, tilesize));
+        const auto p = right_click_origin? *right_click_origin : *click_origin;
+
+        const auto origin = toIndex(divide(p, tilesize));
         const auto target = toIndex(divide(mouse_cursor, tilesize));
 
         if (origin && *origin != -1 && target && *target != -1)
         {
-            if (drag_mode == MOVE_MODE)
+            if (drag_mode == MOVE_MODE && click_origin)
                 displayed.insert(*target, displayed.takeAt(*origin));
-            else if (drag_mode == SWAP_MODE)
+            else if (drag_mode == SWAP_MODE && click_origin)
                 displayed.swapItemsAt(*origin, *target);
+            else if (drag_mode == SELECTION_MODE && right_click_origin)
+                displayed.insert(*target, displayed.takeAt(*origin));
         }
     }
 
@@ -253,17 +257,19 @@ void TilesetView::handleTilesSelected()
 
 void TilesetView::handleTileModifications()
 {
-    const auto origin = toIndex(divide(*click_origin, tilesize));
+    const QPoint p = right_click_origin? *right_click_origin : *click_origin;
+
+    const auto origin = toIndex(divide(p, tilesize));
     const auto target = toIndex(divide(mouse_cursor, tilesize));
 
     if (origin && *origin != -1 && target && *target != -1)
     {
-        if (drag_mode == MOVE_MODE)
+        if (drag_mode == MOVE_MODE && click_origin)
             undo_stack->push(new MoveTileCommand(tiles_order, *origin, *target));
-//            displayed.insert(*target, displayed.takeAt(*origin));
-        else if (drag_mode == SWAP_MODE)
+        else if (drag_mode == SWAP_MODE && click_origin)
             undo_stack->push(new SwapTilesCommand(tiles_order, *origin, *target));
-//            displayed.swapItemsAt(*origin, *target);
+        else if (drag_mode == SELECTION_MODE && right_click_origin)
+            undo_stack->push(new MoveTileCommand(tiles_order, *origin, *target));
     }
 }
 
@@ -298,6 +304,10 @@ void TilesetView::mousePressEvent(QMouseEvent *event)
         if (getWidgetRect().contains(event->pos()))
             click_origin = event->pos();
 
+    if (event->button() == Qt::RightButton)
+        if (getWidgetRect().contains(event->pos()))
+            right_click_origin = event->pos();
+
     update();
 }
 
@@ -311,6 +321,14 @@ void TilesetView::mouseReleaseEvent(QMouseEvent *event)
             handleTileModifications();
 
         click_origin = {};
+    }
+
+    if (event->button() == Qt::RightButton)
+    {
+        if (drag_mode == SELECTION_MODE)
+            handleTileModifications();
+
+        right_click_origin = {};
     }
 
     update();

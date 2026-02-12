@@ -28,7 +28,8 @@ private:
     DragMode drag_mode;
 
     QPoint mouse_cursor;
-    std::optional<QPoint> click_origin;
+//  right click is really just a desktop thing => names accordingly
+    std::optional<QPoint> click_origin, right_click_origin;
 
     std::optional<QPoint> toIJ(const int idx) const;
     std::optional<int> toIndex(const QPoint &ij) const;
