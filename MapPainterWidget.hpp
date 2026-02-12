@@ -23,6 +23,7 @@ public:
     virtual ~MapPainterWidget() final override = default;
 
     QColor getDrawColor() const { return draw_color; }
+    QImage getBrushPixels() const { return brush_pixels; }
 
 public slots:
     void setShowGrid(const bool yes) { show_grid = yes; update(); }

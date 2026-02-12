@@ -126,6 +126,12 @@ private:
     Changes prev, next;
 };
 
+//  QPoint's division rounds ; we DON'T want that
+static inline QPoint divide(const QPoint &p, const int a)
+{
+    return {int(p.x() / a), int(p.y() / a)};
+}
+
 MapPainterWidget::MapPainterWidget(QWidget *parent):
     EditorWidget(parent),
     show_grid{false}, draw_tool{PEN}, retroactive{true},
@@ -143,8 +149,75 @@ void MapPainterWidget::setDrawTool(const int index)
     draw_tool = DrawTool(index);
 }
 
-void MapPainterWidget::paintCursor(QPainter &/*painter*/) const
-{}
+static inline QImage get_low_res(const int pen_size, const bool round)
+{
+    QImage img(pen_size, pen_size, QImage::Format_ARGB32_Premultiplied);
+    img.fill(Qt::black);
+
+    QPen pen(Qt::white);
+    pen.setWidth(pen_size);
+    if (round)
+        pen.setCapStyle(Qt::RoundCap);
+
+    QPainter painter(&img);
+    painter.setPen(pen);
+    painter.drawPoint(pen_size / 2, pen_size / 2);
+
+    return img;
+}
+
+static inline void reduce_to_outline(QImage &img)
+{
+    QPoint d[] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    for (int y = 0; y < img.height(); ++y)
+    {
+        for (int x = 0; x < img.width(); ++x)
+        {
+            bool diff = false;
+            for (auto &[i, j]: d)
+                if (img.rect().contains(x+i, y+j))
+                    if (img.pixelColor(x, y) != img.pixelColor(x+i, y+j))
+                        if (img.pixelColor(x+i, y+j) != Qt::transparent)
+                            diff = true;
+            if (!diff)
+                img.setPixelColor(x, y, Qt::transparent);
+        }
+    }
+}
+
+void MapPainterWidget::paintCursor(QPainter &painter) const
+{
+    QImage cursor;
+    if (draw_tool == SHAPE || draw_tool == FILL || draw_tool == PIPETTE || draw_tool == SELECTION)
+    {
+        cursor = QImage(zoom, zoom, QImage::Format_ARGB32_Premultiplied);
+        cursor.fill((draw_tool == FILL)? draw_color : Qt::transparent);
+    }
+    else
+    {
+        const int w = brush_pixels.isNull()?
+            pen_size * zoom
+          : brush_pixels.width() * zoom;
+        const int h = brush_pixels.isNull()?
+            pen_size * zoom
+          : brush_pixels.height() * zoom;
+
+        cursor = QImage(w+2, h+2, QImage::Format_ARGB32_Premultiplied);;
+        cursor.fill(Qt::black);
+        {
+            QPainter painter(&cursor);
+            painter.drawImage(1, 1, brush_pixels.isNull()?
+                get_low_res(pen_size, round_pen_corners).scaled(w, w)
+              : brush_pixels.scaled(w, h)
+            );
+        }
+
+        reduce_to_outline(cursor);
+    }
+
+    painter.drawImage(mouse_cursor * zoom, cursor);
+}
 
 QColor MapPainterWidget::getEffectiveDrawColor() const
 {
@@ -212,12 +285,6 @@ void MapPainterWidget::drawShape(QPainter &painter) const
         painter.drawEllipse(r);
     else
         painter.drawRoundedRect(r, rect_radius, rect_radius);
-}
-
-//  QPoint's division rounds ; we DON'T want that
-static inline QPoint divide(const QPoint &p, const int a)
-{
-    return {int(p.x() / a), int(p.y() / a)};
 }
 
 static inline bool similar(const QColor &c1, const QColor &c2, const double tolerance)
