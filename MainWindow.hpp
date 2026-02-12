@@ -51,6 +51,7 @@ private:
     QSharedPointer<MapLayer> map_layers;
 
     void resetPointers();
+    void resetBrushPixels();
     void setTilesize(const int tilesize);
     void populateTileset(const int tilesize);
     void setMapSize(const QSize size);

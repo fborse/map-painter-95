@@ -9,6 +9,9 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    BrushDisplayWidget.cpp \
+    BrushEditorDialog.cpp \
+    BrushEditorWidget.cpp \
     ColorGradientWidget.cpp \
     ColorHueWidget.cpp \
     ColorPaletteWidget.cpp \
@@ -23,6 +26,9 @@ SOURCES += \
     MainWindow.cpp
 
 HEADERS += \
+    BrushDisplayWidget.hpp \
+    BrushEditorDialog.hpp \
+    BrushEditorWidget.hpp \
     ColorGradientWidget.hpp \
     ColorHueWidget.hpp \
     ColorPaletteWidget.hpp \
@@ -36,6 +42,7 @@ HEADERS += \
     TilesetView.hpp
 
 FORMS += \
+    BrushEditorDialog.ui \
     MainWindow.ui \
     NewMapDialog.ui
 

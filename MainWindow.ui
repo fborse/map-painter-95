@@ -583,7 +583,35 @@
                    <number>0</number>
                   </property>
                   <widget class="QWidget" name="emptyPage2"/>
-                  <widget class="QWidget" name="brushPage"/>
+                  <widget class="QWidget" name="brushPage">
+                   <layout class="QHBoxLayout" name="horizontalLayout_8">
+                    <item>
+                     <widget class="QScrollArea" name="brushScrollArea">
+                      <property name="widgetResizable">
+                       <bool>true</bool>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignmentFlag::AlignCenter</set>
+                      </property>
+                      <widget class="QWidget" name="scrollAreaWidgetContents_4">
+                       <property name="geometry">
+                        <rect>
+                         <x>0</x>
+                         <y>0</y>
+                         <width>187</width>
+                         <height>96</height>
+                        </rect>
+                       </property>
+                       <layout class="QVBoxLayout" name="verticalLayout_12">
+                        <item>
+                         <widget class="BrushDisplayWidget" name="brushDisplayWidget" native="true"/>
+                        </item>
+                       </layout>
+                      </widget>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
                   <widget class="QWidget" name="shapePage">
                    <layout class="QFormLayout" name="formLayout_2">
                     <item row="0" column="0">
@@ -896,6 +924,16 @@
    <container>1</container>
    <slots>
     <signal>colorSelected(QColor)</signal>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>BrushDisplayWidget</class>
+   <extends>QWidget</extends>
+   <header>BrushDisplayWidget.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>brushChanged(QImage)</signal>
+    <slot>setBrushPixels(QImage)</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -1597,11 +1635,43 @@
    <hints>
     <hint type="sourcelabel">
      <x>830</x>
-     <y>645</y>
+     <y>629</y>
     </hint>
     <hint type="destinationlabel">
      <x>667</x>
      <y>645</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>brushDisplayWidget</sender>
+   <signal>brushChanged(QImage)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setBrushPixels(QImage)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>820</x>
+     <y>665</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>664</x>
+     <y>667</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>brushDisplayWidget</sender>
+   <signal>brushChanged(QImage)</signal>
+   <receiver>brushDisplayWidget</receiver>
+   <slot>setBrushPixels(QImage)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>957</x>
+     <y>651</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>945</x>
+     <y>681</y>
     </hint>
    </hints>
   </connection>

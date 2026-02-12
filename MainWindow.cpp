@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent):
     {
         setMapSize({20, 16});
         populateTileset(32);
+        resetBrushPixels();
     }
 
     connect(undo_stack.get(), &QUndoStack::cleanChanged, ui->actionSave, &QAction::setDisabled);
@@ -103,6 +104,19 @@ void MainWindow::resetPointers()
     tileset->clear();
     selected_tiles->clear();
     map_layers->clear();
+}
+
+void MainWindow::resetBrushPixels()
+{
+    QImage pixels(16, 16, QImage::Format_ARGB32_Premultiplied);
+    pixels.fill(Qt::black);
+    pixels.setPixelColor(7, 7, Qt::white);
+    pixels.setPixelColor(7, 8, Qt::white);
+    pixels.setPixelColor(8, 7, Qt::white);
+    pixels.setPixelColor(8, 8, Qt::white);
+
+    ui->brushDisplayWidget->setBrushPixels(pixels);
+    ui->mapPainter->setBrushPixels(pixels);
 }
 
 void MainWindow::setTilesize(const int tilesize)
@@ -179,6 +193,7 @@ void MainWindow::onNew()
                     populateTileset(dialog.getTilesize());
             }
 
+            resetBrushPixels();
             refreshViews();
         }
     }
@@ -339,6 +354,7 @@ bool MainWindow::load(const QString &path) try
     setTilesize(tilesize);
     ui->tilesetView->setNumberOfColumns(n_columns);
 
+    resetBrushPixels();
     refreshViews();
     return true;
 }

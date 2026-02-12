@@ -137,11 +137,13 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     show_grid{false}, draw_tool{PEN}, retroactive{true},
     draw_color{Qt::red},
     pen_size{1}, anti_aliasing{false}, round_pen_corners{false},
+    brush_pixels{},
     ellipse_shape{false}, fill_shape{false}, rect_radius{false},
     fill_tolerance{0}, fill_this_tile_only{true},
     darken{true},
     mouse_cursor{}, click_origin{}, right_click{false}
-{}
+{
+}
 
 void MapPainterWidget::setDrawTool(const int index)
 {
@@ -279,6 +281,14 @@ void MapPainterWidget::drawBrush(QPainter &painter) const
 {
     setPen(painter);
 //  TODO: create brush controls
+
+    QVector<QPoint> points;
+    for (auto &[x, y]: drag_points)
+        for (int j = 0; j < brush_pixels.height(); ++j)
+            for (int i = 0; i < brush_pixels.width(); ++i)
+                if (brush_pixels.pixelColor(i, j) == Qt::white)
+                    points.push_back({x + i, y + j});
+    painter.drawPoints(points.data(), points.length());
 }
 
 static inline QRect to_rect(const QPoint &p1, const QPoint &p2)
