@@ -251,7 +251,10 @@ void MapPainterWidget::setPen(QPainter &painter) const
 void MapPainterWidget::drawPen(QPainter &painter) const
 {
     setPen(painter);
-    painter.drawPolyline(drag_points.data(), drag_points.length());
+    if (drag_points.length() > 1)
+        painter.drawPolyline(drag_points.data(), drag_points.length());
+    else
+        painter.drawPoint(drag_points.front());
 }
 
 void MapPainterWidget::drawLine(QPainter &painter) const
@@ -329,14 +332,20 @@ void MapPainterWidget::drawEraser(QPainter &painter) const
 {
     setPen(painter);
     painter.setCompositionMode(QPainter::CompositionMode_Clear);
-    painter.drawPolyline(drag_points.data(), drag_points.length());
+    if (drag_points.length() > 1)
+        painter.drawPolyline(drag_points.data(), drag_points.length());
+    else
+        painter.drawPoint(drag_points.front());
 }
 
 void MapPainterWidget::drawShader(QPainter &painter) const
 {
     setPen(painter);
     painter.setCompositionMode(QPainter::CompositionMode_SourceAtop);
-    painter.drawPolyline(drag_points.data(), drag_points.length());
+    if (drag_points.length() > 1)
+        painter.drawPolyline(drag_points.data(), drag_points.length());
+    else
+        painter.drawPoint(drag_points.front());
 }
 
 QImage MapPainterWidget::getDrawnLayer() const
