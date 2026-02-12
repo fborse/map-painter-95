@@ -227,7 +227,8 @@ void MapPainterWidget::paintCursor(QPainter &painter) const
         reduce_to_outline(cursor);
     }
 
-    painter.drawImage(mouse_cursor * zoom, cursor);
+    const QPoint offset(pen_size / 2, pen_size / 2);
+    painter.drawImage((mouse_cursor - offset) * zoom, cursor);
 }
 
 QColor MapPainterWidget::getEffectiveDrawColor() const
