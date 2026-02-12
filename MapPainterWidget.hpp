@@ -84,8 +84,10 @@ private:
 
     QColor getColorAt(const QPoint &p) const;
 
-    void handleRetroactiveDrawing(const QHash<QPoint, QColor> &changed_pixels) const;
-    void handleNonRetroactiveDrawing(const QHash<QPoint, QColor> &changed_pixels) const;
+//  TODO: find a more palatable structure than this ugly composite type
+//  requirement is to aggregate the data as efficiently, though
+    void handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels) const;
+    void handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels) const;
     void handleDrawChanges() const;
 
     void mouseMoveEvent(QMouseEvent *event) override;
