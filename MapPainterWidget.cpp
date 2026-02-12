@@ -377,6 +377,14 @@ static inline bool is_tile_unique(const MapLayer &map_layers, const TileReferenc
     return true;
 }
 
+static inline QImage empty(const int w, const int h)
+{
+    QImage img(w, h, QImage::Format_ARGB32_Premultiplied);
+    img.fill(Qt::transparent);
+
+    return img;
+}
+
 void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels) const
 {
     const auto &[prev_tiles, next_tiles] = get_prev_next_images(
@@ -395,7 +403,10 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
     //  faster than !is_tile_unique(*map_layers, prev_id)
         if (prev_id.isEmpty() || !prev_tiles.contains(prev_id))
         {
-            QImage new_image = tileset->value(prev_id);
+            QImage new_image = prev_id.isEmpty()?
+                empty(tilesize, tilesize)
+              : tileset->value(prev_id);
+
             for (auto &p: changed_pixels[q].keys())
                 new_image.setPixelColor(p, changed_pixels[q][p]);
 
