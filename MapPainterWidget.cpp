@@ -132,6 +132,7 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     draw_color{Qt::red},
     pen_size{1}, anti_aliasing{false}, round_pen_corners{false},
     ellipse_shape{false}, fill_shape{false}, rect_radius{false},
+    fill_tolerance{0}, fill_this_tile_only{true},
     mouse_cursor{}, click_origin{}, right_click{false}
 {}
 
@@ -212,8 +213,49 @@ void MapPainterWidget::drawShape(QPainter &painter) const
         painter.drawRoundedRect(r, rect_radius, rect_radius);
 }
 
-void MapPainterWidget::drawFill(QImage &/*original*/) const
-{}
+//  QPoint's division rounds ; we DON'T want that
+static inline QPoint divide(const QPoint &p, const int a)
+{
+    return {int(p.x() / a), int(p.y() / a)};
+}
+
+static inline bool similar(const QColor &c1, const QColor &c2, const double tolerance)
+{
+    const double dr = c1.redF() - c2.redF();
+    const double dg = c1.greenF() - c2.greenF();
+    const double db = c1.blueF() - c2.blueF();
+    const double da = c1.alphaF() - c2.alphaF();
+
+    const double dist = dr*dr + dg*dg + db*db + da*da;
+
+    return (dist <= tolerance/100*tolerance/100);
+}
+
+void MapPainterWidget::drawFill(QImage &original) const
+{
+    const QRect rect = fill_this_tile_only?
+        QRect(divide(mouse_cursor, tilesize) * tilesize, QSize(tilesize, tilesize))
+      : getWidgetRect();
+
+    const QColor original_color = original.pixelColor(mouse_cursor);
+    const QPoint d[] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    QSet<QPoint> done;
+//  TODO: change QVector to a better structure
+    QVector<QPoint> todo = {mouse_cursor};
+    while (!todo.isEmpty())
+    {
+        const QPoint p = todo.takeAt(0);
+        original.setPixelColor(p, draw_color);
+        done.insert(p);
+
+        for (auto &dp: d)
+            if (rect.contains(p + dp))
+                if (!done.contains(p + dp) && !todo.contains(p + dp))
+                    if (similar(original.pixelColor(p + dp), original_color, fill_tolerance))
+                        todo.push_back(p + dp);
+    }
+}
 
 void MapPainterWidget::drawEraser(QPainter &painter) const
 {
@@ -245,7 +287,7 @@ QImage MapPainterWidget::getDrawnLayer() const
         else if (draw_tool == SHAPE)
             drawShape(painter);
         else if (draw_tool == FILL)
-        {}
+            drawFill(original);
         else if (draw_tool == ERASER)
             drawEraser(painter);
         else if (draw_tool == SHADER)
@@ -282,12 +324,6 @@ QColor MapPainterWidget::getColorAt(const QPoint &p) const
         return layer.pixelColor(p);
     else
         return Qt::transparent;
-}
-
-//  QPoint's division rounds ; we DON'T want that
-static inline QPoint divide(const QPoint &p, const int a)
-{
-    return {int(p.x() / a), int(p.y() / a)};
 }
 
 static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor>> &changes, const Tileset &tileset, const MapLayer &map_layers, std::function<bool(TileReference)> fn)

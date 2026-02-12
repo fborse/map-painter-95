@@ -38,6 +38,8 @@ public slots:
     void setEllipseShape(const int yes) { ellipse_shape = (yes == 1); }
     void setFillShape(const bool yes) { fill_shape = yes; }
     void setRectRadius(const int radius) { rect_radius = radius; }
+    void setFillTolerance(const double tolerance) { fill_tolerance = tolerance; }
+    void setThisTileOnly(const bool yes) { fill_this_tile_only = yes; }
 
 signals:
     void colorChanged(const QColor color);
@@ -57,6 +59,9 @@ private:
     bool ellipse_shape;
     bool fill_shape;
     int rect_radius;
+
+    double fill_tolerance;
+    bool fill_this_tile_only;
 
     QPoint mouse_cursor;
 //  right click is really just a desktop thing => names accordingly

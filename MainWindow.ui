@@ -302,7 +302,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>709</width>
+                <width>699</width>
                 <height>595</height>
                </rect>
               </property>
@@ -410,7 +410,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>215</width>
+                  <width>225</width>
                   <height>68</height>
                  </rect>
                 </property>
@@ -539,7 +539,41 @@
                     </item>
                    </layout>
                   </widget>
-                  <widget class="QWidget" name="fillPage"/>
+                  <widget class="QWidget" name="fillPage">
+                   <layout class="QFormLayout" name="formLayout_3">
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="fillToleranceLabel">
+                      <property name="text">
+                       <string>Fill Tolerance :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QDoubleSpinBox" name="fillToleranceDoubleSpinBox">
+                      <property name="suffix">
+                       <string>%</string>
+                      </property>
+                      <property name="maximum">
+                       <double>100.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="fillThisTileOnlyLabel">
+                      <property name="text">
+                       <string>Local Tile Only :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QCheckBox" name="fillThisTileOnlyCheckBox">
+                      <property name="checked">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
                   <widget class="QWidget" name="selectionPage"/>
                  </widget>
                 </item>
@@ -771,6 +805,8 @@
     <slot>setFillShape(bool)</slot>
     <slot>setRectRadius(int)</slot>
     <slot>setRetroactive(bool)</slot>
+    <slot>setFillTolerance(double)</slot>
+    <slot>setThisTileOnly(bool)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -1046,12 +1082,12 @@
    <slot>setZoom(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>735</x>
-     <y>125</y>
+     <x>731</x>
+     <y>131</y>
     </hint>
     <hint type="destinationlabel">
-     <x>727</x>
-     <y>204</y>
+     <x>722</x>
+     <y>334</y>
     </hint>
    </hints>
   </connection>
@@ -1062,11 +1098,11 @@
    <slot>setValue(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>727</x>
-     <y>426</y>
+     <x>722</x>
+     <y>556</y>
     </hint>
     <hint type="destinationlabel">
-     <x>736</x>
+     <x>731</x>
      <y>131</y>
     </hint>
    </hints>
@@ -1078,7 +1114,7 @@
    <slot>setShowGrid(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>612</x>
+     <x>607</x>
      <y>129</y>
     </hint>
     <hint type="destinationlabel">
@@ -1094,11 +1130,11 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>902</x>
+     <x>897</x>
      <y>284</y>
     </hint>
     <hint type="destinationlabel">
-     <x>958</x>
+     <x>953</x>
      <y>290</y>
     </hint>
    </hints>
@@ -1110,11 +1146,11 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>958</x>
+     <x>953</x>
      <y>290</y>
     </hint>
     <hint type="destinationlabel">
-     <x>902</x>
+     <x>897</x>
      <y>284</y>
     </hint>
    </hints>
@@ -1126,7 +1162,7 @@
    <slot>setAlpha(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>958</x>
+     <x>953</x>
      <y>290</y>
     </hint>
     <hint type="destinationlabel">
@@ -1270,8 +1306,8 @@
    <slot>setColor(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>910</x>
-     <y>309</y>
+     <x>909</x>
+     <y>308</y>
     </hint>
     <hint type="destinationlabel">
      <x>989</x>
@@ -1382,8 +1418,8 @@
    <slot>setEllipseShape(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>907</x>
-     <y>631</y>
+     <x>864</x>
+     <y>618</y>
     </hint>
     <hint type="destinationlabel">
      <x>633</x>
@@ -1398,8 +1434,8 @@
    <slot>setFillShape(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>900</x>
-     <y>657</y>
+     <x>864</x>
+     <y>624</y>
     </hint>
     <hint type="destinationlabel">
      <x>653</x>
@@ -1414,8 +1450,8 @@
    <slot>setRectRadius(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>910</x>
-     <y>688</y>
+     <x>864</x>
+     <y>630</y>
     </hint>
     <hint type="destinationlabel">
      <x>679</x>
@@ -1462,7 +1498,7 @@
    <slot>updateColorWidgets(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>882</x>
+     <x>909</x>
      <y>308</y>
     </hint>
     <hint type="destinationlabel">
@@ -1484,6 +1520,38 @@
     <hint type="destinationlabel">
      <x>82</x>
      <y>297</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>fillToleranceDoubleSpinBox</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setFillTolerance(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>897</x>
+     <y>508</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>679</x>
+     <y>509</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>fillThisTileOnlyCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setThisTileOnly(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>890</x>
+     <y>537</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>661</x>
+     <y>536</y>
     </hint>
    </hints>
   </connection>
