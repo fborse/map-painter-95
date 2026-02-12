@@ -257,6 +257,15 @@ void MainWindow::refreshViews()
     ui->mapEditor->resize();
     ui->tilesetView->resize();
     ui->mapPainter->resize();
+
+//  selected_tiles is assumed to be small
+    bool reset = false;
+    for (auto &row: *selected_tiles)
+        for (auto &id: row)
+            if (!tileset->contains(id))
+                reset = true;
+    if (reset)
+        *selected_tiles = {{{}}};   //  {{empty tile}}
 }
 
 void MainWindow::updateDrawOptions(const int draw_tool)
