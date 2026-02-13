@@ -297,7 +297,7 @@ void MapPainterWidget::drawPen(QPainter &painter) const
     setPen(painter);
     if (drag_points.length() > 1)
         painter.drawPolyline(drag_points.data(), drag_points.length());
-    else
+    else if (drag_points.length() == 1)
         painter.drawPoint(drag_points.front());
 }
 
@@ -310,7 +310,6 @@ void MapPainterWidget::drawLine(QPainter &painter) const
 void MapPainterWidget::drawBrush(QPainter &painter) const
 {
     setPen(painter);
-//  TODO: create brush controls
 
     QVector<QPoint> points;
     for (auto &[x, y]: drag_points)
@@ -318,6 +317,7 @@ void MapPainterWidget::drawBrush(QPainter &painter) const
             for (int i = 0; i < brush_pixels.width(); ++i)
                 if (brush_pixels.pixelColor(i, j) == Qt::white)
                     points.push_back({x + i, y + j});
+
     painter.drawPoints(points.data(), points.length());
 }
 
@@ -386,7 +386,7 @@ void MapPainterWidget::drawEraser(QPainter &painter) const
     painter.setCompositionMode(QPainter::CompositionMode_Clear);
     if (drag_points.length() > 1)
         painter.drawPolyline(drag_points.data(), drag_points.length());
-    else
+    else if (drag_points.length() == 1)
         painter.drawPoint(drag_points.front());
 }
 
@@ -396,7 +396,7 @@ void MapPainterWidget::drawShader(QPainter &painter) const
     painter.setCompositionMode(QPainter::CompositionMode_SourceAtop);
     if (drag_points.length() > 1)
         painter.drawPolyline(drag_points.data(), drag_points.length());
-    else
+    else if (drag_points.length() == 1)
         painter.drawPoint(drag_points.front());
 }
 
@@ -426,6 +426,10 @@ void MapPainterWidget::drawSelectionOutline(QPainter &painter) const
         case ELLIPSE:
             painter.drawEllipse(QRect(p, s)); break;
         case MAGIC:
+            if (drag_points.length() > 1)
+                painter.drawPolyline(drag_points.data(), drag_points.length());
+            else if (drag_points.length() == 1)
+                painter.drawPoint(drag_points.front());
             break;
         }
     }
@@ -691,12 +695,35 @@ void MapPainterWidget::handleDrawChanges() const
         handleNonRetroactiveDrawing(changed_pixels);
 }
 
+static inline std::optional<QRect> path_to_rect(const QVector<QPoint> &points)
+{
+    if (points.isEmpty())
+        return {};
+
+    const auto &[x0, y0] = points.front();
+    int minx = x0, miny = y0, maxx = x0, maxy = y0;
+
+    for (auto &[x, y]: points)
+    {
+        if (x < minx)
+            minx = x;
+        if (y < miny)
+            miny = y;
+        if (x > maxx)
+            maxx = x;
+        if (y > maxy)
+            maxy = y;
+    }
+
+    return QRect(QPoint(minx, miny), QPoint(maxx, maxy));
+}
+
 static inline bool has_selection(const std::optional<QPoint> &offset, const std::optional<QRect> &rect)
 {
     return !offset && rect && !rect->isEmpty();
 }
 
-static inline QImage get_selection_contents(const QImage &source, const SelectionShape &shape)
+static inline QImage get_selection_contents(const QImage &source, const SelectionShape &shape, const QVector<QPoint> &drag)
 {
     QImage dest(source.size(), QImage::Format_ARGB32_Premultiplied);
     dest.fill(Qt::transparent);
@@ -709,8 +736,9 @@ static inline QImage get_selection_contents(const QImage &source, const Selectio
         painter.drawRect(dest.rect());
     else if (shape == ELLIPSE)
         painter.drawEllipse(dest.rect());
-/*    else if (shape == MAGIC)
-        painter.drawPath();*/
+    else if (shape == MAGIC)
+    //  TODO: this somehow doesn't work
+        painter.drawPolygon(drag.data(), drag.length());
 
     painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
     painter.drawImage(0, 0, source);
@@ -723,11 +751,14 @@ void MapPainterWidget::handleSelectionMade()
     if (!(tileset && map_layers))
         return;
 
+    if (selection_shape == MAGIC)
+        selection_rect = path_to_rect(drag_points);
+
     emit canCopy(has_selection(move_offset, selection_rect));
     if (has_selection(move_offset, selection_rect))
     {
         QImage source = getPaintedLayer().copy(*selection_rect);
-        QImage dest = get_selection_contents(source, selection_shape);
+        QImage dest = get_selection_contents(source, selection_shape, drag_points);
 
         selection_image = dest;
     }
@@ -764,6 +795,8 @@ void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
                 selection_rect->moveTo(mouse_cursor - *move_offset);
             else
                 selection_rect = rect_from(*click_origin, mouse_cursor);
+        //  for the case of magic selection
+            drag_points.push_back(mouse_cursor);
         default:
             break;
         }
