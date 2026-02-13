@@ -574,7 +574,46 @@
                     </item>
                    </layout>
                   </widget>
-                  <widget class="QWidget" name="selectionPage"/>
+                  <widget class="QWidget" name="selectionPage">
+                   <layout class="QFormLayout" name="formLayout_4">
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="selectionShapeLabel">
+                      <property name="text">
+                       <string>Shape :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="selectionShapeComboBox">
+                      <item>
+                       <property name="text">
+                        <string>Rectangle</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>Ellipse</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>Magic</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="selectionColorKeyLabel">
+                      <property name="text">
+                       <string>Color Key :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QCheckBox" name="selectionColorKeyCheckBox"/>
+                    </item>
+                   </layout>
+                  </widget>
                  </widget>
                 </item>
                 <item>
@@ -920,6 +959,8 @@
     <slot>setFillTolerance(double)</slot>
     <slot>setFillThisTileOnly(bool)</slot>
     <slot>setDarken(bool)</slot>
+    <slot>setSelectionShape(int)</slot>
+    <slot>setSelectionColorKey(bool)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -1542,7 +1583,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>864</x>
-     <y>618</y>
+     <y>617</y>
     </hint>
     <hint type="destinationlabel">
      <x>633</x>
@@ -1558,7 +1599,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>864</x>
-     <y>624</y>
+     <y>623</y>
     </hint>
     <hint type="destinationlabel">
      <x>653</x>
@@ -1574,7 +1615,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>864</x>
-     <y>630</y>
+     <y>629</y>
     </hint>
     <hint type="destinationlabel">
      <x>679</x>
@@ -1653,8 +1694,8 @@
    <slot>setFillTolerance(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>897</x>
-     <y>508</y>
+     <x>864</x>
+     <y>499</y>
     </hint>
     <hint type="destinationlabel">
      <x>679</x>
@@ -1669,8 +1710,8 @@
    <slot>setFillThisTileOnly(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>890</x>
-     <y>537</y>
+     <x>864</x>
+     <y>508</y>
     </hint>
     <hint type="destinationlabel">
      <x>661</x>
@@ -1685,8 +1726,8 @@
    <slot>setDarken(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>830</x>
-     <y>629</y>
+     <x>864</x>
+     <y>617</y>
     </hint>
     <hint type="destinationlabel">
      <x>667</x>
@@ -1701,8 +1742,8 @@
    <slot>setBrushPixels(QImage)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>820</x>
-     <y>665</y>
+     <x>840</x>
+     <y>637</y>
     </hint>
     <hint type="destinationlabel">
      <x>664</x>
@@ -1717,12 +1758,12 @@
    <slot>setBrushPixels(QImage)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>957</x>
-     <y>651</y>
+     <x>840</x>
+     <y>637</y>
     </hint>
     <hint type="destinationlabel">
-     <x>945</x>
-     <y>681</y>
+     <x>840</x>
+     <y>637</y>
     </hint>
    </hints>
   </connection>
@@ -1730,7 +1771,7 @@
    <sender>actionSelectAll</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>onCopy()</slot>
+   <slot>onSelectAll()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -1819,6 +1860,38 @@
     <hint type="destinationlabel">
      <x>-1</x>
      <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>selectionShapeComboBox</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setSelectionShape(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>866</x>
+     <y>510</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>582</x>
+     <y>509</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>selectionColorKeyCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setSelectionColorKey(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>857</x>
+     <y>537</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>603</x>
+     <y>536</y>
     </hint>
    </hints>
   </connection>

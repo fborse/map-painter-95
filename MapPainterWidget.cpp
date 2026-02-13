@@ -141,6 +141,7 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     ellipse_shape{false}, fill_shape{false}, rect_radius{false},
     fill_tolerance{0}, fill_this_tile_only{true},
     darken{true},
+    selection_shape{RECTANGLE}, selection_color_key{false},
     mouse_cursor{}, click_origin{}, right_click{false},
     selection_rect{}, selection_image{}, move_offset{}
 {
@@ -160,6 +161,23 @@ void MapPainterWidget::setDrawTool(const int index)
 
     Q_ASSERT(0 <= index && index < 9);
     draw_tool = DrawTool(index);
+}
+
+void MapPainterWidget::setSelectionShape(const int index)
+{
+    if (index != int(selection_shape))
+    {
+        if (selection_rect && !selection_rect->isEmpty())
+            blitSelection();
+
+        selection_rect = {};
+        emit canCopy(false);
+    }
+
+    Q_ASSERT(0 <= index && index < 3);
+    selection_shape = SelectionShape(index);
+
+    update();
 }
 
 static inline QImage get_low_res(const int pen_size, const bool round)
@@ -400,7 +418,16 @@ void MapPainterWidget::drawSelectionOutline(QPainter &painter) const
 
         QPen pen(Qt::white);
         painter.setPen(pen);
-        painter.drawRect(QRect(p, s));
+
+        switch (selection_shape)
+        {
+        case RECTANGLE:
+            painter.drawRect(QRect(p, s)); break;
+        case ELLIPSE:
+            painter.drawEllipse(QRect(p, s)); break;
+        case MAGIC:
+            break;
+        }
     }
 }
 
@@ -629,6 +656,26 @@ void MapPainterWidget::cutSelection()
     selection_rect = {};
 }
 
+void MapPainterWidget::transformSelection(const QTransform &transform)
+{
+    if (selection_rect && !selection_image.isNull())
+    {
+        selection_image = selection_image.transformed(transform);
+        selection_rect->setSize(selection_image.size());
+
+        update();
+    }
+}
+
+void MapPainterWidget::selectAll()
+{
+    selection_rect = getWidgetRect();
+    selection_image = getPaintedLayer();
+
+    emit canCopy(true);
+    update();
+}
+
 void MapPainterWidget::handleDrawChanges() const
 {
     if (!(tileset && map_layers))
@@ -649,6 +696,28 @@ static inline bool has_selection(const std::optional<QPoint> &offset, const std:
     return !offset && rect && !rect->isEmpty();
 }
 
+static inline QImage get_selection_contents(const QImage &source, const SelectionShape &shape)
+{
+    QImage dest(source.size(), QImage::Format_ARGB32_Premultiplied);
+    dest.fill(Qt::transparent);
+
+    QPainter painter(&dest);
+    painter.setPen(Qt::black);
+    painter.setBrush(Qt::black);
+
+    if (shape == RECTANGLE)
+        painter.drawRect(dest.rect());
+    else if (shape == ELLIPSE)
+        painter.drawEllipse(dest.rect());
+/*    else if (shape == MAGIC)
+        painter.drawPath();*/
+
+    painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+    painter.drawImage(0, 0, source);
+
+    return dest;
+}
+
 void MapPainterWidget::handleSelectionMade()
 {
     if (!(tileset && map_layers))
@@ -656,7 +725,12 @@ void MapPainterWidget::handleSelectionMade()
 
     emit canCopy(has_selection(move_offset, selection_rect));
     if (has_selection(move_offset, selection_rect))
-        selection_image = getPaintedLayer().copy(*selection_rect);
+    {
+        QImage source = getPaintedLayer().copy(*selection_rect);
+        QImage dest = get_selection_contents(source, selection_shape);
+
+        selection_image = dest;
+    }
 
     move_offset = {};
 }

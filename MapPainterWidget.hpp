@@ -15,6 +15,13 @@ enum DrawTool
     SELECTION = 8
 };
 
+enum SelectionShape
+{
+    RECTANGLE = 0,
+    ELLIPSE = 1,
+    MAGIC = 2
+};
+
 class MapPainterWidget final: public EditorWidget
 {
     Q_OBJECT
@@ -27,9 +34,12 @@ public:
 
     QImage getSelectionImage() const { return selection_image; }
     void setSelectionImage(const QImage &image) { selection_image = image; }
+    void transformSelection(const QTransform &transform);
     void setSelectionRect(const QRect &rect) { selection_rect = rect; }
     void cutSelection();
     void resetSelection() { selection_image = {}; selection_rect = {}; }
+
+    void selectAll();
 
 public slots:
     void setShowGrid(const bool yes) { show_grid = yes; update(); }
@@ -52,6 +62,9 @@ public slots:
     void setFillThisTileOnly(const bool yes) { fill_this_tile_only = yes; }
 
     void setDarken(const bool yes) { darken = yes; }
+//  so does this one
+    void setSelectionShape(const int index);
+    void setSelectionColorKey(const bool yes) { selection_color_key = yes; update(); }
 
 signals:
     void colorChanged(const QColor color);
@@ -77,6 +90,9 @@ private:
     bool fill_this_tile_only;
 
     bool darken;
+
+    SelectionShape selection_shape;
+    bool selection_color_key;
 
     QPoint mouse_cursor;
 //  right click is really just a desktop thing => names accordingly

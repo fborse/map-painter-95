@@ -344,7 +344,12 @@ void MainWindow::onPaste()
 }
 
 void MainWindow::onSelectAll()
-{}
+{
+    ui->mainTabWidget->setCurrentIndex(1);
+    ui->drawToolComboBox->setCurrentIndex(int(SELECTION));
+
+    ui->mapPainter->selectAll();
+}
 
 bool MainWindow::load(const QString &path) try
 {
