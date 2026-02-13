@@ -28,6 +28,7 @@ public:
     virtual void resize();
 
 public slots:
+    void setGridAspect(const QSize aspect) { grid_aspect = aspect; resize(); }
     void setTilesize(const int size) { tilesize = size; resize(); }
     void setZoom(const double z) { zoom = z; resize(); }
 

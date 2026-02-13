@@ -149,6 +149,9 @@ void MainWindow::setMapSize(const QSize size)
     map_layers->resize(size.height());
     for (auto &row: *map_layers)
         row.resize(size.width());
+
+    ui->mapEditor->setGridAspect(size);
+    ui->mapPainter->setGridAspect(size);
 }
 
 bool MainWindow::handleUnsavedChanges()
