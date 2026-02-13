@@ -141,7 +141,8 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     ellipse_shape{false}, fill_shape{false}, rect_radius{false},
     fill_tolerance{0}, fill_this_tile_only{true},
     darken{true},
-    mouse_cursor{}, click_origin{}, right_click{false}
+    mouse_cursor{}, click_origin{}, right_click{false},
+    selection_rect{}, selection_image{}, move_offset{}
 {
 }
 
@@ -188,6 +189,7 @@ static inline void reduce_to_outline(QImage &img)
     }
 }
 
+//  TODO: make a QImage member for the cursor instead
 void MapPainterWidget::paintCursor(QPainter &painter) const
 {
     QImage cursor;
@@ -370,6 +372,25 @@ void MapPainterWidget::drawShader(QPainter &painter) const
         painter.drawPoint(drag_points.front());
 }
 
+void MapPainterWidget::drawSelection(QPainter &painter) const
+{
+    if (selection_rect)
+    {
+    //  QPoint rounds floats ; we don't want that
+        const auto &[x, y] = selection_rect->topLeft();
+        const QPoint p(int(x * zoom), int(y * zoom));
+        const auto &[w, h] = selection_rect->size();
+        const QSize s(int(w * zoom), int(h * zoom));
+
+        if (!selection_image.isNull())
+            painter.drawImage(p, selection_image.scaled(s));
+
+        QPen pen(Qt::white);
+        painter.setPen(pen);
+        painter.drawRect(QRect(p, s));
+    }
+}
+
 QImage MapPainterWidget::getDrawnLayer() const
 {
     QImage original = getPaintedLayer();
@@ -404,6 +425,8 @@ void MapPainterWidget::paintEvent(QPaintEvent *)
 
     painter.scale(zoom, zoom);
     painter.drawImage(0, 0, getDrawnLayer());
+    if (draw_tool == SELECTION)
+        drawSelection(painter);
     painter.resetTransform();
 
     if (show_grid)
@@ -546,6 +569,51 @@ static inline auto get_changed_pixels(const QImage &original, const QImage &chan
     return changes;
 }
 
+void MapPainterWidget::blitSelection()
+{
+    QImage original = getPaintedLayer();
+
+    QImage drawn = original.copy();
+    {
+        QPainter painter(&drawn);
+        painter.drawImage(selection_rect->topLeft(), selection_image);
+    }
+
+    const auto changed_pixels = get_changed_pixels(original, drawn, tilesize);
+    if (changed_pixels.isEmpty())
+        return;
+
+    if (retroactive)
+        handleRetroactiveDrawing(changed_pixels);
+    else
+        handleNonRetroactiveDrawing(changed_pixels);
+
+    selection_rect = {};
+}
+
+void MapPainterWidget::cutSelection()
+{
+    QImage original = getPaintedLayer();
+
+    QImage drawn = original.copy();
+    {
+        QPainter painter(&drawn);
+        painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        painter.fillRect(*selection_rect, Qt::black);
+    }
+
+    const auto changed_pixels = get_changed_pixels(original, drawn, tilesize);
+    if (changed_pixels.isEmpty())
+        return;
+
+    if (retroactive)
+        handleRetroactiveDrawing(changed_pixels);
+    else
+        handleNonRetroactiveDrawing(changed_pixels);
+
+    selection_rect = {};
+}
+
 void MapPainterWidget::handleDrawChanges() const
 {
     if (!(tileset && map_layers))
@@ -559,6 +627,31 @@ void MapPainterWidget::handleDrawChanges() const
         handleRetroactiveDrawing(changed_pixels);
     else
         handleNonRetroactiveDrawing(changed_pixels);
+}
+
+static inline bool has_selection(const std::optional<QPoint> &offset, const std::optional<QRect> &rect)
+{
+    return !offset && rect && !rect->isEmpty();
+}
+
+void MapPainterWidget::handleSelectionMade()
+{
+    if (!(tileset && map_layers))
+        return;
+
+    emit canCopy(has_selection(move_offset, selection_rect));
+    if (has_selection(move_offset, selection_rect))
+        selection_image = getPaintedLayer().copy(*selection_rect);
+
+    move_offset = {};
+}
+
+static inline QRect rect_from(const QPoint &p1, const QPoint &p2)
+{
+    return {
+        qMin(p1.x(), p2.x()), qMin(p1.y(), p2.y()),
+        qAbs(p1.x() - p2.x()), qAbs(p1.y() - p2.y())
+    };
 }
 
 void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
@@ -576,6 +669,12 @@ void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
             break;
         case PIPETTE:
             emit colorChanged(getColorAt(mouse_cursor));
+            break;
+        case SELECTION:
+            if (move_offset)
+                selection_rect->moveTo(mouse_cursor - *move_offset);
+            else
+                selection_rect = rect_from(*click_origin, mouse_cursor);
         default:
             break;
         }
@@ -595,6 +694,22 @@ void MapPainterWidget::mousePressEvent(QMouseEvent *event)
         drag_points = {mouse_cursor};
         if (draw_tool == PIPETTE)
             emit colorChanged(getColorAt(mouse_cursor));
+
+        if (draw_tool == SELECTION)
+        {
+            if (selection_rect && selection_rect->contains(mouse_cursor))
+            {
+                move_offset = mouse_cursor - selection_rect->topLeft();
+            }
+            else
+            {
+                if (selection_rect)
+                    blitSelection();
+
+                selection_rect = QRect(mouse_cursor, QSize(1, 1));
+                selection_image = {};
+            }
+        }
     }
 
     if (event->button() == Qt::RightButton)
@@ -610,7 +725,10 @@ void MapPainterWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
     {
-        handleDrawChanges();
+        if (draw_tool != SELECTION)
+            handleDrawChanges();
+        else
+            handleSelectionMade();
 
         click_origin = {};
         drag_points = {};

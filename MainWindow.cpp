@@ -4,6 +4,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QCloseEvent>
+#include <QClipboard>
 #include <QUuid>
 
 #include "NewMapDialog.hpp"
@@ -310,6 +311,28 @@ void MainWindow::onRedo()
     undo_stack->redo();
     refreshViews();
 }
+
+void MainWindow::onCut()
+{
+    QApplication::clipboard()->setImage(ui->mapPainter->getSelectionImage());
+    ui->mapPainter->cutSelection();
+}
+
+void MainWindow::onCopy()
+{
+    QApplication::clipboard()->setImage(ui->mapPainter->getSelectionImage());
+}
+
+void MainWindow::onPaste()
+{
+    const QImage copy = QApplication::clipboard()->image();
+    ui->mapPainter->setSelectionImage(copy);
+    ui->mapPainter->setSelectionRect({0, 0, copy.width(), copy.height()});
+    ui->mapPainter->update();
+}
+
+void MainWindow::onSelectAll()
+{}
 
 bool MainWindow::load(const QString &path) try
 {

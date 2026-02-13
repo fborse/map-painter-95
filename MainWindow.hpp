@@ -31,6 +31,10 @@ public slots:
 
     void onUndo();
     void onRedo();
+    void onCut();
+    void onCopy();
+    void onPaste();
+    void onSelectAll();
 
 //  centralises undo/redo changes
     void refreshViews();

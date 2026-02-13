@@ -25,6 +25,11 @@ public:
     QColor getDrawColor() const { return draw_color; }
     QImage getBrushPixels() const { return brush_pixels; }
 
+    QImage getSelectionImage() const { return selection_image; }
+    void setSelectionImage(const QImage &image) { selection_image = image; }
+    void setSelectionRect(const QRect &rect) { selection_rect = rect; }
+    void cutSelection();
+
 public slots:
     void setShowGrid(const bool yes) { show_grid = yes; update(); }
     void setDrawTool(const int index);
@@ -49,6 +54,7 @@ public slots:
 
 signals:
     void colorChanged(const QColor color);
+    void canCopy(bool);
 
 private:
     bool show_grid;
@@ -78,6 +84,10 @@ private:
 
     QVector<QPoint> drag_points;
 
+    std::optional<QRect> selection_rect;
+    QImage selection_image;
+    std::optional<QPoint> move_offset;
+
     QColor getEffectiveDrawColor() const;
 //  the first can be useful for paintCursor (or just could ?)
     QPen getPen() const;
@@ -90,6 +100,7 @@ private:
     void drawFill(QImage &original) const;
     void drawEraser(QPainter &painter) const;
     void drawShader(QPainter &painter) const;
+    void drawSelection(QPainter &painter) const;
 
     void paintCursor(QPainter &painter) const;
     QImage getDrawnLayer() const;
@@ -101,6 +112,9 @@ private:
 //  requirement is to aggregate the data as efficiently, though
     void handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels) const;
     void handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels) const;
+
+    void blitSelection();
+    void handleSelectionMade();
     void handleDrawChanges() const;
 
     void mouseMoveEvent(QMouseEvent *event) override;
