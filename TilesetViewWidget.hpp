@@ -8,12 +8,12 @@ enum DragMode {
     SWAP_MODE = 2
 };
 
-class TilesetView final: public EditorWidget
+class TilesetViewWidget final: public EditorWidget
 {
     Q_OBJECT
 public:
-    explicit TilesetView(QWidget *parent = nullptr);
-    virtual ~TilesetView() final override = default;
+    explicit TilesetViewWidget(QWidget *parent = nullptr);
+    virtual ~TilesetViewWidget() final override = default;
 
     int getNumberOfColumns() const { return n_columns; }
 

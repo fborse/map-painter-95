@@ -21,7 +21,7 @@ SOURCES += \
     MapEditorWidget.cpp \
     MapPainterWidget.cpp \
     NewMapDialog.cpp \
-    TilesetView.cpp \
+    TilesetViewWidget.cpp \
     main.cpp \
     MainWindow.cpp
 
@@ -39,7 +39,7 @@ HEADERS += \
     MapEditorWidget.hpp \
     MapPainterWidget.hpp \
     NewMapDialog.hpp \
-    TilesetView.hpp
+    TilesetViewWidget.hpp
 
 FORMS += \
     BrushEditorDialog.ui \

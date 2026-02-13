@@ -1,4 +1,4 @@
-#include "TilesetView.hpp"
+#include "TilesetViewWidget.hpp"
 
 #include <QPainter>
 #include <QMouseEvent>
@@ -74,7 +74,7 @@ private:
     int index1, index2;
 };
 
-TilesetView::TilesetView(QWidget *parent):
+TilesetViewWidget::TilesetViewWidget(QWidget *parent):
     EditorWidget(parent),
     n_columns{8}, drag_mode{SELECTION_MODE},
     mouse_cursor{}, click_origin{}, right_click_origin{}
@@ -82,13 +82,13 @@ TilesetView::TilesetView(QWidget *parent):
     resize();
 }
 
-void TilesetView::setDragMode(const int index)
+void TilesetViewWidget::setDragMode(const int index)
 {
     Q_ASSERT(0 <= index && index < 3);
     drag_mode = DragMode(index);
 }
 
-void TilesetView::resize()
+void TilesetViewWidget::resize()
 {
     const double n_tiles = tiles_order? tiles_order->length() : 0;
 
@@ -101,7 +101,7 @@ void TilesetView::resize()
     EditorWidget::resize();
 }
 
-std::optional<QPoint> TilesetView::toIJ(const int idx) const
+std::optional<QPoint> TilesetViewWidget::toIJ(const int idx) const
 {
     const int n = tiles_order? tiles_order->length() : 0;
 
@@ -113,7 +113,7 @@ std::optional<QPoint> TilesetView::toIJ(const int idx) const
         return {};
 }
 
-std::optional<int> TilesetView::toIndex(const QPoint &ij) const
+std::optional<int> TilesetViewWidget::toIndex(const QPoint &ij) const
 {
     const int n = tiles_order? tiles_order->length() : 0;
     const int idx = ij.x() + ij.y() * n_columns;
@@ -131,7 +131,7 @@ static inline QPoint divide(const QPoint &p, const int a)
     return {int(p.x() / a), int(p.y() / a)};
 }
 
-void TilesetView::paintTileset(QPainter &painter)
+void TilesetViewWidget::paintTileset(QPainter &painter)
 {
     if (!(tiles_order && tileset))
         return;
@@ -166,7 +166,7 @@ void TilesetView::paintTileset(QPainter &painter)
     }
 }
 
-void TilesetView::paintSelectionCursors(QPainter &painter)
+void TilesetViewWidget::paintSelectionCursors(QPainter &painter)
 {
     if (!(selected_tiles && tiles_order))
         return;
@@ -193,7 +193,7 @@ void TilesetView::paintSelectionCursors(QPainter &painter)
     }
 }
 
-void TilesetView::paintCursor(QPainter &painter)
+void TilesetViewWidget::paintCursor(QPainter &painter)
 {
     const QPoint p = divide(mouse_cursor, tilesize);
 
@@ -208,7 +208,7 @@ void TilesetView::paintCursor(QPainter &painter)
     painter.fillRect(draw_rect, (idx < n+1)? white32 : red32);
 }
 
-void TilesetView::paintSelectionRect(QPainter &painter)
+void TilesetViewWidget::paintSelectionRect(QPainter &painter)
 {
     if (click_origin)
     {
@@ -225,7 +225,7 @@ void TilesetView::paintSelectionRect(QPainter &painter)
     }
 }
 
-void TilesetView::paintEvent(QPaintEvent *)
+void TilesetViewWidget::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
 
@@ -238,7 +238,7 @@ void TilesetView::paintEvent(QPaintEvent *)
         paintSelectionRect(painter);
 }
 
-void TilesetView::handleTilesSelected()
+void TilesetViewWidget::handleTilesSelected()
 {
     const QRect selection = asLocalRect(*click_origin, mouse_cursor);
     const auto &[x1, y1] = selection.topLeft();
@@ -255,7 +255,7 @@ void TilesetView::handleTilesSelected()
     }
 }
 
-void TilesetView::handleTileModifications()
+void TilesetViewWidget::handleTileModifications()
 {
     const QPoint p = right_click_origin? *right_click_origin : *click_origin;
 
@@ -291,14 +291,14 @@ static inline QPoint clamp(const QRect &limits, const QPoint &p)
     };
 }
 
-void TilesetView::mouseMoveEvent(QMouseEvent *event)
+void TilesetViewWidget::mouseMoveEvent(QMouseEvent *event)
 {
     mouse_cursor = clamp(getWidgetRect(), event->pos());
 
     update();
 }
 
-void TilesetView::mousePressEvent(QMouseEvent *event)
+void TilesetViewWidget::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
         if (getWidgetRect().contains(event->pos()))
@@ -311,7 +311,7 @@ void TilesetView::mousePressEvent(QMouseEvent *event)
     update();
 }
 
-void TilesetView::mouseReleaseEvent(QMouseEvent *event)
+void TilesetViewWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
     {

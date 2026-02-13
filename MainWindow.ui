@@ -192,7 +192,7 @@
                </property>
                <layout class="QHBoxLayout" name="horizontalLayout_4">
                 <item>
-                 <widget class="TilesetView" name="tilesetView" native="true">
+                 <widget class="TilesetViewWidget" name="tilesetView" native="true">
                   <property name="mouseTracking">
                    <bool>true</bool>
                   </property>
@@ -875,9 +875,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>TilesetView</class>
+   <class>TilesetViewWidget</class>
    <extends>QWidget</extends>
-   <header>TilesetView.hpp</header>
+   <header>TilesetViewWidget.hpp</header>
    <container>1</container>
    <slots>
     <slot>setDragMode(int)</slot>
