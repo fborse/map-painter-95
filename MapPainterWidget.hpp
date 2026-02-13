@@ -101,7 +101,9 @@ private:
     void drawFill(QImage &original) const;
     void drawEraser(QPainter &painter) const;
     void drawShader(QPainter &painter) const;
-    void drawSelection(QPainter &painter) const;
+
+    void drawSelectionPixels(QPainter &painter) const;
+    void drawSelectionOutline(QPainter &painter) const;
 
     void paintCursor(QPainter &painter) const;
     QImage getDrawnLayer() const;

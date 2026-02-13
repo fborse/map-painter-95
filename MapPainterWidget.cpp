@@ -382,7 +382,13 @@ void MapPainterWidget::drawShader(QPainter &painter) const
         painter.drawPoint(drag_points.front());
 }
 
-void MapPainterWidget::drawSelection(QPainter &painter) const
+void MapPainterWidget::drawSelectionPixels(QPainter &painter) const
+{
+    if (selection_rect && !selection_image.isNull())
+        painter.drawImage(selection_rect->topLeft(), selection_image);
+}
+
+void MapPainterWidget::drawSelectionOutline(QPainter &painter) const
 {
     if (selection_rect)
     {
@@ -391,9 +397,6 @@ void MapPainterWidget::drawSelection(QPainter &painter) const
         const QPoint p(int(x * zoom), int(y * zoom));
         const auto &[w, h] = selection_rect->size();
         const QSize s(int(w * zoom), int(h * zoom));
-
-        if (!selection_image.isNull())
-            painter.drawImage(p, selection_image.scaled(s));
 
         QPen pen(Qt::white);
         painter.setPen(pen);
@@ -436,11 +439,13 @@ void MapPainterWidget::paintEvent(QPaintEvent *)
     painter.scale(zoom, zoom);
     painter.drawImage(0, 0, getDrawnLayer());
     if (draw_tool == SELECTION)
-        drawSelection(painter);
+        drawSelectionPixels(painter);
     painter.resetTransform();
 
     if (show_grid)
         paintGrid(painter);
+    if (draw_tool == SELECTION)
+        drawSelectionOutline(painter);
     paintCursor(painter);
 }
 
