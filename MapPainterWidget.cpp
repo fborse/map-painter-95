@@ -148,6 +148,16 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
 
 void MapPainterWidget::setDrawTool(const int index)
 {
+    if (draw_tool == SELECTION)
+    {
+        if (selection_rect && !selection_rect->isEmpty())
+            blitSelection();
+
+        selection_rect = {};
+        emit canCopy(false);
+        update();
+    }
+
     Q_ASSERT(0 <= index && index < 9);
     draw_tool = DrawTool(index);
 }
@@ -211,20 +221,20 @@ void MapPainterWidget::paintCursor(QPainter &painter) const
     }
     else
     {
-        const int w = brush_pixels.isNull()?
-            pen_size * zoom
-          : brush_pixels.width() * zoom;
-        const int h = brush_pixels.isNull()?
-            pen_size * zoom
-          : brush_pixels.height() * zoom;
+        const int w = (draw_tool == BRUSH)?
+            brush_pixels.width() * zoom
+          : pen_size * zoom;
+        const int h = (draw_tool == BRUSH)?
+            brush_pixels.height() * zoom
+          : pen_size * zoom;
 
         cursor = QImage(w+2, h+2, QImage::Format_ARGB32_Premultiplied);;
         cursor.fill(Qt::black);
         {
             QPainter painter(&cursor);
-            painter.drawImage(1, 1, brush_pixels.isNull()?
-                get_low_res(pen_size, round_pen_corners).scaled(w, w)
-              : brush_pixels.scaled(w, h)
+            painter.drawImage(1, 1, (draw_tool == BRUSH)?
+                brush_pixels.scaled(w, h)
+              : get_low_res(pen_size, round_pen_corners).scaled(w, w)
             );
         }
 
@@ -706,7 +716,8 @@ void MapPainterWidget::mousePressEvent(QMouseEvent *event)
                 if (selection_rect)
                     blitSelection();
 
-                selection_rect = QRect(mouse_cursor, QSize(1, 1));
+            //  1x1 would create a selection even if we just clicked
+                selection_rect = QRect(mouse_cursor, QSize(0, 0));
                 selection_image = {};
             }
         }

@@ -29,6 +29,7 @@ public:
     void setSelectionImage(const QImage &image) { selection_image = image; }
     void setSelectionRect(const QRect &rect) { selection_rect = rect; }
     void cutSelection();
+    void resetSelection() { selection_image = {}; selection_rect = {}; }
 
 public slots:
     void setShowGrid(const bool yes) { show_grid = yes; update(); }

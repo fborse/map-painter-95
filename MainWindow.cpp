@@ -47,6 +47,8 @@ MainWindow::MainWindow(QWidget *parent):
     ui->actionSave->setEnabled(false);
     ui->actionUndo->setEnabled(false);
     ui->actionRedo->setEnabled(false);
+    ui->actionCut->setEnabled(false);
+    ui->actionCopy->setEnabled(false);
 
     refreshViews();
 
@@ -195,6 +197,7 @@ void MainWindow::onNew()
             }
 
             resetBrushPixels();
+            ui->mapPainter->resetSelection();
             refreshViews();
         }
     }
@@ -326,9 +329,15 @@ void MainWindow::onCopy()
 void MainWindow::onPaste()
 {
     const QImage copy = QApplication::clipboard()->image();
-    ui->mapPainter->setSelectionImage(copy);
-    ui->mapPainter->setSelectionRect({0, 0, copy.width(), copy.height()});
-    ui->mapPainter->update();
+    if (!copy.isNull())
+    {
+        ui->mainTabWidget->setCurrentIndex(1);
+        ui->drawToolComboBox->setCurrentIndex(int(SELECTION));
+
+        ui->mapPainter->setSelectionImage(copy);
+        ui->mapPainter->setSelectionRect({0, 0, copy.width(), copy.height()});
+        ui->mapPainter->update();
+    }
 }
 
 void MainWindow::onSelectAll()
@@ -378,6 +387,7 @@ bool MainWindow::load(const QString &path) try
     ui->tilesetView->setNumberOfColumns(n_columns);
 
     resetBrushPixels();
+    ui->mapPainter->resetSelection();
     refreshViews();
     return true;
 }
