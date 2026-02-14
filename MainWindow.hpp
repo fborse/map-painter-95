@@ -36,6 +36,9 @@ public slots:
     void onPaste();
     void onSelectAll();
 
+    void onAddTile();
+    void onCloneSelectedTiles();
+
 //  centralises undo/redo changes
     void refreshViews();
 

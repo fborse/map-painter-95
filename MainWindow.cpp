@@ -8,6 +8,7 @@
 #include <QUuid>
 
 #include "NewMapDialog.hpp"
+#include "AddTileDialog.hpp"
 
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow),
@@ -349,6 +350,37 @@ void MainWindow::onSelectAll()
     ui->drawToolComboBox->setCurrentIndex(int(SELECTION));
 
     ui->mapPainter->selectAll();
+}
+
+void MainWindow::onAddTile()
+{
+    const int tilesize = ui->tilesetView->getTilesize();
+
+    AddTileDialog dialog(tilesize, this);
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        QImage tile(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
+        tile.fill(dialog.getColor());
+
+        ui->tilesetView->addTiles({tile}, true);
+    }
+}
+
+void MainWindow::onCloneSelectedTiles()
+{
+    QSet<TileReference> uniques;
+    for (auto &row: *selected_tiles)
+        for (auto &id: row)
+            if (tileset->contains(id))
+                uniques.insert(id);
+    if (uniques.isEmpty())
+        return;
+
+    QVector<QImage> tiles;
+    for (auto &id: uniques)
+        tiles.push_back(tileset->value(id));
+
+    ui->tilesetView->addTiles(tiles, true);
 }
 
 bool MainWindow::load(const QString &path) try

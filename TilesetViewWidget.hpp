@@ -19,6 +19,8 @@ public:
 
     void resize() final override;
 
+    void addTiles(const QVector<QImage> &images, const bool undoable);
+
 public slots:
     void setNumberOfColumns(const int n) { n_columns = n; resize(); }
     void setDragMode(const int index);

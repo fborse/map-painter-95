@@ -787,8 +787,61 @@
     <addaction name="separator"/>
     <addaction name="actionSelectAll"/>
    </widget>
+   <widget class="QMenu" name="menuTileset">
+    <property name="title">
+     <string>&amp;Tileset</string>
+    </property>
+    <widget class="QMenu" name="menuAdd">
+     <property name="title">
+      <string>&amp;Add</string>
+     </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::ListAdd"/>
+     </property>
+     <addaction name="actionAddTile"/>
+     <addaction name="actionCloneSelectedTiles"/>
+    </widget>
+    <widget class="QMenu" name="menuRemove">
+     <property name="title">
+      <string>&amp;Remove</string>
+     </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::ListRemove"/>
+     </property>
+     <addaction name="actionRemoveSelectedTiles"/>
+    </widget>
+    <addaction name="menuAdd"/>
+    <addaction name="menuRemove"/>
+   </widget>
+   <widget class="QMenu" name="menuMap">
+    <property name="title">
+     <string>&amp;Map</string>
+    </property>
+    <addaction name="actionResize"/>
+   </widget>
+   <widget class="QMenu" name="menuDrawing">
+    <property name="title">
+     <string>&amp;Drawing</string>
+    </property>
+    <widget class="QMenu" name="menuSelection">
+     <property name="title">
+      <string>Selection</string>
+     </property>
+     <addaction name="actionFlipHorizontally"/>
+     <addaction name="actionFlipVertically"/>
+     <addaction name="separator"/>
+     <addaction name="actionRotate90CW"/>
+     <addaction name="actionRotate90CCW"/>
+     <addaction name="separator"/>
+     <addaction name="actionScale"/>
+    </widget>
+    <addaction name="menuSelection"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuTileset"/>
+   <addaction name="menuMap"/>
+   <addaction name="menuDrawing"/>
   </widget>
   <action name="actionNew">
    <property name="icon">
@@ -909,6 +962,96 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+A</string>
+   </property>
+  </action>
+  <action name="actionAddTile">
+   <property name="text">
+    <string>&amp;Tile...</string>
+   </property>
+   <property name="toolTip">
+    <string>Add Tile</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A, Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actionRemoveSelectedTiles">
+   <property name="text">
+    <string>Selected &amp;Tiles</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove Selected Tiles</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R, Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actionResize">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::EditCut"/>
+   </property>
+   <property name="text">
+    <string>&amp;Resize...</string>
+   </property>
+   <property name="toolTip">
+    <string>Resize Map</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M, Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionFlipHorizontally">
+   <property name="text">
+    <string>Flip Horizontally</string>
+   </property>
+   <property name="toolTip">
+    <string>Flip Selection Horizontally</string>
+   </property>
+  </action>
+  <action name="actionFlipVertically">
+   <property name="text">
+    <string>Flip Vertically</string>
+   </property>
+   <property name="toolTip">
+    <string>Flip Selection Vertically</string>
+   </property>
+  </action>
+  <action name="actionRotate90CW">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ObjectRotateRight"/>
+   </property>
+   <property name="text">
+    <string>Rotate 90°</string>
+   </property>
+   <property name="toolTip">
+    <string>Rotate Selection 90°</string>
+   </property>
+  </action>
+  <action name="actionRotate90CCW">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ObjectRotateLeft"/>
+   </property>
+   <property name="text">
+    <string>Rotate -90°</string>
+   </property>
+   <property name="toolTip">
+    <string>Rotate Selection -90°</string>
+   </property>
+  </action>
+  <action name="actionScale">
+   <property name="text">
+    <string>Scale...</string>
+   </property>
+   <property name="toolTip">
+    <string>Scale Selection</string>
+   </property>
+  </action>
+  <action name="actionCloneSelectedTiles">
+   <property name="text">
+    <string>&amp;Clone Selected &amp;Tiles</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A, Ctrl+C, Ctrl+T</string>
    </property>
   </action>
  </widget>
@@ -1870,8 +2013,8 @@
    <slot>setSelectionShape(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>866</x>
-     <y>510</y>
+     <x>864</x>
+     <y>499</y>
     </hint>
     <hint type="destinationlabel">
      <x>582</x>
@@ -1886,12 +2029,44 @@
    <slot>setSelectionColorKey(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>857</x>
-     <y>537</y>
+     <x>864</x>
+     <y>508</y>
     </hint>
     <hint type="destinationlabel">
      <x>603</x>
      <y>536</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionCloneSelectedTiles</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onCloneSelectedTiles()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAddTile</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onAddTile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
     </hint>
    </hints>
   </connection>
@@ -1911,5 +2086,7 @@
   <slot>onCopy()</slot>
   <slot>onPaste()</slot>
   <slot>onSelectAll()</slot>
+  <slot>onAddTile()</slot>
+  <slot>onCloneSelectedTiles()</slot>
  </slots>
 </ui>

@@ -2,41 +2,42 @@
 
 #include <QPainter>
 #include <QMouseEvent>
+#include <QUuid>
+
+template <typename T>
+static inline QSharedPointer<T> lock_ptr(QWeakPointer<T> &weak)
+{
+    auto shared = weak.toStrongRef();
+    Q_ASSERT(!shared.isNull());
+
+    return shared;
+}
+
+class TileOrderCommand
+{
+public:
+    TileOrderCommand(QWeakPointer<Names> tiles_order): tiles_order_ptr{tiles_order} {}
+    QSharedPointer<Names> lockTilesOrder() { return lock_ptr(tiles_order_ptr); }
+
+private:
+    QWeakPointer<Names> tiles_order_ptr;
+};
 
 class TilesetCommand
 {
 public:
-    TilesetCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset):
-        tiles_order_ptr{tiles_order}, tileset_ptr{tileset}
-    {}
-
-protected:
-    QSharedPointer<Names> lockTilesOrder()
-    {
-        auto ptr = tiles_order_ptr.toStrongRef();
-        Q_ASSERT(!ptr.isNull());
-
-        return ptr;
-    }
-
-    QSharedPointer<Tileset> lockTileset()
-    {
-        auto ptr = tileset_ptr.toStrongRef();
-        Q_ASSERT(!ptr.isNull());
-
-        return ptr;
-    }
+    TilesetCommand(QWeakPointer<Tileset> tileset): tileset_ptr{tileset} {}
+    QSharedPointer<Tileset> lockTileset() { return lock_ptr(tileset_ptr); }
 
 private:
-    QWeakPointer<Names> tiles_order_ptr;
     QWeakPointer<Tileset> tileset_ptr;
 };
 
-class MoveTileCommand final: public QUndoCommand, public TilesetCommand
+class MoveTileCommand final: public QUndoCommand, public TileOrderCommand
 {
 public:
     MoveTileCommand(QWeakPointer<Names> ptr, const int origin, const int target):
-        QUndoCommand(), TilesetCommand(ptr, {}), origin{origin}, target{target}
+        QUndoCommand(), TileOrderCommand(ptr), origin{origin}, target{target}
     {}
 
     void undo() final override
@@ -53,11 +54,11 @@ private:
     int origin, target;
 };
 
-class SwapTilesCommand final: public QUndoCommand, public TilesetCommand
+class SwapTilesCommand final: public QUndoCommand, public TileOrderCommand
 {
 public:
     SwapTilesCommand(QWeakPointer<Names> ptr, const int index1, const int index2):
-        QUndoCommand(), TilesetCommand(ptr, {}), index1{index1}, index2{index2}
+        QUndoCommand(), TileOrderCommand(ptr), index1{index1}, index2{index2}
     {}
 
     void undo() final override
@@ -72,6 +73,35 @@ public:
 
 private:
     int index1, index2;
+};
+
+class AddTileCommand final: public QUndoCommand, public TileOrderCommand, public TilesetCommand
+{
+public:
+    AddTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, const QImage &pixels):
+        QUndoCommand(), TileOrderCommand(tiles_order), TilesetCommand(tileset),
+        index{0}, id{}, image{pixels}
+    {
+        index = lockTilesOrder()->length();
+        id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    }
+
+    void undo() final override
+    {
+        lockTilesOrder()->remove(index);
+        lockTileset()->remove(id);
+    }
+
+    void redo() final override
+    {
+        lockTilesOrder()->push_back(id);
+        lockTileset()->insert(id, image);
+    }
+
+private:
+    int index;
+    TileReference id;
+    QImage image;
 };
 
 TilesetViewWidget::TilesetViewWidget(QWidget *parent):
@@ -99,6 +129,28 @@ void TilesetViewWidget::resize()
     };
 
     EditorWidget::resize();
+}
+
+void TilesetViewWidget::addTiles(const QVector<QImage> &images, const bool undoable)
+{
+    if (undoable)
+    {
+        undo_stack->beginMacro("Add tiles");
+        for (auto &pixels: images)
+            undo_stack->push(new AddTileCommand(tiles_order, tileset, pixels));
+        undo_stack->endMacro();
+    }
+    else
+    {
+        for (auto &pixels: images)
+        {
+            const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+            tiles_order->push_back(id);
+            tileset->insert(id, pixels);
+        }
+    }
+
+    update();
 }
 
 std::optional<QPoint> TilesetViewWidget::toIJ(const int idx) const
