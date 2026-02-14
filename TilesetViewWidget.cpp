@@ -13,10 +13,10 @@ static inline QSharedPointer<T> lock_ptr(QWeakPointer<T> &weak)
     return shared;
 }
 
-class TileOrderCommand
+class TilesOrderCommand
 {
 public:
-    TileOrderCommand(QWeakPointer<Names> tiles_order): tiles_order_ptr{tiles_order} {}
+    TilesOrderCommand(QWeakPointer<Names> tiles_order): tiles_order_ptr{tiles_order} {}
     QSharedPointer<Names> lockTilesOrder() { return lock_ptr(tiles_order_ptr); }
 
 private:
@@ -33,11 +33,21 @@ private:
     QWeakPointer<Tileset> tileset_ptr;
 };
 
-class MoveTileCommand final: public QUndoCommand, public TileOrderCommand
+class MapLayersCommand
+{
+public:
+    MapLayersCommand(QWeakPointer<MapLayer> map_layers): map_layers_ptr{map_layers} {}
+    QSharedPointer<MapLayer> lockMapLayers() { return lock_ptr(map_layers_ptr); }
+
+private:
+    QWeakPointer<MapLayer> map_layers_ptr;
+};
+
+class MoveTileCommand final: public QUndoCommand, public TilesOrderCommand
 {
 public:
     MoveTileCommand(QWeakPointer<Names> ptr, const int origin, const int target):
-        QUndoCommand(), TileOrderCommand(ptr), origin{origin}, target{target}
+        QUndoCommand(), TilesOrderCommand(ptr), origin{origin}, target{target}
     {}
 
     void undo() final override
@@ -54,11 +64,11 @@ private:
     int origin, target;
 };
 
-class SwapTilesCommand final: public QUndoCommand, public TileOrderCommand
+class SwapTilesCommand final: public QUndoCommand, public TilesOrderCommand
 {
 public:
     SwapTilesCommand(QWeakPointer<Names> ptr, const int index1, const int index2):
-        QUndoCommand(), TileOrderCommand(ptr), index1{index1}, index2{index2}
+        QUndoCommand(), TilesOrderCommand(ptr), index1{index1}, index2{index2}
     {}
 
     void undo() final override
@@ -75,11 +85,11 @@ private:
     int index1, index2;
 };
 
-class AddTileCommand final: public QUndoCommand, public TileOrderCommand, public TilesetCommand
+class AddTileCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand
 {
 public:
     AddTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, const QImage &pixels):
-        QUndoCommand(), TileOrderCommand(tiles_order), TilesetCommand(tileset),
+        QUndoCommand(), TilesOrderCommand(tiles_order), TilesetCommand(tileset),
         index{0}, id{}, image{pixels}
     {
         index = lockTilesOrder()->length();
@@ -102,6 +112,48 @@ private:
     int index;
     TileReference id;
     QImage image;
+};
+
+class RemoveTileCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand, public MapLayersCommand
+{
+public:
+    RemoveTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, QWeakPointer<MapLayer> map_layers, const TileReference &id):
+        QUndoCommand(), TilesOrderCommand(tiles_order), TilesetCommand(tileset), MapLayersCommand(map_layers),
+        index{0}, tile_reference{id}, image{}
+    {
+        index = lockTilesOrder()->indexOf(tile_reference);
+        image = lockTileset()->value(tile_reference);
+
+        auto layers = *lockMapLayers();
+        for (int j = 0; j < layers.length(); ++j)
+            for (int i = 0; i < layers.at(j).length(); ++i)
+                if (layers.at(j).at(i) == id)
+                    affected_tiles.insert({i, j}, layers.at(j).at(i));
+    }
+
+    void undo() final override
+    {
+        lockTilesOrder()->insert(index, tile_reference);
+        lockTileset()->insert(tile_reference, image);
+
+        for (auto &[i, j]: affected_tiles.keys())
+            (*lockMapLayers())[j][i] = affected_tiles[{i, j}];
+    }
+
+    void redo() final override
+    {
+        lockTilesOrder()->remove(index);
+        lockTileset()->remove(tile_reference);
+
+        for (auto &[i, j]: affected_tiles.keys())
+            (*lockMapLayers())[j][i] = {};
+    }
+
+private:
+    int index;
+    TileReference tile_reference;
+    QImage image;
+    QHash<QPoint, TileReference> affected_tiles;
 };
 
 TilesetViewWidget::TilesetViewWidget(QWidget *parent):
@@ -151,6 +203,16 @@ void TilesetViewWidget::addTiles(const QVector<QImage> &images, const bool undoa
     }
 
     update();
+}
+
+void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
+{
+    undo_stack->beginMacro("Remove tiles");
+    for (auto &id: tiles)
+        undo_stack->push(new RemoveTileCommand(tiles_order, tileset, map_layers, id));
+    undo_stack->endMacro();
+
+    emit tilesRemoved();
 }
 
 std::optional<QPoint> TilesetViewWidget::toIJ(const int idx) const

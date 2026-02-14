@@ -1062,6 +1062,7 @@
    <header>TilesetViewWidget.hpp</header>
    <container>1</container>
    <slots>
+    <signal>tilesRemoved()</signal>
     <slot>setDragMode(int)</slot>
     <slot>setNumberOfColumns(int)</slot>
    </slots>
@@ -2070,6 +2071,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionRemoveSelectedTiles</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onRemoveSelectedTiles()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tilesetView</sender>
+   <signal>tilesRemoved()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>refreshViews()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>957</x>
+     <y>473</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1020</x>
+     <y>469</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -2088,5 +2121,6 @@
   <slot>onSelectAll()</slot>
   <slot>onAddTile()</slot>
   <slot>onCloneSelectedTiles()</slot>
+  <slot>onRemoveSelectedTiles()</slot>
  </slots>
 </ui>

@@ -366,13 +366,21 @@ void MainWindow::onAddTile()
     }
 }
 
-void MainWindow::onCloneSelectedTiles()
+static inline QSet<TileReference> get_unique_valid_ids(const Tileset &tileset, const SelectedTiles &selected)
 {
     QSet<TileReference> uniques;
-    for (auto &row: *selected_tiles)
+
+    for (auto &row: selected)
         for (auto &id: row)
-            if (tileset->contains(id))
+            if (tileset.contains(id))
                 uniques.insert(id);
+
+    return uniques;
+}
+
+void MainWindow::onCloneSelectedTiles()
+{
+    QSet<TileReference> uniques = get_unique_valid_ids(*tileset, *selected_tiles);
     if (uniques.isEmpty())
         return;
 
@@ -381,6 +389,19 @@ void MainWindow::onCloneSelectedTiles()
         tiles.push_back(tileset->value(id));
 
     ui->tilesetView->addTiles(tiles, true);
+}
+
+void MainWindow::onRemoveSelectedTiles()
+{
+    QSet<TileReference> uniques = get_unique_valid_ids(*tileset, *selected_tiles);
+    if (uniques.isEmpty())
+        return;
+
+    QVector<TileReference> tiles;
+    for (auto &id: uniques)
+        tiles.push_back(id);
+
+    ui->tilesetView->removeTiles(tiles);
 }
 
 bool MainWindow::load(const QString &path) try

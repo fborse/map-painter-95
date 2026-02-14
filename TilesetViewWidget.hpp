@@ -20,10 +20,14 @@ public:
     void resize() final override;
 
     void addTiles(const QVector<QImage> &images, const bool undoable);
+    void removeTiles(const QVector<TileReference> &tiles);
 
 public slots:
     void setNumberOfColumns(const int n) { n_columns = n; resize(); }
     void setDragMode(const int index);
+
+signals:
+    void tilesRemoved();
 
 private:
     int n_columns;

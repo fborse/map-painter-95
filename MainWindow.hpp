@@ -38,6 +38,7 @@ public slots:
 
     void onAddTile();
     void onCloneSelectedTiles();
+    void onRemoveSelectedTiles();
 
 //  centralises undo/redo changes
     void refreshViews();
