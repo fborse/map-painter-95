@@ -143,8 +143,10 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     darken{true},
     selection_shape{RECTANGLE}, selection_color_key{false},
     mouse_cursor{}, click_origin{}, right_click{false},
-    selection_rect{}, selection_image{}, move_offset{}
+    selection_rect{}, selection_image{}, move_offset{},
+    cursor_image{}
 {
+    redrawCursorImage();
 }
 
 void MapPainterWidget::setDrawTool(const int index)
@@ -161,6 +163,7 @@ void MapPainterWidget::setDrawTool(const int index)
 
     Q_ASSERT(0 <= index && index < 9);
     draw_tool = DrawTool(index);
+    redrawCursorImage();
 }
 
 void MapPainterWidget::setSelectionShape(const int index)
@@ -217,25 +220,23 @@ static inline void reduce_to_outline(QImage &img)
     }
 }
 
-//  TODO: make a QImage member for the cursor instead
-void MapPainterWidget::paintCursor(QPainter &painter) const
+void MapPainterWidget::redrawCursorImage()
 {
-    QImage cursor;
     if (draw_tool == SHAPE || draw_tool == FILL || draw_tool == PIPETTE || draw_tool == SELECTION)
     {
-        cursor = QImage(zoom, zoom, QImage::Format_ARGB32_Premultiplied);
-        cursor.fill((draw_tool == FILL)? draw_color : Qt::transparent);
+        cursor_image = QImage(zoom, zoom, QImage::Format_ARGB32_Premultiplied);
+        cursor_image.fill((draw_tool == FILL)? draw_color : Qt::transparent);
 
-        QPainter painter(&cursor);
-        painter.fillRect(0, 0, cursor.width(), 1, Qt::black);
-        painter.fillRect(0, 0, 1, cursor.height(), Qt::black);
-        painter.fillRect(0, cursor.height()-1, cursor.width(), 1, Qt::black);
-        painter.fillRect(cursor.width()-1, 0, 1, cursor.height(), Qt::black);
+        QPainter painter(&cursor_image);
+        painter.fillRect(0, 0, zoom, 1, Qt::black);
+        painter.fillRect(0, 0, 1, zoom, Qt::black);
+        painter.fillRect(0, zoom-1, zoom, 1, Qt::black);
+        painter.fillRect(zoom-1, 0, 1, zoom, Qt::black);
 
-        painter.fillRect(1, 1, cursor.width()-2, 1, Qt::white);
-        painter.fillRect(1, 1, 1, cursor.height()-2, Qt::white);
-        painter.fillRect(1, cursor.height()-2, cursor.width()-2, 1, Qt::white);
-        painter.fillRect(cursor.width()-2, 1, 1, cursor.height()-2, Qt::white);
+        painter.fillRect(1, 1, zoom-2, 1, Qt::white);
+        painter.fillRect(1, 1, 1, zoom-2, Qt::white);
+        painter.fillRect(1, zoom-2, zoom-2, 1, Qt::white);
+        painter.fillRect(zoom-2, 1, 1, zoom-2, Qt::white);
     }
     else
     {
@@ -246,21 +247,42 @@ void MapPainterWidget::paintCursor(QPainter &painter) const
             brush_pixels.height() * zoom
           : pen_size * zoom;
 
-        cursor = QImage(w+2, h+2, QImage::Format_ARGB32_Premultiplied);;
-        cursor.fill(Qt::black);
+        cursor_image = QImage(w+2, h+2, QImage::Format_ARGB32_Premultiplied);;
+        cursor_image.fill(Qt::black);
         {
-            QPainter painter(&cursor);
+            QPainter painter(&cursor_image);
             painter.drawImage(1, 1, (draw_tool == BRUSH)?
                 brush_pixels.scaled(w, h)
               : get_low_res(pen_size, round_pen_corners).scaled(w, w)
             );
         }
 
-        reduce_to_outline(cursor);
+        reduce_to_outline(cursor_image);
+    }
+}
+
+void MapPainterWidget::paintCursor(QPainter &painter) const
+{
+    QPoint offset;
+    switch (draw_tool)
+    {
+    case PEN:
+    case LINE:
+    case ERASER:
+    case SHADER:
+        offset = {pen_size / 2, pen_size / 2};
+        break;
+    case BRUSH:
+        offset = {int(cursor_image.width() / (2*zoom)), int(cursor_image.height() / (2*zoom))};
+        break;
+    case SHAPE:
+    case FILL:
+    case PIPETTE:
+    case SELECTION:
+        break;
     }
 
-    const QPoint offset(pen_size / 2, pen_size / 2);
-    painter.drawImage((mouse_cursor - offset) * zoom, cursor);
+    painter.drawImage((mouse_cursor - offset) * zoom, cursor_image);
 }
 
 QColor MapPainterWidget::getEffectiveDrawColor() const
@@ -311,12 +333,15 @@ void MapPainterWidget::drawBrush(QPainter &painter) const
 {
     setPen(painter);
 
+    const int ox = cursor_image.width() / (2*zoom);
+    const int oy = cursor_image.height() / (2*zoom);
+
     QVector<QPoint> points;
     for (auto &[x, y]: drag_points)
         for (int j = 0; j < brush_pixels.height(); ++j)
             for (int i = 0; i < brush_pixels.width(); ++i)
                 if (brush_pixels.pixelColor(i, j) == Qt::white)
-                    points.push_back({x + i, y + j});
+                    points.push_back({x + i - ox, y + j - oy});
 
     painter.drawPoints(points.data(), points.length());
 }
@@ -467,12 +492,14 @@ void MapPainterWidget::paintEvent(QPaintEvent *)
 
     paintBackground(painter);
 
+//  we want these contents to be pixelised
     painter.scale(zoom, zoom);
     painter.drawImage(0, 0, getDrawnLayer());
     if (draw_tool == SELECTION)
         drawSelectionPixels(painter);
     painter.resetTransform();
 
+//  for these we don't
     if (show_grid)
         paintGrid(painter);
     if (draw_tool == SELECTION)

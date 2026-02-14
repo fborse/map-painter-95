@@ -42,17 +42,19 @@ public:
     void selectAll();
 
 public slots:
+    void setZoom(const double z) override { EditorWidget::setZoom(z); redrawCursorImage(); }
+
     void setShowGrid(const bool yes) { show_grid = yes; update(); }
     void setDrawTool(const int index);
     void setRetroactive(const bool yes) { retroactive = yes; }
 
-    void setDrawColor(const QColor color) { draw_color = color; }
+    void setDrawColor(const QColor color) { draw_color = color; redrawCursorImage(); }
 
-    void setPenSize(const int size) { pen_size = size; }
+    void setPenSize(const int size) { pen_size = size; redrawCursorImage(); }
     void setAntiAliasing(const bool yes) { anti_aliasing = yes; }
-    void setRoundPenCorners(const bool yes) { round_pen_corners = yes; }
+    void setRoundPenCorners(const bool yes) { round_pen_corners = yes; redrawCursorImage(); }
 
-    void setBrushPixels(const QImage pixels) { brush_pixels = pixels; }
+    void setBrushPixels(const QImage pixels) { brush_pixels = pixels; redrawCursorImage(); }
 //  this one comes from a combo box
     void setEllipseShape(const int yes) { ellipse_shape = (yes == 1); }
     void setFillShape(const bool yes) { fill_shape = yes; }
@@ -105,6 +107,8 @@ private:
     QImage selection_image;
     std::optional<QPoint> move_offset;
 
+    QImage cursor_image;
+
     QColor getEffectiveDrawColor() const;
 //  the first can be useful for paintCursor (or just could ?)
     QPen getPen() const;
@@ -121,7 +125,9 @@ private:
     void drawSelectionPixels(QPainter &painter) const;
     void drawSelectionOutline(QPainter &painter) const;
 
+    void redrawCursorImage();
     void paintCursor(QPainter &painter) const;
+
     QImage getDrawnLayer() const;
     void paintEvent(QPaintEvent *) override;
 
