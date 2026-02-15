@@ -47,11 +47,37 @@ private:
     Changes prev, next;
 };
 
+class SwapLayersCommand final: public QUndoCommand, public MapLayersCommand
+{
+public:
+    SwapLayersCommand(QWeakPointer<MapLayer> map_layers, const MapLayer &prev, const MapLayer &next):
+        QUndoCommand(), MapLayersCommand(map_layers), prev{prev}, next{next}
+    {}
+
+    void undo() final override { *lockMapLayers() = prev; }
+    void redo() final override { *lockMapLayers() = next; }
+
+private:
+    MapLayer prev, next;
+};
+
 MapEditorWidget::MapEditorWidget(QWidget *parent):
     EditorWidget(parent),
     mouse_cursor{}, click_origin{}, right_click_origin{}
 {
     resize();
+}
+
+void MapEditorWidget::resize()
+{
+    if (map_layers)
+    {
+        const int h = map_layers->length();
+        const int w = map_layers->at(0).length();
+
+        grid_aspect = {w, h};
+        EditorWidget::resize();
+    }
 }
 
 void MapEditorWidget::paintTileRects(QPainter &painter)
@@ -122,6 +148,19 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
     paintGrid(painter);
     if (click_origin || right_click_origin)
         paintRectOutlines(painter);
+}
+
+void MapEditorWidget::resizeMap(const QSize &size)
+{
+    MapLayer prev = *map_layers;
+
+    MapLayer next = prev;
+    next.resize(size.height(), {});
+    for (auto &row: next)
+        row.resize(size.width(), {});
+
+    undo_stack->push(new SwapLayersCommand(map_layers, prev, next));
+    emit mapResized();
 }
 
 void MapEditorWidget::handleTileSetting()

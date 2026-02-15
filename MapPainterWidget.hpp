@@ -41,6 +41,8 @@ public:
 
     void selectAll();
 
+    void resize() final override;
+
 public slots:
     void setZoom(const double z) override { EditorWidget::setZoom(z); redrawCursorImage(); }
 

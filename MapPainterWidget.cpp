@@ -149,6 +149,19 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     redrawCursorImage();
 }
 
+void MapPainterWidget::resize()
+{
+    if (map_layers)
+    {
+        const int h = map_layers->length();
+        const int w = map_layers->at(0).length();
+
+        grid_aspect = {w, h};
+        EditorWidget::resize();
+    }
+}
+
+
 void MapPainterWidget::setDrawTool(const int index)
 {
     if (draw_tool == SELECTION)
@@ -468,7 +481,6 @@ void MapPainterWidget::drawSelectionOutline(QPainter &painter) const
                 shown[i] += selection_rect->topLeft();
         for (int i = 0; i < shown.length(); ++i)
                 shown[i] = shown[i] * zoom;
-
 
         switch (selection_shape)
         {

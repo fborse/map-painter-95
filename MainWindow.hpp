@@ -40,6 +40,8 @@ public slots:
     void onCloneSelectedTiles();
     void onRemoveSelectedTiles();
 
+    void onResizeMap();
+
 //  centralises undo/redo changes
     void refreshViews();
 

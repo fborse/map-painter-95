@@ -6,8 +6,11 @@ BrushEditorDialog::BrushEditorDialog(QImage pixels, QWidget *parent):
 {
     ui->setupUi(this);
 
+    Q_ASSERT(!pixels.isNull());
     ui->brushEditorWidget->setBrushPixels(pixels);
+    Q_ASSERT(pixels.width() > 0);
     ui->widthSpinBox->setValue(pixels.width());
+    Q_ASSERT(pixels.height() > 0);
     ui->heightSpinBox->setValue(pixels.height());
 }
 
@@ -18,7 +21,10 @@ BrushEditorDialog::~BrushEditorDialog()
 
 QImage BrushEditorDialog::getBrushPixels() const
 {
-    return ui->brushEditorWidget->getBrushPixels();
+    QImage image = ui->brushEditorWidget->getBrushPixels();
+    Q_ASSERT(!image.isNull());
+
+    return image;
 }
 
 void BrushEditorDialog::setCursorPositionLabel(const QPoint position)

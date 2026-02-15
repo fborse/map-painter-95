@@ -9,10 +9,14 @@ public:
     explicit MapEditorWidget(QWidget *parent = nullptr);
     virtual ~MapEditorWidget() final override = default;
 
+    void resize() final override;
+    void resizeMap(const QSize &size);
+
 signals:
 //  only purposes is to tell MainWindow to refresh the relevant editor widgets
     void tileSelected();
     void tilesSet();
+    void mapResized();
 
 private:
     QPoint mouse_cursor;

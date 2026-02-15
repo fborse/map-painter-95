@@ -24,6 +24,7 @@ void BrushDisplayWidget::paintEvent(QPaintEvent *)
     const int unit = grid_size;
 
     painter.scale(unit, unit);
+    Q_ASSERT(!brush_pixels.isNull());
     painter.drawImage(0, 0, brush_pixels);
     painter.resetTransform();
 
@@ -38,6 +39,8 @@ void BrushDisplayWidget::paintEvent(QPaintEvent *)
 
 void BrushDisplayWidget::mouseReleaseEvent(QMouseEvent *event)
 {
+    Q_ASSERT(!brush_pixels.isNull());
+
     if (rect().contains(event->pos()))
     {
         BrushEditorDialog dialog(brush_pixels, this);

@@ -9,6 +9,7 @@
 
 #include "NewMapDialog.hpp"
 #include "AddTileDialog.hpp"
+#include "ResizeMapDialog.hpp"
 
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow),
@@ -67,6 +68,10 @@ MainWindow::MainWindow(QWidget *parent):
     connect(ui->shapeComboBox, &QComboBox::currentIndexChanged, [&] (const int index) {
         ui->cornerRadiusSpinBox->setEnabled(index == 0);
     });
+
+//  TODO: is there *really* no better way to set this kind of stuff ???
+    ui->splitter->setStretchFactor(0, 5);
+    ui->splitter->setStretchFactor(1, 1);
 }
 
 MainWindow::~MainWindow()
@@ -132,6 +137,10 @@ void MainWindow::setTilesize(const int tilesize)
 
 void MainWindow::populateTileset(const int tilesize)
 {
+    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(tilesize > 0);
+
     QImage img(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
     QColor colors[] = {{0, 128, 255}, {0, 128, 0}, {128, 64, 0}};
 
@@ -147,6 +156,9 @@ void MainWindow::populateTileset(const int tilesize)
 
 void MainWindow::setMapSize(const QSize size)
 {
+    Q_ASSERT(!map_layers.isNull());
+    Q_ASSERT(size.width() > 0 && size.height() > 0);
+
     map_layers->resize(size.height());
     for (auto &row: *map_layers)
         row.resize(size.width());
@@ -157,6 +169,7 @@ void MainWindow::setMapSize(const QSize size)
 
 bool MainWindow::handleUnsavedChanges()
 {
+    Q_ASSERT(!undo_stack.isNull());
     if (undo_stack->isClean())
         return true;
 
@@ -186,6 +199,8 @@ void MainWindow::onNew()
         if (dialog.exec() == QDialog::Accepted)
         {
             resetPointers();
+            Q_ASSERT(dialog.getMapSize().width() > 0);
+            Q_ASSERT(dialog.getMapSize().height() > 0);
             setMapSize(dialog.getMapSize());
 
             if (dialog.shouldImportTileset())
@@ -195,6 +210,7 @@ void MainWindow::onNew()
             }
             else
             {
+                Q_ASSERT(dialog.getTilesize() > 0);
                 setTilesize(dialog.getTilesize());
                 if (dialog.shouldCreateDefaultTiles())
                     populateTileset(dialog.getTilesize());
@@ -232,6 +248,7 @@ bool MainWindow::onSave()
         if (!save(save_path))
             return false;
 
+        Q_ASSERT(!undo_stack.isNull());
         undo_stack->setClean();
         return true;
     }
@@ -248,6 +265,7 @@ bool MainWindow::onSaveAs()
     if (!save(path))
         return false;
 
+    Q_ASSERT(!undo_stack.isNull());
     save_path = path;
     undo_stack->setClean();
     return true;
@@ -257,6 +275,7 @@ void MainWindow::onQuit()
 {
     if (handleUnsavedChanges())
     {
+        Q_ASSERT(!undo_stack.isNull());
         undo_stack->clear();
         qApp->exit(EXIT_SUCCESS);
     }
@@ -266,6 +285,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (handleUnsavedChanges())
     {
+        Q_ASSERT(!undo_stack.isNull());
         undo_stack->clear();
         event->accept();
     }
@@ -281,6 +301,7 @@ void MainWindow::refreshViews()
     ui->tilesetView->resize();
     ui->mapPainter->resize();
 
+    Q_ASSERT(!selected_tiles.isNull());
 //  selected_tiles is assumed to be small
     bool reset = false;
     for (auto &row: *selected_tiles)
@@ -309,12 +330,16 @@ void MainWindow::updateDrawOptions(const int draw_tool)
 
 void MainWindow::onUndo()
 {
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(undo_stack->canUndo());
     undo_stack->undo();
     refreshViews();
 }
 
 void MainWindow::onRedo()
 {
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(undo_stack->canRedo());
     undo_stack->redo();
     refreshViews();
 }
@@ -356,6 +381,7 @@ void MainWindow::onSelectAll()
 void MainWindow::onAddTile()
 {
     const int tilesize = ui->tilesetView->getTilesize();
+    Q_ASSERT(tilesize > 0);
 
     AddTileDialog dialog(tilesize, this);
     if (dialog.exec() == QDialog::Accepted)
@@ -381,6 +407,9 @@ static inline QSet<TileReference> get_unique_valid_ids(const Tileset &tileset, c
 
 void MainWindow::onCloneSelectedTiles()
 {
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+
     QSet<TileReference> uniques = get_unique_valid_ids(*tileset, *selected_tiles);
     if (uniques.isEmpty())
         return;
@@ -394,6 +423,9 @@ void MainWindow::onCloneSelectedTiles()
 
 void MainWindow::onRemoveSelectedTiles()
 {
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+
     QSet<TileReference> uniques = get_unique_valid_ids(*tileset, *selected_tiles);
     if (uniques.isEmpty())
         return;
@@ -403,6 +435,20 @@ void MainWindow::onRemoveSelectedTiles()
         tiles.push_back(id);
 
     ui->tilesetView->removeTiles(tiles);
+}
+
+void MainWindow::onResizeMap()
+{
+    Q_ASSERT(!map_layers.isNull());
+    const int h = map_layers->length();
+    Q_ASSERT(h > 0);
+    const int w = map_layers->at(0).length();
+    Q_ASSERT(w > 0);
+
+    ResizeMapDialog dialog(this);
+    dialog.setSize({w, h});
+    if (dialog.exec() == QDialog::Accepted)
+        ui->mapEditor->resizeMap(dialog.getSize());
 }
 
 bool MainWindow::load(const QString &path) try
@@ -441,8 +487,11 @@ bool MainWindow::load(const QString &path) try
     stream >> layers;
 
     resetPointers();
+    Q_ASSERT(!tiles_order.isNull());
     *tiles_order = std::move(order);
+    Q_ASSERT(!tileset.isNull());
     *tileset = std::move(tiles);
+    Q_ASSERT(!map_layers.isNull());
     *map_layers = std::move(layers);
 
     setTilesize(tilesize);
@@ -492,6 +541,7 @@ bool MainWindow::save(const QString &path)
     }
 
     {
+        Q_ASSERT(!map_layers.isNull());
         stream << *map_layers;
     }
 

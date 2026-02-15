@@ -12,6 +12,8 @@ BrushEditorWidget::BrushEditorWidget(QWidget *parent):
 
 void BrushEditorWidget::toggleAt(const QPoint &p)
 {
+    Q_ASSERT(!brush_pixels.isNull());
+
     if (brush_pixels.pixelColor(p) == Qt::black)
         brush_pixels.setPixelColor(p, Qt::white);
     else
@@ -20,9 +22,11 @@ void BrushEditorWidget::toggleAt(const QPoint &p)
 
 void BrushEditorWidget::resizePixels(const QSize &size)
 {
+    Q_ASSERT(size.width() > 0 && size.height() > 0);
     QImage pixels(size, QImage::Format_ARGB32_Premultiplied);
     pixels.fill(Qt::black);
 
+    Q_ASSERT(!brush_pixels.isNull());
     QPainter painter(&pixels);
     painter.drawImage(0, 0, brush_pixels);
 

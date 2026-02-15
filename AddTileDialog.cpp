@@ -25,28 +25,32 @@ void AddTileDialog::onSelectColor()
         emit colorSelected(color);
 }
 
-static inline void draw_background(QPainter &painter, const int tilesize)
+static inline QPixmap create_the_pixmap(const int tilesize, const QColor &color)
 {
     const QColor dark = {64, 64, 64};
     const QColor light = {128, 128, 128};
 
+    Q_ASSERT(tilesize > 0);
+    QImage image(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
+    QPainter painter(&image);
+
+//  checkered background
     painter.fillRect(0, 0, tilesize/2, tilesize/2, dark);
     painter.fillRect(tilesize/2, 0, qCeil(tilesize/2.0), tilesize/2, light);
     painter.fillRect(0, tilesize/2, tilesize/2, qCeil(tilesize/2.0), light);
     painter.fillRect(tilesize/2, tilesize/2, qCeil(tilesize/2.0), qCeil(tilesize/2.0), dark);
+
+//  actual colour
+    painter.fillRect(0, 0, tilesize, tilesize, color);
+
+    return QPixmap::fromImage(image);
 }
 
 void AddTileDialog::onColorSelected(const QColor color)
 {
+    Q_ASSERT(color.isValid());
     current = color;
 
-    ui->colorSelectionWidget->setColor(current);
-
-    QImage image(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
-    {
-        QPainter painter(&image);
-        draw_background(painter, tilesize);
-        painter.fillRect(0, 0, tilesize, tilesize, current);
-    }
-    ui->tileViewLabel->setPixmap(QPixmap::fromImage(image));
+    ui->colorSelectionWidget->setColor(color);
+    ui->tileViewLabel->setPixmap(create_the_pixmap(tilesize, color));
 }

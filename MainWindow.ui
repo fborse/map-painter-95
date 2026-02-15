@@ -817,7 +817,7 @@
     <property name="title">
      <string>&amp;Map</string>
     </property>
-    <addaction name="actionResize"/>
+    <addaction name="actionResizeMap"/>
    </widget>
    <widget class="QMenu" name="menuDrawing">
     <property name="title">
@@ -986,7 +986,7 @@
     <string>Ctrl+R, Ctrl+T</string>
    </property>
   </action>
-  <action name="actionResize">
+  <action name="actionResizeMap">
    <property name="icon">
     <iconset theme="QIcon::ThemeIcon::EditCut"/>
    </property>
@@ -1076,6 +1076,7 @@
     <signal>tileSelected()</signal>
     <signal>tilesSet()</signal>
     <signal>zoomSet(double)</signal>
+    <signal>mapResized()</signal>
     <slot>setZoom(double)</slot>
    </slots>
   </customwidget>
@@ -2103,6 +2104,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>mapEditor</sender>
+   <signal>mapResized()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>refreshViews()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>211</x>
+     <y>437</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionResizeMap</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onResizeMap()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -2122,5 +2155,6 @@
   <slot>onAddTile()</slot>
   <slot>onCloneSelectedTiles()</slot>
   <slot>onRemoveSelectedTiles()</slot>
+  <slot>onResizeMap()</slot>
  </slots>
 </ui>
