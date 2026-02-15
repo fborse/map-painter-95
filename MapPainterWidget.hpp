@@ -103,9 +103,10 @@ private:
 
     QVector<QPoint> drag_points;
 
-    std::optional<QRect> selection_rect;
+    std::optional<QRect> selection_rect, original_rect;
     QImage selection_image;
     std::optional<QPoint> move_offset;
+    QVector<QPoint> magic_points;
 
     QImage cursor_image;
 

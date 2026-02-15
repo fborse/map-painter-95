@@ -348,6 +348,7 @@ void MainWindow::onSelectAll()
 {
     ui->mainTabWidget->setCurrentIndex(1);
     ui->drawToolComboBox->setCurrentIndex(int(SELECTION));
+    ui->selectionShapeComboBox->setCurrentIndex(int(RECTANGLE));
 
     ui->mapPainter->selectAll();
 }
