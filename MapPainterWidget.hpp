@@ -102,6 +102,7 @@ private:
 //  right click is really just a desktop thing => names accordingly
     std::optional<QPoint> click_origin;
     bool right_click;
+    bool shift_key;
 
     QVector<QPoint> drag_points;
 
@@ -150,4 +151,5 @@ private:
     void mouseReleaseEvent(QMouseEvent *event) override;
 
     void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
 };

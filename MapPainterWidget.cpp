@@ -143,7 +143,7 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     fill_tolerance{0}, fill_this_tile_only{true},
     darken{true},
     selection_shape{RECTANGLE}, selection_color_key{false},
-    mouse_cursor{}, click_origin{}, right_click{false},
+    mouse_cursor{}, click_origin{}, right_click{false}, shift_key{false},
     selection_rect{}, original_rect{}, selection_image{}, move_offset{}, magic_points{},
     cursor_image{}
 {
@@ -344,10 +344,35 @@ void MapPainterWidget::drawPen(QPainter &painter) const
         painter.drawPoint(drag_points.back());
 }
 
+static constexpr double pi = 3.1415926535897932384626433;
+
+static inline double deg(const double rad) { return rad * 180 / pi; }
+static inline double rad(const double deg) { return deg * pi / 180; }
+
+static inline QPoint rotate(const QPoint &p, const double angle)
+{
+    const double length = qSqrt(p.x() * p.x() + p.y() * p.y());
+
+    return QPoint(length * cos(angle), length * sin(angle));
+}
+
+static inline QPoint snap(const QPoint &p0, const QPoint &p1)
+{
+    const QPoint dp = p1 - p0;
+    const double angle = qAtan2(dp.y(), dp.x());
+    const double nearest = round(deg(angle) / 45) * 45;
+
+    return p0 + rotate(dp, rad(nearest));
+}
+
 void MapPainterWidget::drawLine(QPainter &painter) const
 {
     setPen(painter);
-    painter.drawLine(*click_origin, mouse_cursor);
+    const QPoint cursor = shift_key?
+        snap(*click_origin, mouse_cursor)
+      : mouse_cursor;
+
+    painter.drawLine(*click_origin, cursor);
 }
 
 void MapPainterWidget::drawBrush(QPainter &painter) const
@@ -998,6 +1023,23 @@ void MapPainterWidget::keyPressEvent(QKeyEvent *event)
             return;
         }
     }
+    else if (event->key() == Qt::Key_Shift)
+    {
+        shift_key = true;
+    }
 
     event->ignore();
+}
+
+void MapPainterWidget::keyReleaseEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Shift)
+    {
+        shift_key = false;
+        event->accept();
+    }
+    else
+    {
+        event->ignore();
+    }
 }
