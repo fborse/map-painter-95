@@ -10,6 +10,7 @@
 #include "NewMapDialog.hpp"
 #include "AddTileDialog.hpp"
 #include "ResizeMapDialog.hpp"
+#include "ScaleSelectionDialog.hpp"
 
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow),
@@ -449,6 +450,41 @@ void MainWindow::onResizeMap()
     dialog.setSize({w, h});
     if (dialog.exec() == QDialog::Accepted)
         ui->mapEditor->resizeMap(dialog.getSize());
+}
+
+void MainWindow::onFlipHorizontally()
+{
+    ui->mapPainter->transformSelection(QTransform::fromScale(-1, 1));
+}
+
+void MainWindow::onFlipVertically()
+{
+    ui->mapPainter->transformSelection(QTransform::fromScale(1, -1));
+}
+
+void MainWindow::onRotate90CW()
+{
+    QTransform transform;
+    transform.rotate(90);
+
+    ui->mapPainter->transformSelection(transform);
+}
+
+void MainWindow::onRotate90CCW()
+{
+    QTransform transform;
+    transform.rotate(-90);
+
+    ui->mapPainter->transformSelection(transform);
+}
+
+void MainWindow::onScale()
+{
+    const QSize original_size = ui->mapPainter->getSelectionImage().size();
+    ScaleSelectionDialog dialog(original_size, this);
+
+    if (dialog.exec() == QDialog::Accepted)
+        ui->mapPainter->transformSelection(dialog.getTransform());
 }
 
 bool MainWindow::load(const QString &path) try

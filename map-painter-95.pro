@@ -23,6 +23,7 @@ SOURCES += \
     MapPainterWidget.cpp \
     NewMapDialog.cpp \
     ResizeMapDialog.cpp \
+    ScaleSelectionDialog.cpp \
     TilesetViewWidget.cpp \
     main.cpp \
     MainWindow.cpp
@@ -43,6 +44,7 @@ HEADERS += \
     MapPainterWidget.hpp \
     NewMapDialog.hpp \
     ResizeMapDialog.hpp \
+    ScaleSelectionDialog.hpp \
     TilesetViewWidget.hpp
 
 FORMS += \
@@ -50,7 +52,8 @@ FORMS += \
     BrushEditorDialog.ui \
     MainWindow.ui \
     NewMapDialog.ui \
-    ResizeMapDialog.ui
+    ResizeMapDialog.ui \
+    ScaleSelectionDialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

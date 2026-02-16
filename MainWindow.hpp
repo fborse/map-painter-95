@@ -42,6 +42,12 @@ public slots:
 
     void onResizeMap();
 
+    void onFlipHorizontally();
+    void onFlipVertically();
+    void onRotate90CW();
+    void onRotate90CCW();
+    void onScale();
+
 //  centralises undo/redo changes
     void refreshViews();
 
