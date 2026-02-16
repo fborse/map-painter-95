@@ -929,6 +929,18 @@ void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
     update();
 }
 
+static inline bool ellipse_contains(const QRect &rect, const QPoint &p)
+{
+    const double w2 = rect.width() / 2.0;
+    const double h2 = rect.height() / 2.0;
+    const QPoint center = rect.topLeft() + QPoint(w2, h2);
+
+    const double dx = (p.x() - center.x()) / w2;
+    const double dy = (p.y() - center.y()) / h2;
+
+    return dx*dx + dy*dy <= 1;
+}
+
 static inline bool contains(const SelectionShape shape, const std::optional<QRect> rect, const QVector<QPoint> &magic, const QPoint &p)
 {
     if (!rect)
@@ -937,9 +949,9 @@ static inline bool contains(const SelectionShape shape, const std::optional<QRec
     switch (shape)
     {
     case RECTANGLE:
-//  TODO: find way to make the ellipse behave correctly
-    case ELLIPSE:
         return rect->contains(p);
+    case ELLIPSE:
+        return ellipse_contains(*rect, p);
     case MAGIC:
         return QPolygon(magic).containsPoint(p, Qt::OddEvenFill);
     }
