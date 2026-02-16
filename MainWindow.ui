@@ -104,6 +104,9 @@
                   <property name="mouseTracking">
                    <bool>true</bool>
                   </property>
+                  <property name="focusPolicy">
+                   <enum>Qt::FocusPolicy::StrongFocus</enum>
+                  </property>
                  </widget>
                 </item>
                </layout>
@@ -311,6 +314,9 @@
                 <widget class="MapPainterWidget" name="mapPainter" native="true">
                  <property name="mouseTracking">
                   <bool>true</bool>
+                 </property>
+                 <property name="focusPolicy">
+                  <enum>Qt::FocusPolicy::StrongFocus</enum>
                  </property>
                 </widget>
                </item>
@@ -637,7 +643,7 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>98</width>
+                         <width>66</width>
                          <height>28</height>
                         </rect>
                        </property>

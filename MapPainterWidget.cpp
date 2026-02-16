@@ -2,6 +2,7 @@
 
 #include <QPainter>
 #include <QMouseEvent>
+#include <QKeyEvent>
 #include <QUuid>
 
 template <typename T>
@@ -903,6 +904,24 @@ void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
     update();
 }
 
+static inline bool contains(const SelectionShape shape, const std::optional<QRect> rect, const QVector<QPoint> &magic, const QPoint &p)
+{
+    if (!rect)
+        return false;
+
+    switch (shape)
+    {
+    case RECTANGLE:
+//  TODO: find way to make the ellipse behave correctly
+    case ELLIPSE:
+        return rect->contains(p);
+    case MAGIC:
+        return QPolygon(magic).containsPoint(p, Qt::OddEvenFill);
+    }
+
+    throw std::runtime_error("Someone made SelectionShape able to be invalid");
+}
+
 void MapPainterWidget::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
@@ -915,7 +934,7 @@ void MapPainterWidget::mousePressEvent(QMouseEvent *event)
 
         if (draw_tool == SELECTION)
         {
-            if (selection_rect && selection_rect->contains(mouse_cursor))
+            if (contains(selection_shape, selection_rect, magic_points, mouse_cursor))
             {
                 move_offset = mouse_cursor - selection_rect->topLeft();
             }
@@ -924,6 +943,7 @@ void MapPainterWidget::mousePressEvent(QMouseEvent *event)
                 if (selection_rect)
                     blitSelection();
 
+                emit canCopy(false);
             //  1x1 would create a selection even if we just clicked
                 selection_rect = QRect(mouse_cursor, QSize(0, 0));
                 magic_points = {mouse_cursor};
@@ -960,4 +980,24 @@ void MapPainterWidget::mouseReleaseEvent(QMouseEvent *event)
         right_click = false;
 
     update();
+}
+
+void MapPainterWidget::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Escape)
+    {
+        if (original_rect)
+        {
+            emit canCopy(false);
+            selection_rect = {};
+            original_rect = {};
+            magic_points = {};
+
+            update();
+            event->accept();
+            return;
+        }
+    }
+
+    event->ignore();
 }
