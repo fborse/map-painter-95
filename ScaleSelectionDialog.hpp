@@ -13,7 +13,10 @@ public:
     explicit ScaleSelectionDialog(const QSize &original_size, QWidget *parent = nullptr);
     ~ScaleSelectionDialog();
 
-    QTransform getTransform() const;
+    bool isInFactorMode() const;
+
+    double getHorizontalFactor() const;
+    double getVerticalFactor() const;
 
 public slots:
     void setPreserveRatio(const bool yes) { preserve_ratio = yes; ratio = getRatio(); }

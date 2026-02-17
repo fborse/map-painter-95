@@ -34,8 +34,12 @@ public:
 
     QImage getSelectionImage() const { return selection_image; }
     void setSelectionImage(const QImage &image) { selection_image = image; }
-    void transformSelection(const QTransform &transform);
     void setSelectionRect(const QRect &rect) { selection_rect = rect; }
+
+    void flipSelection(const bool horizontally, const bool vertically);
+    void scaleSelection(const double fw, const double fh);
+    void transposeSelection();
+    void rotateSelection(const int angle);
     void cutSelection();
     void resetSelection() { selection_image = {}; selection_rect = {}; }
 
@@ -109,6 +113,7 @@ private:
     std::optional<QRect> selection_rect, original_rect;
     QImage selection_image, original_selection_image;
     std::optional<QPoint> move_offset;
+//  TODO: QPainterPath may be better suited
     QVector<QPoint> magic_points;
 
     QImage cursor_image;

@@ -454,28 +454,22 @@ void MainWindow::onResizeMap()
 
 void MainWindow::onFlipHorizontally()
 {
-    ui->mapPainter->transformSelection(QTransform::fromScale(-1, 1));
+    ui->mapPainter->flipSelection(true, false);
 }
 
 void MainWindow::onFlipVertically()
 {
-    ui->mapPainter->transformSelection(QTransform::fromScale(1, -1));
+    ui->mapPainter->flipSelection(false, true);
 }
 
 void MainWindow::onRotate90CW()
 {
-    QTransform transform;
-    transform.rotate(90);
-
-    ui->mapPainter->transformSelection(transform);
+    ui->mapPainter->rotateSelection(-90);
 }
 
 void MainWindow::onRotate90CCW()
 {
-    QTransform transform;
-    transform.rotate(-90);
-
-    ui->mapPainter->transformSelection(transform);
+    ui->mapPainter->rotateSelection(90);
 }
 
 void MainWindow::onScale()
@@ -484,7 +478,7 @@ void MainWindow::onScale()
     ScaleSelectionDialog dialog(original_size, this);
 
     if (dialog.exec() == QDialog::Accepted)
-        ui->mapPainter->transformSelection(dialog.getTransform());
+        ui->mapPainter->scaleSelection(dialog.getHorizontalFactor(), dialog.getVerticalFactor());
 }
 
 bool MainWindow::load(const QString &path) try

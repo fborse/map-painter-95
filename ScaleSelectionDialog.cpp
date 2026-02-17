@@ -50,23 +50,31 @@ double ScaleSelectionDialog::getRatio() const
     return h / w;
 }
 
-QTransform ScaleSelectionDialog::getTransform() const
+bool ScaleSelectionDialog::isInFactorMode() const
 {
-    const int tab = ui->tabWidget->currentIndex();
+    return (ScaleMode(ui->tabWidget->currentIndex()) == FACTOR);
+}
 
-    if (ScaleMode(tab) == FACTOR)
-    {
-        const double h = ui->horizontallyDoubleSpinBox->value();
-        const double v = ui->verticallyDoubleSpinBox->value();
+double ScaleSelectionDialog::getHorizontalFactor() const
+{
+    const double h = ui->horizontallyDoubleSpinBox->value();
+    const double w = ui->widthSpinBox->value();
+    const double w0 = original_size.width();
 
-        return QTransform::fromScale(h, v);
-    }
+    if (isInFactorMode())
+        return h;
     else
-    {
-        const double w = ui->widthSpinBox->value();
-        const double h = ui->heightSpinBox->value();
-        const auto &[w0, h0] = original_size;
+        return w / w0;
+}
 
-        return QTransform::fromScale(w / w0, h / h0);
-    }
+double ScaleSelectionDialog::getVerticalFactor() const
+{
+    const double v = ui->verticallyDoubleSpinBox->value();
+    const double h = ui->heightSpinBox->value();
+    const double h0 = original_size.height();
+
+    if (isInFactorMode())
+        return v;
+    else
+        return h / h0;
 }

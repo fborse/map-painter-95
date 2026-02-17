@@ -804,13 +804,94 @@ void MapPainterWidget::cutSelection()
     magic_points = {};
 }
 
-void MapPainterWidget::transformSelection(const QTransform &transform)
+void MapPainterWidget::flipSelection(const bool horizontally, const bool vertically)
+{
+//  magic_points are already in a rect of origin (0, 0)
+    if (selection_rect && !selection_image.isNull())
+    {
+        if (horizontally)
+        {
+            selection_image.flip(Qt::Horizontal);
+            original_selection_image.flip(Qt::Horizontal);
+
+            for (auto &p: magic_points)
+                p.setX(selection_rect->width() - p.x());
+        }
+        if (vertically)
+        {
+            selection_image.flip(Qt::Vertical);
+            original_selection_image.flip(Qt::Vertical);
+
+            for (auto &p: magic_points)
+                p.setY(selection_rect->height() - p.y());
+        }
+
+        update();
+    }
+}
+
+static inline void scale_image(QImage &img, const double fw, const double fh)
+{
+    const int w = img.width() * fw;
+    const int h = img.height() * fh;
+
+    img = img.scaled(w, h);
+}
+
+void MapPainterWidget::scaleSelection(const double fw, const double fh)
 {
     if (selection_rect && !selection_image.isNull())
     {
-    //  TODO: transform also magic_points
-        selection_image = selection_image.transformed(transform);
+        scale_image(selection_image, fw, fh);
+        scale_image(original_selection_image, fw, fh);
         selection_rect->setSize(selection_image.size());
+
+    //  magic_points are in a rect of origin (0, 0)
+        for (auto &p: magic_points)
+            p = {int(p.x() * fw) , int(p.y() * fh)};
+
+        update();
+    }
+}
+
+static inline void transpose_image(QImage &img)
+{
+    QImage next(img.height(), img.width(), QImage::Format_ARGB32_Premultiplied);
+
+    for (int j = 0; j < img.height(); ++j)
+        for (int i = 0; i < img.width(); ++i)
+            next.setPixelColor(j, i, img.pixelColor(i, j));
+
+    img = next;
+}
+
+void MapPainterWidget::transposeSelection()
+{
+    if (selection_rect && !selection_image.isNull())
+    {
+        transpose_image(selection_image);
+        transpose_image(original_selection_image);
+        selection_rect = selection_rect->transposed();
+
+        for (auto &p: magic_points)
+            p = {p.y(), p.x()};
+    }
+}
+
+void MapPainterWidget::rotateSelection(const int angle)
+{
+    if (selection_rect && !selection_image.isNull())
+    {
+        if (angle == 90)
+        {
+            transposeSelection();
+            flipSelection(true, false);
+        }
+        else
+        {
+            transposeSelection();
+            flipSelection(false, true);
+        }
 
         update();
     }
