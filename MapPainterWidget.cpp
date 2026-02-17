@@ -1067,7 +1067,7 @@ static inline bool contains(const SelectionShape shape, const std::optional<QRec
     case ELLIPSE:
         return ellipse_contains(*rect, p);
     case MAGIC:
-        return QPolygon(magic).containsPoint(p, Qt::OddEvenFill);
+        return QPolygon(magic).translated(rect->topLeft()).containsPoint(p, Qt::OddEvenFill);
     }
 
     throw std::runtime_error("Someone made SelectionShape able to be invalid");
