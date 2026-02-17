@@ -144,7 +144,9 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     darken{true},
     selection_shape{RECTANGLE}, selection_color_key{false},
     mouse_cursor{}, click_origin{}, right_click{false}, shift_key{false},
-    selection_rect{}, original_rect{}, selection_image{}, move_offset{}, magic_points{},
+    selection_rect{}, original_rect{},
+    selection_image{}, original_selection_image{},
+    move_offset{}, magic_points{},
     cursor_image{}
 {
     redrawCursorImage();
@@ -161,7 +163,6 @@ void MapPainterWidget::resize()
         EditorWidget::resize();
     }
 }
-
 
 void MapPainterWidget::setDrawTool(const int index)
 {
@@ -182,6 +183,13 @@ void MapPainterWidget::setDrawTool(const int index)
     redrawCursorImage();
 }
 
+void MapPainterWidget::setDrawColor(const QColor color)
+{
+    draw_color = color;
+    redrawDisplayedSelectionImage();
+    redrawCursorImage();
+}
+
 void MapPainterWidget::setSelectionShape(const int index)
 {
     if (index != int(selection_shape))
@@ -197,6 +205,41 @@ void MapPainterWidget::setSelectionShape(const int index)
 
     Q_ASSERT(0 <= index && index < 3);
     selection_shape = SelectionShape(index);
+
+    update();
+}
+
+void MapPainterWidget::setSelectionColorKey(const bool yes)
+{
+    selection_color_key = yes;
+    redrawDisplayedSelectionImage();
+
+    update();
+}
+
+static inline bool similar(const QColor &c1, const QColor &c2, const double tolerance)
+{
+    const double dr = c1.redF() - c2.redF();
+    const double dg = c1.greenF() - c2.greenF();
+    const double db = c1.blueF() - c2.blueF();
+    const double da = c1.alphaF() - c2.alphaF();
+
+    const double dist = dr*dr + dg*dg + db*db + da*da;
+
+    return (dist <= tolerance/100 * tolerance/100);
+}
+
+void MapPainterWidget::redrawDisplayedSelectionImage()
+{
+    selection_image = original_selection_image.copy();
+
+    if (selection_color_key)
+        for (int i = 0; i < selection_image.width(); ++i)
+            for (int j = 0; j < selection_image.height(); ++j)
+            //  TODO: find a non-hacky way to tackle the problem
+            //  colour selection going to Color*Widget seems to alter it
+                if (similar(selection_image.pixelColor(i, j), draw_color, 2))
+                    selection_image.setPixelColor(i, j, Qt::transparent);
 
     update();
 }
@@ -411,18 +454,6 @@ void MapPainterWidget::drawShape(QPainter &painter) const
         painter.drawEllipse(r);
     else
         painter.drawRoundedRect(r, rect_radius, rect_radius);
-}
-
-static inline bool similar(const QColor &c1, const QColor &c2, const double tolerance)
-{
-    const double dr = c1.redF() - c2.redF();
-    const double dg = c1.greenF() - c2.greenF();
-    const double db = c1.blueF() - c2.blueF();
-    const double da = c1.alphaF() - c2.alphaF();
-
-    const double dist = dr*dr + dg*dg + db*db + da*da;
-
-    return (dist <= tolerance/100*tolerance/100);
 }
 
 void MapPainterWidget::drawFill(QImage &original) const
@@ -789,6 +820,7 @@ void MapPainterWidget::selectAll()
 {
     selection_rect = getWidgetRect();
     selection_image = getPaintedLayer();
+    original_selection_image = selection_image.copy();
     original_rect = selection_rect;
 
     emit canCopy(true);
@@ -881,7 +913,8 @@ void MapPainterWidget::handleSelectionMade()
 //            magic_points.push_back(magic_points.front());
             QImage dest = get_selection_contents(source, selection_shape, magic_points);
 
-            selection_image = dest;
+            original_selection_image = dest;
+            redrawDisplayedSelectionImage();
         }
     }
 
@@ -984,7 +1017,7 @@ void MapPainterWidget::mousePressEvent(QMouseEvent *event)
             //  1x1 would create a selection even if we just clicked
                 selection_rect = QRect(mouse_cursor, QSize(0, 0));
                 magic_points = {mouse_cursor};
-                selection_image = {};
+                selection_image = original_selection_image = {};
                 original_rect = {};
             }
         }

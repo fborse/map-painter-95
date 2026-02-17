@@ -50,7 +50,7 @@ public slots:
     void setDrawTool(const int index);
     void setRetroactive(const bool yes) { retroactive = yes; }
 
-    void setDrawColor(const QColor color) { draw_color = color; redrawCursorImage(); }
+    void setDrawColor(const QColor color);
 
     void setPenSize(const int size) { pen_size = size; redrawCursorImage(); }
     void setAntiAliasing(const bool yes) { anti_aliasing = yes; }
@@ -68,7 +68,7 @@ public slots:
     void setDarken(const bool yes) { darken = yes; }
 //  so does this one
     void setSelectionShape(const int index);
-    void setSelectionColorKey(const bool yes) { selection_color_key = yes; update(); }
+    void setSelectionColorKey(const bool yes);
 
 signals:
     void colorChanged(const QColor color);
@@ -107,7 +107,7 @@ private:
     QVector<QPoint> drag_points;
 
     std::optional<QRect> selection_rect, original_rect;
-    QImage selection_image;
+    QImage selection_image, original_selection_image;
     std::optional<QPoint> move_offset;
     QVector<QPoint> magic_points;
 
@@ -129,6 +129,7 @@ private:
     void drawSelectionPixels(QPainter &painter) const;
     void drawSelectionOutline(QPainter &painter) const;
 
+    void redrawDisplayedSelectionImage();
     void redrawCursorImage();
     void paintCursor(QPainter &painter) const;
 
