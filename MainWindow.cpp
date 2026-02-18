@@ -11,6 +11,7 @@
 #include "AddTileDialog.hpp"
 #include "ResizeMapDialog.hpp"
 #include "ScaleSelectionDialog.hpp"
+#include "ImportTilesInBulkDialog.hpp"
 
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow),
@@ -270,6 +271,13 @@ bool MainWindow::onSaveAs()
     save_path = path;
     undo_stack->setClean();
     return true;
+}
+
+void MainWindow::onImportTilesInBulk()
+{
+    ImportTilesInBulkDialog dialog(ui->tilesetView->getTilesize(), this);
+    if (dialog.exec() == QDialog::Accepted)
+    {}
 }
 
 void MainWindow::onQuit()
