@@ -26,10 +26,13 @@ public slots:
     void setColorKey(const QColor color) { color_key = color; updateDisplayedTexture(); }
     void setMagnetic(const bool yes) { magnetic = yes; update(); }
 
-    void setSelectedArea(const int index) { selected = index; }
+    void setSelectedRectangle(const int index) { selected = index; update(); }
 
 signals:
-    void areaSelected(const int index);
+    void rectangleSelected(const int index);
+    void rectangleAdded(const QRect rectangle);
+    void rectangleRemoved(const int index);
+    void rectangleChanged(const QPoint new_position);
 
 private:
     int tilesize;
@@ -43,8 +46,16 @@ private:
     int selected;
     QImage displayed_texture;
 
+    QPoint mouse_cursor;
+    std::optional<QPoint> click_origin;
+    std::optional<QPoint> move_offset;
+
     void updateDisplayedTexture();
     void paintEvent(QPaintEvent *) final override;
+
+    void mouseMoveEvent(QMouseEvent *event) final override;
+    void mousePressEvent(QMouseEvent *event) final override;
+    void mouseReleaseEvent(QMouseEvent *event) final override;
 };
 
 class ImportTilesInBulkDialog: public QDialog
@@ -63,10 +74,19 @@ public slots:
 
     void onAccept();
 
-    void onAddArea();
-    void onRemoveArea();
+    void enableAreasWidgets(const bool enabled);
+    void onAddArea(const QRect area = {0, 0, 1, 1});
+    void onRemoveArea(int index = -1);
 
+    void enableAreaWidgets(const bool enabled);
     void onSelectedAreaChanged(const int index);
+//  QListWidget::setCurrentRow is not a slot ; this one is merely doing the call
+    void onSelectArea(const int index);
+
+//  only transmitting the area changes to the rectangles view widget
+    void onChangeArea();
+//  only transmitting the changes to the x and y spinboxes
+    void onAreaChanged(const QPoint new_position);
 
 private:
     Ui::ImportTilesInBulkDialog *ui;

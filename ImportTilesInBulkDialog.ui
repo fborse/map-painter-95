@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>640</width>
-    <height>480</height>
+    <height>487</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1,0">
        <item>
         <widget class="QGroupBox" name="texturePropertiesGroupBox">
@@ -327,8 +327,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>138</width>
-            <height>348</height>
+            <width>216</width>
+            <height>355</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -377,6 +377,10 @@
    <header>ImportTilesInBulkDialog.hpp</header>
    <container>1</container>
    <slots>
+    <signal>rectangleSelected(int)</signal>
+    <signal>rectangleAdded(QRect)</signal>
+    <signal>rectangleRemoved(int)</signal>
+    <signal>rectangleChanged(QPoint)</signal>
     <slot>setZoom(double)</slot>
     <slot>setScaling(double)</slot>
     <slot>setColorKey(QColor)</slot>
@@ -489,8 +493,8 @@
    <slot>onChangeTexturePath()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>397</x>
-     <y>58</y>
+     <x>370</x>
+     <y>69</y>
     </hint>
     <hint type="destinationlabel">
      <x>397</x>
@@ -525,7 +529,7 @@
      <y>267</y>
     </hint>
     <hint type="destinationlabel">
-     <x>-4</x>
+     <x>0</x>
      <y>253</y>
     </hint>
    </hints>
@@ -562,6 +566,134 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>rectanglesViewWidget</sender>
+   <signal>rectangleSelected(int)</signal>
+   <receiver>ImportTilesInBulkDialog</receiver>
+   <slot>onSelectArea(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>574</x>
+     <y>240</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>637</x>
+     <y>242</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rectanglesViewWidget</sender>
+   <signal>rectangleAdded(QRect)</signal>
+   <receiver>ImportTilesInBulkDialog</receiver>
+   <slot>onAddArea(QRect)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>608</x>
+     <y>92</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>637</x>
+     <y>87</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rectanglesViewWidget</sender>
+   <signal>rectangleRemoved(int)</signal>
+   <receiver>ImportTilesInBulkDialog</receiver>
+   <slot>onRemoveArea(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>602</x>
+     <y>423</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>634</x>
+     <y>423</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>xSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>ImportTilesInBulkDialog</receiver>
+   <slot>onChangeArea()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>51</x>
+     <y>360</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2</x>
+     <y>340</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>wSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>ImportTilesInBulkDialog</receiver>
+   <slot>onChangeArea()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>155</x>
+     <y>366</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-2</x>
+     <y>366</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ySpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>ImportTilesInBulkDialog</receiver>
+   <slot>onChangeArea()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>71</x>
+     <y>388</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>71</x>
+     <y>484</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>hSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>ImportTilesInBulkDialog</receiver>
+   <slot>onChangeArea()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>168</x>
+     <y>389</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>168</x>
+     <y>485</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rectanglesViewWidget</sender>
+   <signal>rectangleChanged(QPoint)</signal>
+   <receiver>ImportTilesInBulkDialog</receiver>
+   <slot>onAreaChanged(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>516</x>
+     <y>350</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>516</x>
+     <y>485</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onChangeTexturePath()</slot>
@@ -570,5 +702,10 @@
   <slot>onAddArea()</slot>
   <slot>onRemoveArea()</slot>
   <slot>onSelectedAreaChanged(int)</slot>
+  <slot>onSelectArea(int)</slot>
+  <slot>onAddArea(QRect)</slot>
+  <slot>onRemoveArea(int)</slot>
+  <slot>onChangeArea()</slot>
+  <slot>onAreaChanged(QPoint)</slot>
  </slots>
 </ui>
