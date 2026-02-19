@@ -95,16 +95,16 @@ void ImportTilesInBulkWidget::updateDisplayedTexture()
     update();
 }
 
-//  tilesize * zoom at function call
-static inline void draw_background(QPainter &painter, const QSize &paint_area, const int tilesize)
+void ImportTilesInBulkWidget::drawBackground(QPainter &painter)
 {
+    const int s = tilesize * zoom;
+
     const QColor dark = {64, 64, 64};
     const QColor light = {128, 128, 128};
-    const int s = tilesize;
 
-    for (int j = 0; j < paint_area.height() / tilesize + 1; ++j)
+    for (int j = 0; j < height() / tilesize + 1; ++j)
     {
-        for (int i = 0; i < paint_area.width() / tilesize + 1; ++i)
+        for (int i = 0; i < width() / tilesize + 1; ++i)
         {
             painter.fillRect(i*s, j*s, s/2, s/2, dark);
             painter.fillRect(i*s + s/2, j*s, qCeil(s/2.0), s/2, light);
@@ -114,19 +114,12 @@ static inline void draw_background(QPainter &painter, const QSize &paint_area, c
     }
 }
 
-static inline void draw_rect(QPainter &painter, const QRect &rect, const bool selected)
-{
-    const QColor white128 = {255, 255, 255, 128};
-    const QColor white192 = {255, 255, 255, 192};
-
-    painter.setPen(selected? Qt::white : white192);
-    painter.drawRect(rect);
-    painter.fillRect(rect, selected? white192 : white128);
-}
-
-static inline void draw_rectangles(QPainter &painter, const QVector<QRect> &rectangles, const int tilesize, const double zoom, const int selected)
+void ImportTilesInBulkWidget::drawRectangles(QPainter &painter)
 {
     const int unit = tilesize * zoom;
+
+    const QColor white128 = {255, 255, 255, 128};
+    const QColor white192 = {255, 255, 255, 192};
 
     for (int i = 0; i < rectangles.length(); ++i)
     {
@@ -134,50 +127,82 @@ static inline void draw_rectangles(QPainter &painter, const QVector<QRect> &rect
         const QSize aspect = rectangles[i].size();
         const QRect rect = {position * zoom, aspect * unit};
 
-        draw_rect(painter, rect, (i == selected));
+        painter.setPen((i == selected)? Qt::white : white192);
+        painter.drawRect(rect);
+        painter.fillRect(rect, (i == selected)? white192 : white128);
     }
 }
 
-static inline void draw_grid(QPainter &painter, const QSize &paint_area, const int tilesize)
+void ImportTilesInBulkWidget::drawGrid(QPainter &painter)
 {
+    const int unit = tilesize * zoom;
+
     const QColor white128 = {255, 255, 255, 128};
 
-    for (int j = 0; j < paint_area.height() / tilesize + 1; ++j)
-        painter.fillRect(0, j * tilesize, paint_area.width(), 1, white128);
-    for (int i = 0; i < paint_area.width() / tilesize + 1; ++i)
-        painter.fillRect(i * tilesize, 0, 1, paint_area.height(), white128);
-    for (int j = 0; j < paint_area.height() / tilesize + 1; ++j)
-        painter.fillRect(0, (j+1) * tilesize - 1, paint_area.width(), 1, white128);
-    for (int i = 0; i < paint_area.width() / tilesize + 1; ++i)
-        painter.fillRect((i+1) * tilesize - 1, 0, 1, paint_area.height(), white128);
+    for (int j = 0; j < height() / unit + 1; ++j)
+        painter.fillRect(0, j * unit, width(), 1, white128);
+    for (int i = 0; i < width() / unit + 1; ++i)
+        painter.fillRect(i * unit, 0, 1, height(), white128);
+    for (int j = 0; j < height() / unit + 1; ++j)
+        painter.fillRect(0, (j+1) * unit - 1, width(), 1, white128);
+    for (int i = 0; i < width() / unit + 1; ++i)
+        painter.fillRect((i+1) * unit - 1, 0, 1, height(), white128);
 }
 
-static inline void draw_points(QPainter &painter, const QSize &paint_area, const int tilesize)
+void ImportTilesInBulkWidget::drawSnapPoints(QPainter &painter, const int unit)
 {
-    for (int j = 0; j < paint_area.height() / tilesize + 1; ++j)
-        for (int i = 0; i < paint_area.width() / tilesize + 1; ++i)
-            painter.fillRect(i * tilesize - 2, j * tilesize - 2, 4, 4, Qt::white);
+    for (int j = 0; j < height() / unit + 1; ++j)
+        for (int i = 0; i < width() / unit + 1; ++i)
+            painter.fillRect(i * unit - 2, j * unit - 2, 4, 4, Qt::white);
 }
 
-static inline QRect to_rect(const QPoint &p1, const QPoint &p2)
+static inline QPoint get_mins(const QPoint &p1, const QPoint &p2)
 {
-    return {
-        qMin(p1.x(), p2.x()), qMin(p1.y(), p2.y()),
-        qAbs(p1.x() - p2.x()), qAbs(p1.y() - p2.y())
-    };
+    return QPoint(qMin(p1.x(), p2.x()), qMin(p1.y(), p2.y()));
+}
+
+static inline QPoint get_maxs(const QPoint &p1, const QPoint &p2)
+{
+    return QPoint(qMax(p1.x(), p2.x()), qMax(p1.y(), p2.y()));
+}
+
+QRect ImportTilesInBulkWidget::getSelectionRect() const
+{
+    QPoint top_left = get_mins(*click_origin, mouse_cursor);
+    QPoint bottom_right = get_maxs(*click_origin, mouse_cursor);
+
+    const int unit = tilesize * zoom;
+
+    if (magnetic)
+    //  this time we want the QPoint rounding
+        return QRect((top_left / unit) * unit, (bottom_right / unit) * unit);
+    else
+        return QRect(top_left, bottom_right);
+}
+
+void ImportTilesInBulkWidget::drawSelectionRect(QPainter &painter)
+{
+    QRect rect = getSelectionRect();
+//  QRect(QPoint, QPoint) adds 1 to each size components
+    rect.setSize(rect.size() - QSize(1, 1));
+
+    painter.setPen(Qt::white);
+    painter.drawRect(rect);
+    const QColor white192 = {255, 255, 255, 192};
+    painter.fillRect(rect, white192);
 }
 
 void ImportTilesInBulkWidget::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
-    draw_background(painter, size(), tilesize * zoom);
+    drawBackground(painter);
     painter.drawImage(0, 0, displayed_texture);
-    draw_rectangles(painter, rectangles, tilesize, zoom, selected);
-    draw_grid(painter, size(), tilesize * zoom);
+    drawRectangles(painter);
+    drawGrid(painter);
     if (magnetic)
-        draw_points(painter, size(), tilesize * zoom);
+        drawSnapPoints(painter, tilesize * zoom);
     if (click_origin && selected < 0)
-        draw_rect(painter, to_rect(*click_origin, mouse_cursor), true);
+        drawSelectionRect(painter);
 }
 
 //  we don't want QPoint's rounding
@@ -236,18 +261,29 @@ void ImportTilesInBulkWidget::mousePressEvent(QMouseEvent *event)
     update();
 }
 
+static inline QRect to_rect(const QPoint &p1, const QPoint &p2)
+{
+    return {
+        qMin(p1.x(), p2.x()), qMin(p1.y(), p2.y()),
+        qAbs(p1.x() - p2.x()), qAbs(p1.y() - p2.y())
+    };
+}
+
 void ImportTilesInBulkWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
     {
         if (selected < 0)
         {
-            QRect rect = to_rect(*click_origin, mouse_cursor);
+            QRect rect = getSelectionRect();
+        //  QRect(QPoint, QPoint) adds 1 to each size components
+            rect.setSize(rect.size() - QSize(1, 1));
+
+            const auto &[x, y] = rect.topLeft();
         //  we want a truncating behaviour
             const auto &[w, h] = rect.size();
-            rect.setSize({w / tilesize, h / tilesize});
 
-            emit rectangleAdded(rect);
+            emit rectangleAdded(QRect(x, y, w / tilesize, h / tilesize));
         }
 
         click_origin = {};

@@ -51,6 +51,14 @@ private:
     std::optional<QPoint> move_offset;
 
     void updateDisplayedTexture();
+
+    QRect getSelectionRect() const;
+
+    void drawBackground(QPainter &painter);
+    void drawRectangles(QPainter &painter);
+    void drawGrid(QPainter &painter);
+    void drawSnapPoints(QPainter &painter, const int unit);
+    void drawSelectionRect(QPainter &painter);
     void paintEvent(QPaintEvent *) final override;
 
     void mouseMoveEvent(QMouseEvent *event) final override;
