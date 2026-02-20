@@ -9,7 +9,7 @@
 
 ImportTilesInBulkWidget::ImportTilesInBulkWidget(QWidget *parent):
     QWidget(parent),
-    tilesize{0}, original_texture{}, rectangles{},
+    tilesize{0}, original_texture{}, areas{},
     zoom{1}, scaling{1}, color_key{}, magnetic{true},
     selected{-1}, displayed_texture{},
     mouse_cursor{}, click_origin{}
@@ -17,21 +17,46 @@ ImportTilesInBulkWidget::ImportTilesInBulkWidget(QWidget *parent):
     setFixedSize(0, 0);
 }
 
-void ImportTilesInBulkWidget::removeRectangleAt(const int index)
+void ImportTilesInBulkWidget::removeAreaAt(const int index)
 {
-    Q_ASSERT(0 <= index && index < rectangles.length());
+    Q_ASSERT(0 <= index && index < areas.length());
 
-    rectangles.remove(index);
+    areas.remove(index);
     if (selected == index)
         selected = -1;
     update();
 }
 
-QRect &ImportTilesInBulkWidget::getRectangleAt(const int index)
+ImportTilesArea &ImportTilesInBulkWidget::getAreaAt(const int index)
 {
-    Q_ASSERT(0 <= index && index < rectangles.length());
+    Q_ASSERT(0 <= index && index < areas.length());
 
-    return rectangles[index];
+    return areas[index];
+}
+
+QVector<QImage> ImportTilesInBulkWidget::getTiles() const
+{
+    QVector<QImage> tiles;
+
+    for (auto &area: areas)
+    {
+        const auto &[x, y, w, h, dx, dy] = area;
+
+        for (int j = 0; j < h; ++j)
+        {
+            for (int i = 0; i < w; ++i)
+            {
+                const QPoint o(x, y);
+                const QPoint p(i * tilesize, j * tilesize);
+                const QPoint dp(i * dx, j * dy);
+                const QSize s(tilesize, tilesize);
+
+                tiles.push_back(displayed_texture.copy(QRect(o + p + dp, s)));
+            }
+        }
+    }
+
+    return tiles;
 }
 
 //  ensure the correct image format
@@ -121,11 +146,15 @@ void ImportTilesInBulkWidget::drawRectangles(QPainter &painter)
     const QColor white128 = {255, 255, 255, 128};
     const QColor white192 = {255, 255, 255, 192};
 
-    for (int i = 0; i < rectangles.length(); ++i)
+    for (int i = 0; i < areas.length(); ++i)
     {
-        const QPoint position = rectangles[i].topLeft();
-        const QSize aspect = rectangles[i].size();
-        const QRect rect = {position * zoom, aspect * unit};
+        const auto &[x, y, w, h, dx, dy] = areas[i];
+
+        const QPoint position(x * zoom, y * zoom);
+        const QSize size(w * unit, h * unit);
+        const QSize additional((w-1) * dx, (h-1) * dy);
+
+        const QRect rect(position, size + additional);
 
         painter.setPen((i == selected)? Qt::white : white192);
         painter.drawRect(rect);
@@ -166,6 +195,22 @@ static inline QPoint get_maxs(const QPoint &p1, const QPoint &p2)
     return QPoint(qMax(p1.x(), p2.x()), qMax(p1.y(), p2.y()));
 }
 
+static inline QRect round_snap(const QPoint &top_left, const QPoint &bottom_right, const int unit)
+{
+    const QPoint tl = (top_left / unit) * unit;
+    const QPoint br = (bottom_right / unit) * unit;
+
+    return QRect(tl, br);
+}
+
+static inline QRect size_snap(const QRect &rect, const int unit)
+{
+    const auto &[x, y] = rect.topLeft();
+    const auto &[w, h] = rect.size();
+
+    return QRect(x, y, (w / unit) * unit, (h / unit) * unit);
+}
+
 QRect ImportTilesInBulkWidget::getSelectionRect() const
 {
     QPoint top_left = get_mins(*click_origin, mouse_cursor);
@@ -175,9 +220,9 @@ QRect ImportTilesInBulkWidget::getSelectionRect() const
 
     if (magnetic)
     //  this time we want the QPoint rounding
-        return QRect((top_left / unit) * unit, (bottom_right / unit) * unit);
+        return round_snap(top_left, bottom_right, unit);
     else
-        return QRect(top_left, bottom_right);
+        return size_snap(QRect(top_left, bottom_right), unit);
 }
 
 void ImportTilesInBulkWidget::drawSelectionRect(QPainter &painter)
@@ -219,22 +264,27 @@ void ImportTilesInBulkWidget::mouseMoveEvent(QMouseEvent *event)
         QPoint new_position = mouse_cursor - *move_offset;
         if (magnetic)
             new_position = (new_position / tilesize) * tilesize;
-        emit rectangleChanged(new_position);
+        emit areaChanged(new_position);
     }
 
     update();
 }
 
-static inline std::optional<int> rect_at(const QVector<QRect> &rectangles, const QPoint &p, const int tilesize, const double zoom)
+static inline std::optional<int> rect_at(const QVector<ImportTilesArea> &areas, const QPoint &p, const int tilesize, const double zoom)
 {
     const int unit = tilesize * zoom;
 
-    for (int i = 0; i < rectangles.length(); ++i)
+    for (int i = 0; i < areas.length(); ++i)
     {
-        const QPoint position = rectangles[i].topLeft();
-        const QSize aspect = rectangles[i].size();
+        const auto &[x, y, w, h, dx, dy] = areas[i];
 
-        if (QRect(position * zoom, aspect * unit).contains(p))
+        const QPoint position(x * zoom, y * zoom);
+        const QSize size(w * unit, h * unit);
+        const QSize additional((w-1) * dx, (h-1) * dy);
+
+        const QRect rect(position, size + additional);
+
+        if (rect.contains(p))
             return i;
     }
 
@@ -247,26 +297,22 @@ void ImportTilesInBulkWidget::mousePressEvent(QMouseEvent *event)
     {
         click_origin = mouse_cursor = divide(event->pos(), zoom);
 
-        if (const auto idx = rect_at(rectangles, mouse_cursor, tilesize, zoom))
+        if (const auto idx = rect_at(areas, mouse_cursor, tilesize, zoom))
         {
-            emit rectangleSelected(*idx);
-            move_offset = mouse_cursor - rectangles[*idx].topLeft();
+            emit areaSelected(*idx);
+            move_offset = mouse_cursor - QPoint(areas[*idx].x, areas[*idx].y);
         }
         else
         {
-            emit rectangleSelected(-1);
+            emit areaSelected(-1);
         }
     }
 
-    update();
-}
+    if (event->button() == Qt::RightButton)
+        if (const auto idx = rect_at(areas, mouse_cursor, tilesize, zoom))
+            emit areaRemoved(*idx);
 
-static inline QRect to_rect(const QPoint &p1, const QPoint &p2)
-{
-    return {
-        qMin(p1.x(), p2.x()), qMin(p1.y(), p2.y()),
-        qAbs(p1.x() - p2.x()), qAbs(p1.y() - p2.y())
-    };
+    update();
 }
 
 void ImportTilesInBulkWidget::mouseReleaseEvent(QMouseEvent *event)
@@ -283,7 +329,7 @@ void ImportTilesInBulkWidget::mouseReleaseEvent(QMouseEvent *event)
         //  we want a truncating behaviour
             const auto &[w, h] = rect.size();
 
-            emit rectangleAdded(QRect(x, y, w / tilesize, h / tilesize));
+            emit areaAdded({x, y, w / tilesize, h / tilesize, 0, 0});
         }
 
         click_origin = {};
@@ -319,9 +365,14 @@ QString ImportTilesInBulkDialog::getTexturePath() const
     return ui->pathLineEdit->text();
 }
 
-QVector<QRect> ImportTilesInBulkDialog::getTileAreas() const
+QVector<ImportTilesArea> ImportTilesInBulkDialog::getTileAreas() const
 {
-    return ui->rectanglesViewWidget->getRectangles();
+    return ui->rectanglesViewWidget->getAreas();
+}
+
+QVector<QImage> ImportTilesInBulkDialog::getTiles() const
+{
+    return ui->rectanglesViewWidget->getTiles();
 }
 
 void ImportTilesInBulkDialog::onChangeTexturePath()
@@ -352,7 +403,8 @@ void ImportTilesInBulkDialog::onAccept() try
 {
     if (getTexturePath().isEmpty())
         throw std::runtime_error("Cannot import tiles without texture !");
-//    if (ui->rectanglesListWidget->)
+    if (ui->rectanglesViewWidget->getAreas().isEmpty())
+        throw std::runtime_error("No tile area found !");
 
     accept();
 }
@@ -377,12 +429,13 @@ void ImportTilesInBulkDialog::enableAreasWidgets(const bool enabled)
     ui->magneticCheckBox->setEnabled(enabled);
 }
 
-void ImportTilesInBulkDialog::onAddArea(const QRect area)
+void ImportTilesInBulkDialog::onAddArea(const ImportTilesArea area)
 {
-    const QString rect = QString("(%1, %2) %3x%4")
-        .arg(area.x()).arg(area.y())
-        .arg(area.width()).arg(area.height());
-    ui->rectanglesViewWidget->addRectangle(area);
+    const QString rect = QString("(%1, %2) %3x%4 +%5+%6")
+        .arg(area.x).arg(area.y)
+        .arg(area.w).arg(area.w)
+        .arg(area.dx).arg(area.dy);
+    ui->rectanglesViewWidget->addArea(area);
     ui->rectanglesListWidget->addItem(rect);
 
     const int n = ui->rectanglesListWidget->count();
@@ -397,7 +450,7 @@ void ImportTilesInBulkDialog::onRemoveArea(int index)
 
     ui->rectanglesListWidget->setCurrentRow(-1);
     delete ui->rectanglesListWidget->takeItem(index);
-    ui->rectanglesViewWidget->removeRectangleAt(index);
+    ui->rectanglesViewWidget->removeAreaAt(index);
 }
 
 void ImportTilesInBulkDialog::enableAreaWidgets(const bool enabled)
@@ -412,6 +465,10 @@ void ImportTilesInBulkDialog::enableAreaWidgets(const bool enabled)
     ui->wSpinBox->setEnabled(enabled);
     ui->hLabel->setEnabled(enabled);
     ui->hSpinBox->setEnabled(enabled);
+    ui->dxLabel->setEnabled(enabled);
+    ui->dxSpinBox->setEnabled(enabled);
+    ui->dyLabel->setEnabled(enabled);
+    ui->dySpinBox->setEnabled(enabled);
 }
 
 static inline void set_value(QSpinBox *widget, const int value)
@@ -423,18 +480,20 @@ static inline void set_value(QSpinBox *widget, const int value)
 
 void ImportTilesInBulkDialog::onSelectedAreaChanged(const int index)
 {
-    const auto &areas = ui->rectanglesViewWidget->getRectangles();
+    const auto &areas = ui->rectanglesViewWidget->getAreas();
     Q_ASSERT(index < areas.length());
 
     enableAreaWidgets(index >= 0);
 
-    ui->rectanglesViewWidget->setSelectedRectangle(index);
+    ui->rectanglesViewWidget->setSelectedArea(index);
     if (index >= 0)
     {
-        set_value(ui->xSpinBox, areas[index].left());
-        set_value(ui->ySpinBox, areas[index].top());
-        set_value(ui->wSpinBox, areas[index].width());
-        set_value(ui->hSpinBox, areas[index].height());
+        set_value(ui->xSpinBox, areas[index].x);
+        set_value(ui->ySpinBox, areas[index].y);
+        set_value(ui->wSpinBox, areas[index].w);
+        set_value(ui->hSpinBox, areas[index].h);
+        set_value(ui->dxSpinBox, areas[index].dx);
+        set_value(ui->dySpinBox, areas[index].dy);
     }
 }
 
@@ -448,11 +507,13 @@ void ImportTilesInBulkDialog::onChangeArea()
     const int index = ui->rectanglesListWidget->currentRow();
     Q_ASSERT(0 <= index);
 
-    QRect &area = ui->rectanglesViewWidget->getRectangleAt(index);
-    area.setX(ui->xSpinBox->value());
-    area.setY(ui->ySpinBox->value());
-    area.setWidth(ui->wSpinBox->value());
-    area.setHeight(ui->hSpinBox->value());
+    ImportTilesArea &area = ui->rectanglesViewWidget->getAreaAt(index);
+    area.x = ui->xSpinBox->value();
+    area.y = ui->ySpinBox->value();
+    area.w = ui->wSpinBox->value();
+    area.h = ui->hSpinBox->value();
+    area.dx = ui->dxSpinBox->value();
+    area.dy = ui->dySpinBox->value();
 
     ui->rectanglesViewWidget->update();
 }

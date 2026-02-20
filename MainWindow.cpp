@@ -277,7 +277,10 @@ void MainWindow::onImportTilesInBulk()
 {
     ImportTilesInBulkDialog dialog(ui->tilesetView->getTilesize(), this);
     if (dialog.exec() == QDialog::Accepted)
-    {}
+    {
+        ui->tilesetView->addTiles(dialog.getTiles(), true);
+        refreshViews();
+    }
 }
 
 void MainWindow::onQuit()

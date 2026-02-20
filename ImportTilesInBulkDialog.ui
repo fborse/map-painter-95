@@ -143,120 +143,121 @@
          <property name="title">
           <string>Area</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_5">
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_5">
-            <item>
-             <layout class="QFormLayout" name="formLayout">
-              <item row="0" column="0">
-               <widget class="QLabel" name="xLabel">
-                <property name="text">
-                 <string>X :</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QSpinBox" name="xSpinBox">
-                <property name="maximum">
-                 <number>65535</number>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="yLabel">
-                <property name="text">
-                 <string>Y :</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QSpinBox" name="ySpinBox">
-                <property name="maximum">
-                 <number>65535</number>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QFormLayout" name="formLayout_2">
-              <item row="0" column="0">
-               <widget class="QLabel" name="wLabel">
-                <property name="text">
-                 <string>W :</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QSpinBox" name="wSpinBox">
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>256</number>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="hLabel">
-                <property name="text">
-                 <string>H :</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QSpinBox" name="hSpinBox">
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>256</number>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_2">
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
+           <layout class="QFormLayout" name="formLayout">
+            <item row="0" column="0">
+             <widget class="QLabel" name="xLabel">
+              <property name="text">
+               <string>x :</string>
               </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QSpinBox" name="xSpinBox">
+              <property name="maximum">
+               <number>65535</number>
               </property>
-             </spacer>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="yLabel">
+              <property name="text">
+               <string>y :</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QSpinBox" name="ySpinBox">
+              <property name="maximum">
+               <number>65535</number>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
-            <item>
-             <widget class="QCheckBox" name="magneticCheckBox">
+           <layout class="QFormLayout" name="formLayout_2">
+            <item row="0" column="0">
+             <widget class="QLabel" name="wLabel">
               <property name="text">
-               <string>Snap To Nearest Tile</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
+               <string>w :</string>
               </property>
              </widget>
             </item>
-            <item>
-             <spacer name="horizontalSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
+            <item row="0" column="1">
+             <widget class="QSpinBox" name="wSpinBox">
+              <property name="minimum">
+               <number>1</number>
               </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
+              <property name="maximum">
+               <number>256</number>
               </property>
-             </spacer>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="hLabel">
+              <property name="text">
+               <string>h :</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QSpinBox" name="hSpinBox">
+              <property name="minimum">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <number>256</number>
+              </property>
+             </widget>
             </item>
            </layout>
+          </item>
+          <item>
+           <layout class="QFormLayout" name="formLayout_3">
+            <item row="0" column="0">
+             <widget class="QLabel" name="dxLabel">
+              <property name="text">
+               <string>dx :</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QSpinBox" name="dxSpinBox">
+              <property name="maximum">
+               <number>256</number>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="dyLabel">
+              <property name="text">
+               <string>dy :</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QSpinBox" name="dySpinBox">
+              <property name="maximum">
+               <number>256</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </widget>
@@ -270,6 +271,16 @@
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <item>
+          <widget class="QCheckBox" name="magneticCheckBox">
+           <property name="text">
+            <string>Snap To Nearest Tile</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
          <item>
           <spacer name="horizontalSpacer_4">
            <property name="orientation">
@@ -327,13 +338,17 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>216</width>
+            <width>269</width>
             <height>355</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
-            <widget class="ImportTilesInBulkWidget" name="rectanglesViewWidget" native="true"/>
+            <widget class="ImportTilesInBulkWidget" name="rectanglesViewWidget" native="true">
+             <property name="mouseTracking">
+              <bool>true</bool>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -377,10 +392,10 @@
    <header>ImportTilesInBulkDialog.hpp</header>
    <container>1</container>
    <slots>
-    <signal>rectangleSelected(int)</signal>
-    <signal>rectangleAdded(QRect)</signal>
-    <signal>rectangleRemoved(int)</signal>
-    <signal>rectangleChanged(QPoint)</signal>
+    <signal>areaSelected(int)</signal>
+    <signal>areaAdded(ImportTilesArea)</signal>
+    <signal>areaRemoved(int)</signal>
+    <signal>areaChanged(QPoint)</signal>
     <slot>setZoom(double)</slot>
     <slot>setScaling(double)</slot>
     <slot>setColorKey(QColor)</slot>
@@ -477,8 +492,8 @@
    <slot>setMagnetic(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>86</x>
-     <y>416</y>
+     <x>435</x>
+     <y>67</y>
     </hint>
     <hint type="destinationlabel">
      <x>561</x>
@@ -493,7 +508,7 @@
    <slot>onChangeTexturePath()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>370</x>
+     <x>317</x>
      <y>69</y>
     </hint>
     <hint type="destinationlabel">
@@ -525,8 +540,8 @@
    <slot>onAddArea()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>96</x>
-     <y>267</y>
+     <x>119</x>
+     <y>318</y>
     </hint>
     <hint type="destinationlabel">
      <x>0</x>
@@ -541,8 +556,8 @@
    <slot>onRemoveArea()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>336</x>
-     <y>270</y>
+     <x>317</x>
+     <y>318</y>
     </hint>
     <hint type="destinationlabel">
      <x>6</x>
@@ -568,7 +583,7 @@
   </connection>
   <connection>
    <sender>rectanglesViewWidget</sender>
-   <signal>rectangleSelected(int)</signal>
+   <signal>areaSelected(int)</signal>
    <receiver>ImportTilesInBulkDialog</receiver>
    <slot>onSelectArea(int)</slot>
    <hints>
@@ -584,9 +599,9 @@
   </connection>
   <connection>
    <sender>rectanglesViewWidget</sender>
-   <signal>rectangleAdded(QRect)</signal>
+   <signal>areaAdded(ImportTilesArea)</signal>
    <receiver>ImportTilesInBulkDialog</receiver>
-   <slot>onAddArea(QRect)</slot>
+   <slot>onAddArea(ImportTilesArea)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>608</x>
@@ -600,7 +615,7 @@
   </connection>
   <connection>
    <sender>rectanglesViewWidget</sender>
-   <signal>rectangleRemoved(int)</signal>
+   <signal>areaRemoved(int)</signal>
    <receiver>ImportTilesInBulkDialog</receiver>
    <slot>onRemoveArea(int)</slot>
    <hints>
@@ -621,8 +636,8 @@
    <slot>onChangeArea()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>51</x>
-     <y>360</y>
+     <x>94</x>
+     <y>398</y>
     </hint>
     <hint type="destinationlabel">
      <x>2</x>
@@ -637,8 +652,8 @@
    <slot>onChangeArea()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>155</x>
-     <y>366</y>
+     <x>188</x>
+     <y>398</y>
     </hint>
     <hint type="destinationlabel">
      <x>-2</x>
@@ -653,8 +668,8 @@
    <slot>onChangeArea()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>71</x>
-     <y>388</y>
+     <x>106</x>
+     <y>431</y>
     </hint>
     <hint type="destinationlabel">
      <x>71</x>
@@ -669,8 +684,8 @@
    <slot>onChangeArea()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>168</x>
-     <y>389</y>
+     <x>188</x>
+     <y>431</y>
     </hint>
     <hint type="destinationlabel">
      <x>168</x>
@@ -680,7 +695,7 @@
   </connection>
   <connection>
    <sender>rectanglesViewWidget</sender>
-   <signal>rectangleChanged(QPoint)</signal>
+   <signal>areaChanged(QPoint)</signal>
    <receiver>ImportTilesInBulkDialog</receiver>
    <slot>onAreaChanged(QPoint)</slot>
    <hints>
@@ -694,6 +709,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>dxSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>ImportTilesInBulkDialog</receiver>
+   <slot>onChangeArea()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>273</x>
+     <y>398</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>274</x>
+     <y>480</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>dySpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>ImportTilesInBulkDialog</receiver>
+   <slot>onChangeArea()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>247</x>
+     <y>426</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>247</x>
+     <y>484</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onChangeTexturePath()</slot>
@@ -703,7 +750,7 @@
   <slot>onRemoveArea()</slot>
   <slot>onSelectedAreaChanged(int)</slot>
   <slot>onSelectArea(int)</slot>
-  <slot>onAddArea(QRect)</slot>
+  <slot>onAddArea(ImportTilesArea)</slot>
   <slot>onRemoveArea(int)</slot>
   <slot>onChangeArea()</slot>
   <slot>onAreaChanged(QPoint)</slot>

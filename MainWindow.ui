@@ -1085,6 +1085,21 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>ColorSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>ColorSelectionWidget.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>clicked(QColor)</signal>
+    <signal>colorChanged(QColor)</signal>
+    <slot>setHue(int)</slot>
+    <slot>setSaturation(int)</slot>
+    <slot>setValue(int)</slot>
+    <slot>setAlpha(int)</slot>
+    <slot>setColor(QColor)</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
    <class>TilesetViewWidget</class>
    <extends>QWidget</extends>
    <header>TilesetViewWidget.hpp</header>
@@ -1154,21 +1169,6 @@
    <container>1</container>
    <slots>
     <signal>hueChanged(int)</signal>
-   </slots>
-  </customwidget>
-  <customwidget>
-   <class>ColorSelectionWidget</class>
-   <extends>QWidget</extends>
-   <header>ColorSelectionWidget.hpp</header>
-   <container>1</container>
-   <slots>
-    <signal>clicked(QColor)</signal>
-    <signal>colorChanged(QColor)</signal>
-    <slot>setHue(int)</slot>
-    <slot>setSaturation(int)</slot>
-    <slot>setValue(int)</slot>
-    <slot>setAlpha(int)</slot>
-    <slot>setColor(QColor)</slot>
    </slots>
   </customwidget>
   <customwidget>

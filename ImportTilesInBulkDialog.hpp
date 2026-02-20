@@ -6,6 +6,8 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class ImportTilesInBulkDialog; }
 QT_END_NAMESPACE
 
+struct ImportTilesArea { int x, y, w, h, dx, dy; };
+
 class ImportTilesInBulkWidget final: public QWidget
 {
     Q_OBJECT
@@ -14,11 +16,13 @@ public:
 
     void setTexture(const QString &path);
     void setTilesize(const int size) { tilesize = size; update(); }
-    QVector<QRect> getRectangles() const { return rectangles; }
+    QVector<ImportTilesArea> getAreas() const { return areas; }
 
-    void addRectangle(const QRect &rect) { rectangles.push_back(rect); update(); }
-    void removeRectangleAt(const int index);
-    QRect &getRectangleAt(const int index);
+    void addArea(const ImportTilesArea &area) { areas.push_back(area); update(); }
+    void removeAreaAt(const int index);
+    ImportTilesArea &getAreaAt(const int index);
+
+    QVector<QImage> getTiles() const;
 
 public slots:
     void setZoom(const double z) { zoom = z; updateDisplayedTexture(); }
@@ -26,18 +30,18 @@ public slots:
     void setColorKey(const QColor color) { color_key = color; updateDisplayedTexture(); }
     void setMagnetic(const bool yes) { magnetic = yes; update(); }
 
-    void setSelectedRectangle(const int index) { selected = index; update(); }
+    void setSelectedArea(const int index) { selected = index; update(); }
 
 signals:
-    void rectangleSelected(const int index);
-    void rectangleAdded(const QRect rectangle);
-    void rectangleRemoved(const int index);
-    void rectangleChanged(const QPoint new_position);
+    void areaSelected(const int index);
+    void areaAdded(const ImportTilesArea area);
+    void areaRemoved(const int index);
+    void areaChanged(const QPoint new_position);
 
 private:
     int tilesize;
     QImage original_texture;
-    QVector<QRect> rectangles;
+    QVector<ImportTilesArea> areas;
 
     double zoom, scaling;
     QColor color_key;
@@ -74,7 +78,9 @@ public:
     ~ImportTilesInBulkDialog();
 
     QString getTexturePath() const;
-    QVector<QRect> getTileAreas() const;
+    QVector<ImportTilesArea> getTileAreas() const;
+
+    QVector<QImage> getTiles() const;
 
 public slots:
     void onChangeTexturePath();
@@ -83,7 +89,7 @@ public slots:
     void onAccept();
 
     void enableAreasWidgets(const bool enabled);
-    void onAddArea(const QRect area = {0, 0, 1, 1});
+    void onAddArea(const ImportTilesArea area = {0, 0, 1, 1, 0, 0});
     void onRemoveArea(int index = -1);
 
     void enableAreaWidgets(const bool enabled);
