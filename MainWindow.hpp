@@ -28,6 +28,8 @@ public slots:
     bool onSave();
     bool onSaveAs();
     void onImportTilesInBulk();
+    void onExportTilesetAndMap();
+    void onExportAsTextures();
     void onQuit();
 
     void onUndo();

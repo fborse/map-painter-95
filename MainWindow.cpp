@@ -12,6 +12,7 @@
 #include "ResizeMapDialog.hpp"
 #include "ScaleSelectionDialog.hpp"
 #include "ImportTilesInBulkDialog.hpp"
+#include "ExportTilesetAndMapDialog.hpp"
 
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow),
@@ -275,13 +276,29 @@ bool MainWindow::onSaveAs()
 
 void MainWindow::onImportTilesInBulk()
 {
-    ImportTilesInBulkDialog dialog(ui->tilesetView->getTilesize(), this);
+    const int tilesize = ui->tilesetView->getTilesize();
+
+    ImportTilesInBulkDialog dialog(tilesize, this);
     if (dialog.exec() == QDialog::Accepted)
     {
         ui->tilesetView->addTiles(dialog.getTiles(), true);
         refreshViews();
     }
 }
+
+void MainWindow::onExportTilesetAndMap()
+{
+    const int tilesize = ui->tilesetView->getTilesize();
+
+    ExportTilesetAndMapDialog dialog(tilesize, this);
+    dialog.setTilesOrderPointer(tiles_order);
+    dialog.setTilesetPointer(tileset);
+    dialog.setMapLayersPointer(map_layers);
+    dialog.exec();
+}
+
+void MainWindow::onExportAsTextures()
+{}
 
 void MainWindow::onQuit()
 {

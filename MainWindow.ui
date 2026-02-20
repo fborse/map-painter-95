@@ -778,6 +778,13 @@
      </property>
      <addaction name="actionImportTilesInBulk"/>
     </widget>
+    <widget class="QMenu" name="menuExport">
+     <property name="title">
+      <string>Export</string>
+     </property>
+     <addaction name="actionExportTilesetAndMap"/>
+     <addaction name="actionExportAsTextures"/>
+    </widget>
     <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
     <addaction name="separator"/>
@@ -785,7 +792,7 @@
     <addaction name="actionSaveAs"/>
     <addaction name="separator"/>
     <addaction name="menuImport"/>
-    <addaction name="actionExport"/>
+    <addaction name="menuExport"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -1066,20 +1073,37 @@
     <string>Ctrl+A, Ctrl+C, Ctrl+T</string>
    </property>
   </action>
-  <action name="actionExport">
-   <property name="text">
-    <string>Export</string>
-   </property>
-  </action>
   <action name="actionImportTilesInBulk">
    <property name="text">
-    <string>Tiles In &amp;Bulk</string>
+    <string>Tiles In &amp;Bulk...</string>
    </property>
    <property name="toolTip">
     <string>Import Tiles In Bulk</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+I, Ctrl+B</string>
+   </property>
+  </action>
+  <action name="actionExportTilesetAndMap">
+   <property name="text">
+    <string>Tileset And &amp;Map...</string>
+   </property>
+   <property name="toolTip">
+    <string>Export Tileset And Map</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E, Ctrl+M</string>
+   </property>
+  </action>
+  <action name="actionExportAsTextures">
+   <property name="text">
+    <string>As Textures...</string>
+   </property>
+   <property name="toolTip">
+    <string>Export As Textures</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E, Ctrl+T</string>
    </property>
   </action>
  </widget>
@@ -2340,6 +2364,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionExportAsTextures</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onExportAsTextures()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionExportTilesetAndMap</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onExportTilesetAndMap()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -2366,5 +2422,7 @@
   <slot>onRotate90CCW()</slot>
   <slot>onScale()</slot>
   <slot>onImportTilesInBulk()</slot>
+  <slot>onExportTilesetAndMap()</slot>
+  <slot>onExportAsTextures()</slot>
  </slots>
 </ui>
