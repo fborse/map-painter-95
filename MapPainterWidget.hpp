@@ -76,6 +76,8 @@ public slots:
 
 signals:
     void colorChanged(const QColor color);
+    void tilesAdded();
+
     void canCopy(bool);
 
 private:
@@ -145,12 +147,12 @@ private:
 
 //  TODO: find a more palatable structure than this ugly composite type
 //  requirement is to aggregate the data as efficiently, though
-    void handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels) const;
-    void handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels) const;
+    void handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels);
+    void handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels);
 
     void blitSelection();
     void handleSelectionMade();
-    void handleDrawChanges() const;
+    void handleDrawChanges();
 
     void mouseMoveEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;

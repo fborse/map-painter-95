@@ -712,7 +712,7 @@ static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor
     return QPair<decltype(prev), decltype(next)>(prev, next);
 }
 
-void MapPainterWidget::handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels) const
+void MapPainterWidget::handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels)
 {
     const auto &[prev, next] = get_prev_next_images(
         changed_pixels,
@@ -745,7 +745,7 @@ static inline QImage empty(const int w, const int h)
     return img;
 }
 
-void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels) const
+void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels)
 {
     const auto &[prev_tiles, next_tiles] = get_prev_next_images(
         changed_pixels,
@@ -784,6 +784,9 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
         undo_stack->push(new AddTilesCommand(tiles_order, tileset, added));
         undo_stack->push(new ReplaceReferencesCommand(map_layers, prev_refs, next_refs));
         undo_stack->endMacro();
+
+        if (!added.isEmpty())
+            emit tilesAdded();
     }
 }
 
@@ -962,7 +965,7 @@ void MapPainterWidget::selectAll()
     update();
 }
 
-void MapPainterWidget::handleDrawChanges() const
+void MapPainterWidget::handleDrawChanges()
 {
     if (!(tileset && map_layers))
         return;

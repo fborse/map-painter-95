@@ -643,7 +643,7 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>66</width>
+                         <width>98</width>
                          <height>28</height>
                         </rect>
                        </property>
@@ -1156,6 +1156,7 @@
     <signal>zoomSet(double)</signal>
     <signal>colorChanged(QColor)</signal>
     <signal>canCopy(bool)</signal>
+    <signal>tilesAdded()</signal>
     <slot>setZoom(double)</slot>
     <slot>setShowGrid(bool)</slot>
     <slot>setDrawColor(QColor)</slot>
@@ -1939,8 +1940,8 @@
    <slot>setBrushPixels(QImage)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>840</x>
-     <y>637</y>
+     <x>863</x>
+     <y>628</y>
     </hint>
     <hint type="destinationlabel">
      <x>664</x>
@@ -1955,12 +1956,12 @@
    <slot>setBrushPixels(QImage)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>840</x>
-     <y>637</y>
+     <x>863</x>
+     <y>628</y>
     </hint>
     <hint type="destinationlabel">
-     <x>840</x>
-     <y>637</y>
+     <x>863</x>
+     <y>628</y>
     </hint>
    </hints>
   </connection>
@@ -2393,6 +2394,22 @@
     <hint type="destinationlabel">
      <x>511</x>
      <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mapPainter</sender>
+   <signal>tilesAdded()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>refreshViews()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>381</x>
+     <y>649</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>381</x>
+     <y>763</y>
     </hint>
    </hints>
   </connection>
