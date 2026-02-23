@@ -30,15 +30,17 @@ public:
 
 public slots:
     void onAccept();
+    void redrawTileset();
 
 private:
     Ui::ExportTilesetAndMapDialog *ui;
 
     int tilesize;
 
+    QHash<QString, QPoint> tile_coordinates;
+    QImage drawn_tileset;
+
     QWeakPointer<Names> tiles_order;
     QWeakPointer<Tileset> tileset;
     QWeakPointer<MapLayer> map_layers;
-
-    void redrawTileset();
 };
