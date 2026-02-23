@@ -19,6 +19,7 @@ SOURCES += \
     ColorSaturationValueWidget.cpp \
     ColorSelectionWidget.cpp \
     EditorWidget.cpp \
+    ExportAsTexturesDialog.cpp \
     ExportTilesetAndMapDialog.cpp \
     ImportTilesInBulkDialog.cpp \
     MapEditorWidget.cpp \
@@ -41,6 +42,7 @@ HEADERS += \
     ColorSaturationValueWidget.hpp \
     ColorSelectionWidget.hpp \
     EditorWidget.hpp \
+    ExportAsTexturesDialog.hpp \
     ExportTilesetAndMapDialog.hpp \
     ImportTilesInBulkDialog.hpp \
     MainWindow.hpp \
@@ -54,6 +56,7 @@ HEADERS += \
 FORMS += \
     AddTileDialog.ui \
     BrushEditorDialog.ui \
+    ExportAsTexturesDialog.ui \
     ExportTilesetAndMapDialog.ui \
     ImportTilesInBulkDialog.ui \
     MainWindow.ui \

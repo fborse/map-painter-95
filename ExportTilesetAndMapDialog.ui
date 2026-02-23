@@ -6,16 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>480</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Export Tileset And Map</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_4">
+    <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="2,3">
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
@@ -143,8 +143,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>281</width>
-             <height>381</height>
+             <width>438</width>
+             <height>501</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
