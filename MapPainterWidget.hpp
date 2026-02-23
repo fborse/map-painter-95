@@ -104,7 +104,7 @@ private:
     SelectionShape selection_shape;
     bool selection_color_key;
 
-    QPoint mouse_cursor;
+    QPointF mouse_cursor;
 //  right click is really just a desktop thing => names accordingly
     std::optional<QPoint> click_origin;
     bool right_click;

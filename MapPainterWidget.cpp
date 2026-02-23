@@ -439,8 +439,8 @@ void MapPainterWidget::drawLine(QPainter &painter) const
 {
     setPen(painter);
     const QPoint cursor = shift_key?
-        snap(*click_origin, mouse_cursor)
-      : mouse_cursor;
+        snap(*click_origin, mouse_cursor.toPoint())
+      : mouse_cursor.toPoint();
 
     painter.drawLine(*click_origin, cursor);
 }
@@ -476,7 +476,7 @@ void MapPainterWidget::drawShape(QPainter &painter) const
     if (fill_shape)
         painter.setBrush(draw_color);
 
-    const QRect r = to_rect(*click_origin, mouse_cursor);
+    const QRect r = to_rect(*click_origin, mouse_cursor.toPoint());
     if (ellipse_shape)
         painter.drawEllipse(r);
     else
@@ -486,15 +486,15 @@ void MapPainterWidget::drawShape(QPainter &painter) const
 void MapPainterWidget::drawFill(QImage &original) const
 {
     const QRect rect = fill_this_tile_only?
-        QRect(divide(mouse_cursor, tilesize) * tilesize, QSize(tilesize, tilesize))
+        QRect(divide(mouse_cursor.toPoint(), tilesize) * tilesize, QSize(tilesize, tilesize))
       : getWidgetRect();
 
-    const QColor original_color = original.pixelColor(mouse_cursor);
+    const QColor original_color = original.pixelColor(mouse_cursor.toPoint());
     const QPoint d[] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
     QSet<QPoint> done;
 //  TODO: change QVector to a better structure
-    QVector<QPoint> todo = {mouse_cursor};
+    QVector<QPoint> todo = {mouse_cursor.toPoint()};
     while (!todo.isEmpty())
     {
         const QPoint p = todo.takeAt(0);
@@ -1048,6 +1048,8 @@ static inline QRect rect_from(const QPoint &p1, const QPoint &p2)
 
 void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
 {
+//  we still want to divide like that, to get granularity compared to the zoom
+//  note that event->pos() / zoom would shift the cursor half of the time
     mouse_cursor = divide(event->pos(), zoom);
 
     if (click_origin)
@@ -1058,24 +1060,24 @@ void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
         case ERASER:
         case SHADER:
             if (drag_points.back() != mouse_cursor)
-                drag_points.push_back(mouse_cursor);
+                drag_points.push_back(mouse_cursor.toPoint());
             break;
         case PIPETTE:
-            emit colorChanged(getColorAt(mouse_cursor));
+            emit colorChanged(getColorAt(mouse_cursor.toPoint()));
             break;
         case SELECTION:
             if (move_offset)
-                selection_rect->moveTo(mouse_cursor - *move_offset);
+                selection_rect->moveTo(mouse_cursor.toPoint() - *move_offset);
             else if (selection_shape != MAGIC)
-                selection_rect = rect_from(*click_origin, mouse_cursor);
+                selection_rect = rect_from(*click_origin, mouse_cursor.toPoint());
             else if (magic_points.back() != mouse_cursor)
-                magic_points.push_back(mouse_cursor);
+                magic_points.push_back(mouse_cursor.toPoint());
         default:
             break;
         }
 
     if (right_click)
-        emit colorChanged(getColorAt(mouse_cursor));
+        emit colorChanged(getColorAt(mouse_cursor.toPoint()));
 
     update();
 }
@@ -1092,7 +1094,7 @@ static inline bool ellipse_contains(const QRect &rect, const QPoint &p)
     return dx*dx + dy*dy <= 1;
 }
 
-static inline bool contains(const SelectionShape shape, const std::optional<QRect> rect, const QVector<QPoint> &magic, const QPoint &p)
+static inline bool contains(const SelectionShape shape, const std::optional<QRect> rect, const QVector<QPoint> &magic, const QPointF &p)
 {
     if (!rect)
         return false;
@@ -1100,11 +1102,11 @@ static inline bool contains(const SelectionShape shape, const std::optional<QRec
     switch (shape)
     {
     case RECTANGLE:
-        return rect->contains(p);
+        return rect->contains(p.toPoint());
     case ELLIPSE:
-        return ellipse_contains(*rect, p);
+        return ellipse_contains(*rect, p.toPoint());
     case MAGIC:
-        return QPolygon(magic).translated(rect->topLeft()).containsPoint(p, Qt::OddEvenFill);
+        return QPolygon(magic).translated(rect->topLeft()).containsPoint(p.toPoint(), Qt::OddEvenFill);
     }
 
     throw std::runtime_error("Someone made SelectionShape able to be invalid");
@@ -1116,15 +1118,15 @@ void MapPainterWidget::mousePressEvent(QMouseEvent *event)
     {
         click_origin = divide(event->pos(), zoom);
 
-        drag_points = {mouse_cursor};
+        drag_points = {mouse_cursor.toPoint()};
         if (draw_tool == PIPETTE)
-            emit colorChanged(getColorAt(mouse_cursor));
+            emit colorChanged(getColorAt(mouse_cursor.toPoint()));
 
         if (draw_tool == SELECTION)
         {
             if (contains(selection_shape, selection_rect, magic_points, mouse_cursor))
             {
-                move_offset = mouse_cursor - selection_rect->topLeft();
+                move_offset = mouse_cursor.toPoint() - selection_rect->topLeft();
             }
             else
             {
@@ -1133,8 +1135,8 @@ void MapPainterWidget::mousePressEvent(QMouseEvent *event)
 
                 emit canCopy(false);
             //  1x1 would create a selection even if we just clicked
-                selection_rect = QRect(mouse_cursor, QSize(0, 0));
-                magic_points = {mouse_cursor};
+                selection_rect = QRect(mouse_cursor.toPoint(), QSize(0, 0));
+                magic_points = {mouse_cursor.toPoint()};
                 selection_image = original_selection_image = {};
                 original_rect = {};
             }
@@ -1144,7 +1146,7 @@ void MapPainterWidget::mousePressEvent(QMouseEvent *event)
     if (event->button() == Qt::RightButton)
     {
         right_click = true;
-        emit colorChanged(getColorAt(mouse_cursor));
+        emit colorChanged(getColorAt(mouse_cursor.toPoint()));
     }
 
     update();
