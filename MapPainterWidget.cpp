@@ -381,26 +381,37 @@ static inline QPair<QPoint, QPoint> two_last(const QVector<QPoint> &xs)
     return {xs[xs.length()-2], xs[xs.length()-1]};
 }
 
+static inline QVector<QPoint> bugfix_add_up_left_shifted(const QVector<QPoint> &xs, const int pen_size)
+{
+    QVector<QPoint> ys = xs;
+
+    Q_ASSERT(xs.length() > 1);
+    const QPoint p1 = xs[xs.length() - 2];
+    const QPoint p2 = xs[xs.length() - 1];
+
+    if (pen_size == 1)
+    {
+        const int dx = p2.x() - p1.x();
+        const int dy = p2.y() - p1.y();
+
+        if (dx < 0 && dy < 0)
+            ys.push_back(p2  - QPoint(1, 1));
+        else if (dx < 0)
+            ys.push_back(p2 - QPoint(1, 0));
+        else if (dy < 0)
+            ys.push_back(p2 - QPoint(0, 1));
+    }
+
+    return ys;
+}
+
 void MapPainterWidget::drawPen(QPainter &painter) const
 {
     setPen(painter);
 
     if (drag_points.length() > 1)
     {
-        const auto &[p1, p2] = two_last(drag_points);
-        auto copy = drag_points;
-
-    //  BUGFIX: going up/left doesn't draw the last added point
-        if (pen_size == 1)
-        {
-            if (p2.x() - p1.x() < 0 && p2.y() - p2.y() < 0)
-                copy.push_back(drag_points.back() - QPoint(1, 1));
-            else if (p2.x() - p1.x() < 0)
-                copy.push_back(drag_points.back() - QPoint(1, 0));
-            else if (p2.y() - p1.y() < 0)
-                copy.push_back(drag_points.back() - QPoint(0, 1));
-        }
-
+        auto copy = bugfix_add_up_left_shifted(drag_points, pen_size);
         painter.drawPolyline(copy.data(), copy.length());
     }
 
@@ -511,20 +522,7 @@ void MapPainterWidget::drawEraser(QPainter &painter) const
 
     if (drag_points.length() > 1)
     {
-        const auto &[p1, p2] = two_last(drag_points);
-        auto copy = drag_points;
-
-    //  BUGFIX: going up/left doesn't draw the last added point
-        if (pen_size == 1)
-        {
-            if (p2.x() - p1.x() < 0 && p2.y() - p2.y() < 0)
-                copy.push_back(drag_points.back() - QPoint(1, 1));
-            else if (p2.x() - p1.x() < 0)
-                copy.push_back(drag_points.back() - QPoint(1, 0));
-            else if (p2.y() - p1.y() < 0)
-                copy.push_back(drag_points.back() - QPoint(0, 1));
-        }
-
+        auto copy = bugfix_add_up_left_shifted(drag_points, pen_size);
         painter.drawPolyline(copy.data(), copy.length());
     }
 
@@ -540,20 +538,7 @@ void MapPainterWidget::drawShader(QPainter &painter) const
 
     if (drag_points.length() > 1)
     {
-        const auto &[p1, p2] = two_last(drag_points);
-        auto copy = drag_points;
-
-    //  BUGFIX: going up/left doesn't draw the last added point
-        if (pen_size == 1)
-        {
-            if (p2.x() - p1.x() < 0 && p2.y() - p2.y() < 0)
-                copy.push_back(drag_points.back() - QPoint(1, 1));
-            else if (p2.x() - p1.x() < 0)
-                copy.push_back(drag_points.back() - QPoint(1, 0));
-            else if (p2.y() - p1.y() < 0)
-                copy.push_back(drag_points.back() - QPoint(0, 1));
-        }
-
+        auto copy = bugfix_add_up_left_shifted(drag_points, pen_size);
         painter.drawPolyline(copy.data(), copy.length());
     }
 
