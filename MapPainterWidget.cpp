@@ -343,7 +343,7 @@ void MapPainterWidget::paintCursor(QPainter &painter) const
         break;
     }
 
-    painter.drawImage((mouse_cursor - offset) * zoom, cursor_image);
+    painter.drawImage((mouse_cursor - offset) * int(zoom), cursor_image);
 }
 
 QColor MapPainterWidget::getEffectiveDrawColor() const
@@ -449,8 +449,8 @@ void MapPainterWidget::drawBrush(QPainter &painter) const
 {
     setPen(painter);
 
-    const int ox = cursor_image.width() / (2*zoom);
-    const int oy = cursor_image.height() / (2*zoom);
+    const int ox = cursor_image.width() / (2*int(zoom));
+    const int oy = cursor_image.height() / (2*int(zoom));
 
     QVector<QPoint> points;
     for (auto &[x, y]: drag_points)
@@ -560,6 +560,7 @@ void MapPainterWidget::drawSelectionOutline(QPainter &painter) const
     if (selection_rect)
     {
     //  QPoint rounds floats ; we don't want that
+    //  ABCDEF int(zoom)
         const auto &[x, y] = selection_rect->topLeft();
         const QPoint p(int(x * zoom), int(y * zoom));
         const auto &[w, h] = selection_rect->size();
@@ -570,7 +571,8 @@ void MapPainterWidget::drawSelectionOutline(QPainter &painter) const
             for (int i = 0; i < shown.length(); ++i)
                 shown[i] += selection_rect->topLeft();
         for (int i = 0; i < shown.length(); ++i)
-                shown[i] = shown[i] * zoom;
+        //  ABCDEF
+            shown[i] = shown[i] * zoom;
 
         switch (selection_shape)
         {
