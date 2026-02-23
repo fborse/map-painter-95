@@ -375,12 +375,34 @@ void MapPainterWidget::setPen(QPainter &painter) const
     painter.setRenderHint(QPainter::Antialiasing, anti_aliasing);
 }
 
+static inline QPair<QPoint, QPoint> two_last(const QVector<QPoint> &xs)
+{
+    Q_ASSERT(xs.length() > 1);
+    return {xs[xs.length()-2], xs[xs.length()-1]};
+}
+
 void MapPainterWidget::drawPen(QPainter &painter) const
 {
     setPen(painter);
 
     if (drag_points.length() > 1)
-        painter.drawPolyline(drag_points.data(), drag_points.length());
+    {
+        const auto &[p1, p2] = two_last(drag_points);
+        auto copy = drag_points;
+
+    //  BUGFIX: going up/left doesn't draw the last added point
+        if (pen_size == 1)
+        {
+            if (p2.x() - p1.x() < 0 && p2.y() - p2.y() < 0)
+                copy.push_back(drag_points.back() - QPoint(1, 1));
+            else if (p2.x() - p1.x() < 0)
+                copy.push_back(drag_points.back() - QPoint(1, 0));
+            else if (p2.y() - p1.y() < 0)
+                copy.push_back(drag_points.back() - QPoint(0, 1));
+        }
+
+        painter.drawPolyline(copy.data(), copy.length());
+    }
 
 //    painter.drawPoint(drag_points.front());
     if (drag_points.length() == 1)
@@ -488,7 +510,23 @@ void MapPainterWidget::drawEraser(QPainter &painter) const
     painter.setCompositionMode(QPainter::CompositionMode_Clear);
 
     if (drag_points.length() > 1)
-        painter.drawPolyline(drag_points.data(), drag_points.length());
+    {
+        const auto &[p1, p2] = two_last(drag_points);
+        auto copy = drag_points;
+
+    //  BUGFIX: going up/left doesn't draw the last added point
+        if (pen_size == 1)
+        {
+            if (p2.x() - p1.x() < 0 && p2.y() - p2.y() < 0)
+                copy.push_back(drag_points.back() - QPoint(1, 1));
+            else if (p2.x() - p1.x() < 0)
+                copy.push_back(drag_points.back() - QPoint(1, 0));
+            else if (p2.y() - p1.y() < 0)
+                copy.push_back(drag_points.back() - QPoint(0, 1));
+        }
+
+        painter.drawPolyline(copy.data(), copy.length());
+    }
 
 //    painter.drawPoint(drag_points.front());
     if (drag_points.length() == 1)
@@ -501,7 +539,23 @@ void MapPainterWidget::drawShader(QPainter &painter) const
     painter.setCompositionMode(QPainter::CompositionMode_SourceAtop);
 
     if (drag_points.length() > 1)
-        painter.drawPolyline(drag_points.data(), drag_points.length());
+    {
+        const auto &[p1, p2] = two_last(drag_points);
+        auto copy = drag_points;
+
+    //  BUGFIX: going up/left doesn't draw the last added point
+        if (pen_size == 1)
+        {
+            if (p2.x() - p1.x() < 0 && p2.y() - p2.y() < 0)
+                copy.push_back(drag_points.back() - QPoint(1, 1));
+            else if (p2.x() - p1.x() < 0)
+                copy.push_back(drag_points.back() - QPoint(1, 0));
+            else if (p2.y() - p1.y() < 0)
+                copy.push_back(drag_points.back() - QPoint(0, 1));
+        }
+
+        painter.drawPolyline(copy.data(), copy.length());
+    }
 
 //    painter.drawPoint(drag_points.front());
     if (drag_points.length() == 1)
@@ -1021,7 +1075,8 @@ void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
         case BRUSH:
         case ERASER:
         case SHADER:
-            drag_points.push_back(mouse_cursor);
+            if (drag_points.back() != mouse_cursor)
+                drag_points.push_back(mouse_cursor);
             break;
         case PIPETTE:
             emit colorChanged(getColorAt(mouse_cursor));
@@ -1031,7 +1086,7 @@ void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
                 selection_rect->moveTo(mouse_cursor - *move_offset);
             else if (selection_shape != MAGIC)
                 selection_rect = rect_from(*click_origin, mouse_cursor);
-            else
+            else if (magic_points.back() != mouse_cursor)
                 magic_points.push_back(mouse_cursor);
         default:
             break;
