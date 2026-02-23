@@ -375,12 +375,6 @@ void MapPainterWidget::setPen(QPainter &painter) const
     painter.setRenderHint(QPainter::Antialiasing, anti_aliasing);
 }
 
-static inline QPair<QPoint, QPoint> two_last(const QVector<QPoint> &xs)
-{
-    Q_ASSERT(xs.length() > 1);
-    return {xs[xs.length()-2], xs[xs.length()-1]};
-}
-
 static inline QVector<QPoint> bugfix_add_up_left_shifted(const QVector<QPoint> &xs, const int pen_size)
 {
     QVector<QPoint> ys = xs;
@@ -414,10 +408,10 @@ void MapPainterWidget::drawPen(QPainter &painter) const
         auto copy = bugfix_add_up_left_shifted(drag_points, pen_size);
         painter.drawPolyline(copy.data(), copy.length());
     }
-
-//    painter.drawPoint(drag_points.front());
-    if (drag_points.length() == 1)
+    else if (drag_points.length() == 1)
+    {
         painter.drawPoint(drag_points.back());
+    }
 }
 
 static constexpr double pi = 3.1415926535897932384626433;
@@ -525,10 +519,10 @@ void MapPainterWidget::drawEraser(QPainter &painter) const
         auto copy = bugfix_add_up_left_shifted(drag_points, pen_size);
         painter.drawPolyline(copy.data(), copy.length());
     }
-
-//    painter.drawPoint(drag_points.front());
-    if (drag_points.length() == 1)
+    else if (drag_points.length() == 1)
+    {
         painter.drawPoint(drag_points.back());
+    }
 }
 
 void MapPainterWidget::drawShader(QPainter &painter) const
@@ -541,10 +535,10 @@ void MapPainterWidget::drawShader(QPainter &painter) const
         auto copy = bugfix_add_up_left_shifted(drag_points, pen_size);
         painter.drawPolyline(copy.data(), copy.length());
     }
-
-//    painter.drawPoint(drag_points.front());
-    if (drag_points.length() == 1)
+    else if (drag_points.length() == 1)
+    {
         painter.drawPoint(drag_points.back());
+    }
 }
 
 void MapPainterWidget::drawSelectionPixels(QPainter &painter) const
