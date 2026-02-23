@@ -1019,19 +1019,23 @@ void MapPainterWidget::handleSelectionMade()
         if (selection_shape == MAGIC)
             selection_rect = path_to_rect(magic_points);
 
-        original_rect = selection_rect;
-
-        emit canCopy(true);
-        if (has_selection(move_offset, selection_rect))
+        if (selection_rect && !selection_rect->isEmpty())
         {
-            QImage source = getPaintedLayer().copy(*selection_rect);
-            for (int i = 0; i < magic_points.length(); ++i)
-                magic_points[i] = magic_points[i] - selection_rect->topLeft();
-//            magic_points.push_back(magic_points.front());
-            QImage dest = get_selection_contents(source, selection_shape, magic_points);
+            original_rect = selection_rect;
 
-            original_selection_image = dest;
-            redrawDisplayedSelectionImage();
+            emit canCopy(true);
+            if (has_selection(move_offset, selection_rect))
+            {
+                QImage source = getPaintedLayer().copy(*selection_rect);
+                for (int i = 0; i < magic_points.length(); ++i)
+                    magic_points[i] = magic_points[i] - selection_rect->topLeft();
+                //            magic_points.push_back(magic_points.front());
+                QImage dest = get_selection_contents(source, selection_shape, magic_points);
+
+                original_selection_image = dest;
+                redrawDisplayedSelectionImage();
+
+            }
         }
     }
 

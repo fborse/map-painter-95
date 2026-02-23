@@ -53,8 +53,14 @@ MainWindow::MainWindow(QWidget *parent):
     ui->actionSave->setEnabled(false);
     ui->actionUndo->setEnabled(false);
     ui->actionRedo->setEnabled(false);
+
     ui->actionCut->setEnabled(false);
     ui->actionCopy->setEnabled(false);
+    ui->actionFlipHorizontally->setEnabled(false);
+    ui->actionFlipVertically->setEnabled(false);
+    ui->actionRotate90CW->setEnabled(false);
+    ui->actionRotate90CCW->setEnabled(false);
+    ui->actionScale->setEnabled(false);
 
     refreshViews();
 
