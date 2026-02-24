@@ -154,14 +154,14 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
 
 void MapPainterWidget::resize()
 {
-    if (map_layers)
-    {
-        const int h = map_layers->length();
-        const int w = map_layers->at(0).length();
+    Q_ASSERT(!map_layers.isNull());
 
-        grid_aspect = {w, h};
-        EditorWidget::resize();
-    }
+    const int h = map_layers->length();
+    Q_ASSERT(!map_layers->isEmpty());
+    const int w = map_layers->at(0).length();
+
+    grid_aspect = {w, h};
+    EditorWidget::resize();
 }
 
 void MapPainterWidget::setDrawTool(const int index)
@@ -261,24 +261,35 @@ static inline QImage get_low_res(const int pen_size, const bool round)
     return img;
 }
 
+static inline std::optional<QColor> get_at(const QImage &img, const QPoint &p)
+{
+    if (img.rect().contains(p))
+        return img.pixelColor(p);
+    else
+        return {};
+}
+
+static inline bool different_from_neighbours(const QImage &img, const QPoint &p)
+{
+    const QPoint directions[] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    Q_ASSERT(img.rect().contains(p));
+    const QColor original = img.pixelColor(p);
+
+    for (auto &d: directions)
+        if (const auto candidate = get_at(img, p + d))
+            if (*candidate != original && *candidate != Qt::transparent)
+                return false;
+
+    return true;
+}
+
 static inline void reduce_to_outline(QImage &img)
 {
-    QPoint d[] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-
     for (int y = 0; y < img.height(); ++y)
-    {
         for (int x = 0; x < img.width(); ++x)
-        {
-            bool diff = false;
-            for (auto &[i, j]: d)
-                if (img.rect().contains(x+i, y+j))
-                    if (img.pixelColor(x, y) != img.pixelColor(x+i, y+j))
-                        if (img.pixelColor(x+i, y+j) != Qt::transparent)
-                            diff = true;
-            if (!diff)
+            if (different_from_neighbours(img, {x, y}))
                 img.setPixelColor(x, y, Qt::transparent);
-        }
-    }
 }
 
 void MapPainterWidget::redrawCursorImage()
@@ -438,6 +449,8 @@ static inline QPoint snap(const QPoint &p0, const QPoint &p1)
 void MapPainterWidget::drawLine(QPainter &painter) const
 {
     setPen(painter);
+
+    Q_ASSERT(click_origin.has_value());
     const QPoint cursor = shift_key?
         snap(*click_origin, mouse_cursor)
       : mouse_cursor;
@@ -476,7 +489,9 @@ void MapPainterWidget::drawShape(QPainter &painter) const
     if (fill_shape)
         painter.setBrush(draw_color);
 
+    Q_ASSERT(click_origin.has_value());
     const QRect r = to_rect(*click_origin, mouse_cursor);
+
     if (ellipse_shape)
         painter.drawEllipse(r);
     else
@@ -490,10 +505,11 @@ void MapPainterWidget::drawFill(QImage &original) const
       : getWidgetRect();
 
     const QColor original_color = original.pixelColor(mouse_cursor);
-    const QPoint d[] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    const QPoint directions[] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
     QSet<QPoint> done;
 //  TODO: change QVector to a better structure
+//  QSet failed miserably by the way
     QVector<QPoint> todo = {mouse_cursor};
     while (!todo.isEmpty())
     {
@@ -501,11 +517,11 @@ void MapPainterWidget::drawFill(QImage &original) const
         original.setPixelColor(p, draw_color);
         done.insert(p);
 
-        for (auto &dp: d)
-            if (rect.contains(p + dp))
-                if (!done.contains(p + dp) && !todo.contains(p + dp))
-                    if (similar(original.pixelColor(p + dp), original_color, fill_tolerance))
-                        todo.push_back(p + dp);
+        for (auto &d: directions)
+            if (rect.contains(p+d))
+                if (!done.contains(p+d) && !todo.contains(p+d))
+                    if (similar(original.pixelColor(p+d), original_color, fill_tolerance))
+                        todo.push_back(p+d);
     }
 }
 
@@ -560,7 +576,6 @@ void MapPainterWidget::drawSelectionOutline(QPainter &painter) const
     if (selection_rect)
     {
     //  QPoint rounds floats ; we don't want that
-    //  ABCDEF int(zoom)
         const auto &[x, y] = selection_rect->topLeft();
         const QPoint p(int(x * zoom), int(y * zoom));
         const auto &[w, h] = selection_rect->size();
@@ -571,7 +586,6 @@ void MapPainterWidget::drawSelectionOutline(QPainter &painter) const
             for (int i = 0; i < shown.length(); ++i)
                 shown[i] += selection_rect->topLeft();
         for (int i = 0; i < shown.length(); ++i)
-        //  ABCDEF
             shown[i] = shown[i] * zoom;
 
         switch (selection_shape)
@@ -695,6 +709,9 @@ static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor
 
 void MapPainterWidget::handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels)
 {
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!map_layers.isNull());
+
     const auto &[prev, next] = get_prev_next_images(
         changed_pixels,
         *tileset,
@@ -718,7 +735,7 @@ static inline bool is_tile_unique(const MapLayer &map_layers, const TileReferenc
     return true;
 }
 
-static inline QImage empty(const int w, const int h)
+static inline QImage gen_empty(const int w, const int h)
 {
     QImage img(w, h, QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
@@ -728,6 +745,9 @@ static inline QImage empty(const int w, const int h)
 
 void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels)
 {
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!map_layers.isNull());
+
     const auto &[prev_tiles, next_tiles] = get_prev_next_images(
         changed_pixels,
         *tileset,
@@ -745,7 +765,7 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
         if (prev_id.isEmpty() || !prev_tiles.contains(prev_id))
         {
             QImage new_image = prev_id.isEmpty()?
-                empty(tilesize, tilesize)
+                gen_empty(tilesize, tilesize)
               : tileset->value(prev_id);
 
             for (auto &p: changed_pixels[q].keys())
@@ -793,8 +813,9 @@ static inline auto get_changed_pixels(const QImage &original, const QImage &chan
 
 void MapPainterWidget::blitSelection()
 {
-    QImage original = getPaintedLayer();
+    Q_ASSERT(selection_rect.has_value());
 
+    QImage original = getPaintedLayer();
     QImage drawn = original.copy();
     {
         QPainter painter(&drawn);
@@ -818,8 +839,9 @@ void MapPainterWidget::blitSelection()
 
 void MapPainterWidget::cutSelection()
 {
-    QImage original = getPaintedLayer();
+    Q_ASSERT(original_rect.has_value());
 
+    QImage original = getPaintedLayer();
     QImage drawn = original.copy();
     {
         QPainter painter(&drawn);
@@ -948,8 +970,8 @@ void MapPainterWidget::selectAll()
 
 void MapPainterWidget::handleDrawChanges()
 {
-    if (!(tileset && map_layers))
-        return;
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!map_layers.isNull());
 
     const auto changed_pixels = get_changed_pixels(getPaintedLayer(), getDrawnLayer(), tilesize);
     if (changed_pixels.isEmpty())
@@ -1003,6 +1025,7 @@ static inline QImage get_selection_contents(const QImage &source, const Selectio
     else if (shape == ELLIPSE)
         painter.drawEllipse(dest.rect());
     else if (shape == MAGIC)
+    //  TODO: get better way to convert the path to a filled shape
         painter.drawPolygon(magic.data(), magic.length());
 
     painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
@@ -1013,8 +1036,8 @@ static inline QImage get_selection_contents(const QImage &source, const Selectio
 
 void MapPainterWidget::handleSelectionMade()
 {
-    if (!(tileset && map_layers))
-        return;
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!map_layers.isNull());
 
     if (!original_rect)
     {
@@ -1031,7 +1054,7 @@ void MapPainterWidget::handleSelectionMade()
                 QImage source = getPaintedLayer().copy(*selection_rect);
                 for (int i = 0; i < magic_points.length(); ++i)
                     magic_points[i] = magic_points[i] - selection_rect->topLeft();
-//                magic_points.push_back(magic_points.front());
+
                 QImage dest = get_selection_contents(source, selection_shape, magic_points);
 
                 original_selection_image = dest;
@@ -1098,19 +1121,17 @@ static inline bool ellipse_contains(const QRect &rect, const QPoint &p)
     return dx*dx + dy*dy <= 1;
 }
 
-static inline bool contains(const SelectionShape shape, const std::optional<QRect> rect, const QVector<QPoint> &magic, const QPointF &p)
+static inline bool contains(const SelectionShape shape, const QRect &rect, const QVector<QPoint> &magic, const QPointF &p)
 {
-    if (!rect)
-        return false;
-
     switch (shape)
     {
     case RECTANGLE:
-        return rect->contains(p.toPoint());
+        return rect.contains(p.toPoint());
     case ELLIPSE:
-        return ellipse_contains(*rect, p.toPoint());
+        return ellipse_contains(rect, p.toPoint());
     case MAGIC:
-        return QPolygon(magic).translated(rect->topLeft()).containsPoint(p.toPoint(), Qt::OddEvenFill);
+    //  TODO: same here
+        return QPolygon(magic).translated(rect.topLeft()).containsPoint(p.toPoint(), Qt::OddEvenFill);
     }
 
     throw std::runtime_error("Someone made SelectionShape able to be invalid");
@@ -1128,7 +1149,7 @@ void MapPainterWidget::mousePressEvent(QMouseEvent *event)
 
         if (draw_tool == SELECTION)
         {
-            if (contains(selection_shape, selection_rect, magic_points, mouse_cursor))
+            if (selection_rect && contains(selection_shape, *selection_rect, magic_points, mouse_cursor))
             {
                 move_offset = mouse_cursor - selection_rect->topLeft();
             }

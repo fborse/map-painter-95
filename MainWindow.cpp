@@ -99,6 +99,8 @@ static inline void update_hue_widget(ColorHueWidget *widget, const QColor &color
 
 static inline void update_saturation_value_widget(ColorSaturationValueWidget *widget, const QColor &color)
 {
+    Q_ASSERT(widget != nullptr);
+
     const int hue = color.hsvHue();
     const int saturation = color.hsvSaturation();
     const int value = color.value();
@@ -118,10 +120,15 @@ void MainWindow::updateColorWidgets(const QColor color)
 
 void MainWindow::resetPointers()
 {
+    Q_ASSERT(!undo_stack.isNull());
     undo_stack->clear();
+    Q_ASSERT(!tiles_order.isNull());
     tiles_order->clear();
+    Q_ASSERT(!tileset.isNull());
     tileset->clear();
+    Q_ASSERT(!selected_tiles.isNull());
     selected_tiles->clear();
+    Q_ASSERT(!map_layers.isNull());
     map_layers->clear();
 }
 
@@ -249,6 +256,8 @@ void MainWindow::onOpen()
 
 bool MainWindow::onSave()
 {
+    Q_ASSERT(!undo_stack.isNull());
+
     if (save_path.isEmpty())
     {
         return onSaveAs();
@@ -258,7 +267,6 @@ bool MainWindow::onSave()
         if (!save(save_path))
             return false;
 
-        Q_ASSERT(!undo_stack.isNull());
         undo_stack->setClean();
         return true;
     }
@@ -266,6 +274,8 @@ bool MainWindow::onSave()
 
 bool MainWindow::onSaveAs()
 {
+    Q_ASSERT(!undo_stack.isNull());
+
     const char *title = "Choose a Map Painter 95 file to save to !";
     const char *ext = "Map Painter 95 files (*.mp95)";
     const QString path = QFileDialog::getSaveFileName(this, tr(title), QString(), tr(ext));
@@ -275,7 +285,6 @@ bool MainWindow::onSaveAs()
     if (!save(path))
         return false;
 
-    Q_ASSERT(!undo_stack.isNull());
     save_path = path;
     undo_stack->setClean();
     return true;
@@ -295,6 +304,10 @@ void MainWindow::onImportTilesInBulk()
 
 void MainWindow::onExportTilesetAndMap()
 {
+    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!map_layers.isNull());
+
     const int tilesize = ui->tilesetView->getTilesize();
 
     ExportTilesetAndMapDialog dialog(tilesize, this);
@@ -306,6 +319,9 @@ void MainWindow::onExportTilesetAndMap()
 
 void MainWindow::onExportAsTextures()
 {
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!map_layers.isNull());
+
     const int tilesize = ui->tilesetView->getTilesize();
 
     ExportAsTexturesDialog dialog(tilesize, this);
@@ -357,6 +373,7 @@ void MainWindow::refreshViews()
 
 void MainWindow::updateDrawOptions(const int draw_tool)
 {
+//  TODO: find a way to remove the magic aspect of this magic value
     const int n = 9;
     Q_ASSERT(0 <= draw_tool && draw_tool < n);
 
@@ -375,6 +392,7 @@ void MainWindow::onUndo()
 {
     Q_ASSERT(!undo_stack.isNull());
     Q_ASSERT(undo_stack->canUndo());
+
     undo_stack->undo();
     refreshViews();
 }
@@ -383,6 +401,7 @@ void MainWindow::onRedo()
 {
     Q_ASSERT(!undo_stack.isNull());
     Q_ASSERT(undo_stack->canRedo());
+
     undo_stack->redo();
     refreshViews();
 }
@@ -459,7 +478,10 @@ void MainWindow::onCloneSelectedTiles()
 
     QVector<QImage> tiles;
     for (auto &id: uniques)
+    {
+        Q_ASSERT(tileset->contains(id));
         tiles.push_back(tileset->value(id));
+    }
 
     ui->tilesetView->addTiles(tiles, true);
 }
@@ -475,7 +497,10 @@ void MainWindow::onRemoveSelectedTiles()
 
     QVector<TileReference> tiles;
     for (auto &id: uniques)
+    {
+        Q_ASSERT(tileset->contains(id));
         tiles.push_back(id);
+    }
 
     ui->tilesetView->removeTiles(tiles);
 }
@@ -484,9 +509,9 @@ void MainWindow::onResizeMap()
 {
     Q_ASSERT(!map_layers.isNull());
     const int h = map_layers->length();
-    Q_ASSERT(h > 0);
+    Q_ASSERT(!map_layers->isEmpty());
     const int w = map_layers->at(0).length();
-    Q_ASSERT(w > 0);
+    Q_ASSERT(!map_layers->at(0).isEmpty());
 
     ResizeMapDialog dialog(this);
     dialog.setSize({w, h});
@@ -584,6 +609,10 @@ catch (const QString &errstr)
 
 bool MainWindow::save(const QString &path)
 {
+    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!map_layers.isNull());
+
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly))
     {
@@ -613,7 +642,6 @@ bool MainWindow::save(const QString &path)
     }
 
     {
-        Q_ASSERT(!map_layers.isNull());
         stream << *map_layers;
     }
 

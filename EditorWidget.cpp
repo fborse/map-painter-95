@@ -6,7 +6,8 @@
 EditorWidget::EditorWidget(QWidget *parent):
     QWidget(parent),
     grid_aspect{20, 16}, tilesize{32}, zoom{1},
-    undo_stack{nullptr}
+    undo_stack{nullptr}, tiles_order{nullptr}, tileset{nullptr},
+    selected_tiles{nullptr}, map_layers{nullptr}
 {
 }
 
@@ -18,7 +19,7 @@ void EditorWidget::resize()
 }
 
 //  QPoint's division rounds ; we DON'T want that
-static inline QPoint divide(const QPoint &p, const int a)
+static inline QPoint divide(const QPoint &p, const double a)
 {
     return {int(p.x() / a), int(p.y() / a)};
 }
@@ -57,8 +58,8 @@ void EditorWidget::paintBackground(QPainter &painter) const
 
 QImage EditorWidget::getPaintedLayer() const
 {
-    if (!(map_layers && tileset))
-        return QImage();
+    Q_ASSERT(!map_layers.isNull());
+    Q_ASSERT(!tileset.isNull());
 
     QImage img(grid_aspect * tilesize, QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);

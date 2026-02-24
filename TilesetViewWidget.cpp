@@ -185,6 +185,10 @@ void TilesetViewWidget::resize()
 
 void TilesetViewWidget::addTiles(const QVector<QImage> &images, const bool undoable)
 {
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!tileset.isNull());
+
     if (undoable)
     {
         undo_stack->beginMacro("Add tiles");
@@ -207,6 +211,11 @@ void TilesetViewWidget::addTiles(const QVector<QImage> &images, const bool undoa
 
 void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
 {
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!map_layers.isNull());
+
     undo_stack->beginMacro("Remove tiles");
     for (auto &id: tiles)
         undo_stack->push(new RemoveTileCommand(tiles_order, tileset, map_layers, id));
@@ -217,7 +226,8 @@ void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
 
 std::optional<QPoint> TilesetViewWidget::toIJ(const int idx) const
 {
-    const int n = tiles_order? tiles_order->length() : 0;
+    Q_ASSERT(!tiles_order.isNull());
+    const int n = tiles_order->length();
 
     if (idx < 0)
         return QPoint(0, 0);
@@ -229,7 +239,8 @@ std::optional<QPoint> TilesetViewWidget::toIJ(const int idx) const
 
 std::optional<int> TilesetViewWidget::toIndex(const QPoint &ij) const
 {
-    const int n = tiles_order? tiles_order->length() : 0;
+    Q_ASSERT(!tiles_order.isNull());
+    const int n = tiles_order->length();
     const int idx = ij.x() + ij.y() * n_columns;
 
 //  idx still takes into account the empty tile
@@ -240,15 +251,15 @@ std::optional<int> TilesetViewWidget::toIndex(const QPoint &ij) const
 }
 
 //  QPoint's division rounds ; we DON'T want that
-static inline QPoint divide(const QPoint &p, const int a)
+static inline QPoint divide(const QPoint &p, const double a)
 {
     return {int(p.x() / a), int(p.y() / a)};
 }
 
 void TilesetViewWidget::paintTileset(QPainter &painter)
 {
-    if (!(tiles_order && tileset))
-        return;
+    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!tileset.isNull());
 
     const int n = tiles_order->length();
 
@@ -282,8 +293,8 @@ void TilesetViewWidget::paintTileset(QPainter &painter)
 
 void TilesetViewWidget::paintSelectionCursors(QPainter &painter)
 {
-    if (!(selected_tiles && tiles_order))
-        return;
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(!tiles_order.isNull());
 
 //  more readable and concise, with hardly any performances drop
     QSet<QString> unique_ids;
@@ -309,10 +320,11 @@ void TilesetViewWidget::paintSelectionCursors(QPainter &painter)
 
 void TilesetViewWidget::paintCursor(QPainter &painter)
 {
+    Q_ASSERT(!tiles_order.isNull());
     const QPoint p = divide(mouse_cursor, tilesize);
 
 //  TODO: find nice way to factorise using toIndex()
-    const int n = tiles_order? tiles_order->length() : 0;
+    const int n = tiles_order->length();
     const int idx = p.x() + p.y() * n_columns;
 
     const QColor white32 = {255, 255, 255, 32};
@@ -354,6 +366,10 @@ void TilesetViewWidget::paintEvent(QPaintEvent *)
 
 void TilesetViewWidget::handleTilesSelected()
 {
+    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(click_origin.has_value());
+
     const QRect selection = asLocalRect(*click_origin, mouse_cursor);
     const auto &[x1, y1] = selection.topLeft();
     const auto &[x2, y2] = selection.bottomRight();
@@ -371,6 +387,9 @@ void TilesetViewWidget::handleTilesSelected()
 
 void TilesetViewWidget::handleTileModifications()
 {
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(!tiles_order.isNull());
+
     const QPoint p = right_click_origin? *right_click_origin : *click_origin;
 
     const auto origin = toIndex(divide(p, tilesize));

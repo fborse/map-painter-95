@@ -70,6 +70,7 @@ MapEditorWidget::MapEditorWidget(QWidget *parent):
 
 void MapEditorWidget::resize()
 {
+//  here map_layers null is a legit case
     if (map_layers)
     {
         const int h = map_layers->length();
@@ -82,8 +83,8 @@ void MapEditorWidget::resize()
 
 void MapEditorWidget::paintTileRects(QPainter &painter)
 {
-    if (!(selected_tiles && tileset))
-        return;
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(!tileset.isNull());
 
     const auto click = click_origin? *click_origin : *right_click_origin;
     const QRect selection = asLocalRect(click, mouse_cursor);
@@ -152,6 +153,7 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
 
 void MapEditorWidget::resizeMap(const QSize &size)
 {
+    Q_ASSERT(!map_layers.isNull());
     MapLayer prev = *map_layers;
 
     MapLayer next = prev;
@@ -165,6 +167,10 @@ void MapEditorWidget::resizeMap(const QSize &size)
 
 void MapEditorWidget::handleTileSetting()
 {
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(!map_layers.isNull());
+    Q_ASSERT(click_origin.has_value());
+
     const QRect selection = asLocalRect(*click_origin, mouse_cursor);
     const auto &[x, y] = selection.topLeft();
     const auto &[w, h] = selection.size();
@@ -195,6 +201,10 @@ void MapEditorWidget::handleTileSetting()
 
 void MapEditorWidget::handleTileSelection()
 {
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(!map_layers.isNull());
+    Q_ASSERT(right_click_origin.has_value());
+
     const QRect selection = asLocalRect(*right_click_origin, mouse_cursor);
     const auto &[x1, y1] = selection.topLeft();
     const auto &[x2, y2] = selection.bottomRight();

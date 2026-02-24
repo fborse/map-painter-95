@@ -5,6 +5,8 @@ enum ScaleMode { FACTOR = 0, SIZE = 1 };
 
 static inline void set_value(QSpinBox *box, const int value)
 {
+    Q_ASSERT(box != nullptr);
+
     box->blockSignals(true);
     box->setValue(value);
     box->blockSignals(false);

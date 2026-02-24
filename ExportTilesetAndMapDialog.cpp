@@ -110,6 +110,7 @@ static inline OrderedTileset linearise_tiles(QWeakPointer<Names> tiles_order_ptr
 {
     OrderedTileset linearised;
 
+//  here tiles_order/tileset null is a legit case
     QSharedPointer<Names> tiles_order = tiles_order_ptr.toStrongRef();
     if (tiles_order.isNull())
         return linearised;

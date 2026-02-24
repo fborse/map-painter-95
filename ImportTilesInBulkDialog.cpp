@@ -87,6 +87,7 @@ static inline void apply_color_key(QImage &texture, const QColor &ck)
 {
     for (int j = 0; j < texture.height(); ++j)
         for (int i = 0; i < texture.width(); ++i)
+        //  TODO: buggy
             if (texture.pixelColor(i, j) == ck)
                 texture.setPixelColor(i, j, Qt::transparent);
 }
@@ -240,10 +241,13 @@ void ImportTilesInBulkWidget::drawSelectionRect(QPainter &painter)
 void ImportTilesInBulkWidget::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
+
     drawBackground(painter);
     painter.drawImage(0, 0, displayed_texture);
+
     drawRectangles(painter);
     drawGrid(painter);
+
     if (magnetic)
         drawSnapPoints(painter, tilesize * zoom);
     if (click_origin && selected < 0)
@@ -259,11 +263,14 @@ static inline QPoint divide(const QPoint &p, const double f)
 void ImportTilesInBulkWidget::mouseMoveEvent(QMouseEvent *event)
 {
     mouse_cursor = divide(event->pos(), zoom);
+
     if (move_offset)
     {
         QPoint new_position = mouse_cursor - *move_offset;
         if (magnetic)
+        //  rounding is wanted here though
             new_position = (new_position / tilesize) * tilesize;
+
         emit areaChanged(new_position);
     }
 
@@ -394,6 +401,7 @@ void ImportTilesInBulkDialog::onChangeColorKey()
     const QColor initial = ui->colorKeyWidget->getColor();
     const char *title = "Choose a color key !";
     const QColor ck = QColorDialog::getColor(initial, this, tr(title));
+
     if (ck.isValid())
     //  TODO: This step here is buggy
         ui->colorKeyWidget->setColor(ck.toRgb());
@@ -473,6 +481,8 @@ void ImportTilesInBulkDialog::enableAreaWidgets(const bool enabled)
 
 static inline void set_value(QSpinBox *widget, const int value)
 {
+    Q_ASSERT(widget != nullptr);
+
     widget->blockSignals(true);
     widget->setValue(value);
     widget->blockSignals(false);

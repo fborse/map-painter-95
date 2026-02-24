@@ -7,7 +7,8 @@
 
 ExportAsTexturesDialog::ExportAsTexturesDialog(const int tilesize, QWidget *parent):
     QDialog(parent), ui(new Ui::ExportAsTexturesDialog),
-    tilesize{tilesize}, drawn_layers{}
+    tilesize{tilesize}, drawn_layers{},
+    tileset{nullptr}, map_layers{nullptr}
 {
     ui->setupUi(this);
 
