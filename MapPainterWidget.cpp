@@ -128,7 +128,7 @@ private:
 };
 
 //  QPoint's division rounds ; we DON'T want that
-static inline QPoint divide(const QPoint &p, const int a)
+static inline QPoint divide(const QPoint &p, const double a)
 {
     return {int(p.x() / a), int(p.y() / a)};
 }
@@ -343,7 +343,7 @@ void MapPainterWidget::paintCursor(QPainter &painter) const
         break;
     }
 
-    painter.drawImage((mouse_cursor - offset) * int(zoom), cursor_image);
+    painter.drawImage((mouse_cursor - offset) * zoom, cursor_image);
 }
 
 QColor MapPainterWidget::getEffectiveDrawColor() const
@@ -1054,8 +1054,6 @@ static inline QRect rect_from(const QPoint &p1, const QPoint &p2)
 
 void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
 {
-//  we still want to divide like that, to get granularity compared to the zoom
-//  note that event->pos() / zoom would shift the cursor half of the time
     mouse_cursor = divide(event->pos(), zoom);
 
     if (click_origin)
