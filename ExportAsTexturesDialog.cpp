@@ -7,7 +7,7 @@
 
 ExportAsTexturesDialog::ExportAsTexturesDialog(const int tilesize, QWidget *parent):
     QDialog(parent), ui(new Ui::ExportAsTexturesDialog),
-    tilesize{tilesize}, drawn_layers{},
+    tilesize{tilesize}, current_layer{0}, drawn_layers{},
     tileset{nullptr}, map_layers{nullptr}
 {
     ui->setupUi(this);
@@ -38,7 +38,10 @@ QString ExportAsTexturesDialog::getPattern() const
 
 int ExportAsTexturesDialog::getNumberOfLayers() const
 {
-    return 1;
+    auto map_layers_ptr = map_layers.toStrongRef();
+    Q_ASSERT(!map_layers_ptr.isNull());
+
+    return map_layers_ptr->length();
 }
 
 //  TODO: the combinatorics for every used tile
@@ -68,14 +71,14 @@ void ExportAsTexturesDialog::onAccept() try
         {
             const QDir dir(getDirectory());
             QString pattern = getPattern();
-            pattern.replace('#', QString::number(l));
-            pattern.replace('%', QString::number(f));
+            pattern.replace('#', QString::number(l + 1));
+            pattern.replace('%', QString::number(f + 1));
             const QString path = dir.absoluteFilePath(pattern);
 
         //  TODO: provide a replace/discard/rename/cancel dialog
 /*            if (dir.exists(pattern))
                 throw QString("A file with that name exists already !");
-            else*/ if (!drawn_layers.save(path))
+            else*/ if (!drawn_layers[l].save(path))
                 throw QString("Could not save to '%1' !").arg(path);
         }
     }
@@ -118,6 +121,20 @@ static inline QImage gen_layer(const int tilesize, const Tileset &tileset, const
     return image;
 }
 
+void ExportAsTexturesDialog::redrawLayers()
+{
+    QSharedPointer<Tileset> tileset_ptr = tileset.toStrongRef();
+    Q_ASSERT(!tileset_ptr.isNull());
+    QSharedPointer<MapLayers> map_layers_ptr = map_layers.toStrongRef();
+    Q_ASSERT(!map_layers_ptr.isNull());
+    Q_ASSERT(current_layer < map_layers_ptr->length());
+
+    for (int k = 0; k < map_layers_ptr->length(); ++k)
+        drawn_layers.push_back(gen_layer(tilesize, *tileset_ptr, map_layers_ptr->at(k)));
+
+    updateLayerLabel();
+}
+
 static inline QImage gen_background(const QSize &size, const int tilesize)
 {
     const QColor dark = {64, 64, 64};
@@ -140,17 +157,14 @@ static inline QImage gen_background(const QSize &size, const int tilesize)
     return image;
 }
 
-void ExportAsTexturesDialog::redrawLayers()
+void ExportAsTexturesDialog::updateLayerLabel()
 {
-    QSharedPointer<Tileset> tileset_ptr = tileset.toStrongRef();
-    Q_ASSERT(!tileset_ptr.isNull());
-    QSharedPointer<MapLayer> map_layers_ptr = map_layers.toStrongRef();
-    Q_ASSERT(!map_layers_ptr.isNull());
+    Q_ASSERT(current_layer < drawn_layers.length());
+    QImage &img = drawn_layers[current_layer];
 
-    drawn_layers = gen_layer(tilesize, *tileset_ptr, *map_layers_ptr);
-    QImage generated = gen_background(drawn_layers.size(), tilesize);
+    QImage generated = gen_background(img.size(), tilesize);
     QPainter painter(&generated);
-    painter.drawImage(0, 0, drawn_layers);
+    painter.drawImage(0, 0, img);
 
     ui->textureViewLabel->setPixmap(QPixmap::fromImage(generated));
 }

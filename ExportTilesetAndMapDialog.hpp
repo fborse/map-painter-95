@@ -11,6 +11,7 @@ using Tileset = QHash<QString, QImage>;
 
 using TileReference = QString;
 using MapLayer = QVector<QVector<TileReference>>;
+using MapLayers = QVector<MapLayer>;
 
 class ExportTilesetAndMapDialog: public QDialog
 {
@@ -21,7 +22,7 @@ public:
 
     void setTilesOrderPointer(QWeakPointer<Names> ptr) { tiles_order = ptr; redrawTileset(); }
     void setTilesetPointer(QWeakPointer<Tileset> ptr) { tileset = ptr; redrawTileset(); }
-    void setMapLayersPointer(QWeakPointer<MapLayer> ptr) { map_layers = ptr; }
+    void setMapLayersPointer(QWeakPointer<MapLayers> ptr) { map_layers = ptr; }
 
     QString getTilesetPath() const;
     QString getMapPath() const;
@@ -42,5 +43,5 @@ private:
 
     QWeakPointer<Names> tiles_order;
     QWeakPointer<Tileset> tileset;
-    QWeakPointer<MapLayer> map_layers;
+    QWeakPointer<MapLayers> map_layers;
 };

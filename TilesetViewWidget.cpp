@@ -36,11 +36,11 @@ private:
 class MapLayersCommand
 {
 public:
-    MapLayersCommand(QWeakPointer<MapLayer> map_layers): map_layers_ptr{map_layers} {}
-    QSharedPointer<MapLayer> lockMapLayers() { return lock_ptr(map_layers_ptr); }
+    MapLayersCommand(QWeakPointer<MapLayers> map_layers): map_layers_ptr{map_layers} {}
+    QSharedPointer<MapLayers> lockMapLayers() { return lock_ptr(map_layers_ptr); }
 
 private:
-    QWeakPointer<MapLayer> map_layers_ptr;
+    QWeakPointer<MapLayers> map_layers_ptr;
 };
 
 class MoveTileCommand final: public QUndoCommand, public TilesOrderCommand
@@ -117,7 +117,17 @@ private:
 class RemoveTileCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand, public MapLayersCommand
 {
 public:
-    RemoveTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, QWeakPointer<MapLayer> map_layers, const TileReference &id):
+    struct Coordinates
+    {
+        int i, j, k;
+
+        bool operator==(const Coordinates &other) const
+        {
+            return i == other.i && j == other.j && k == other.k;
+        }
+    };
+
+    RemoveTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, QWeakPointer<MapLayers> map_layers, const TileReference &id):
         QUndoCommand(), TilesOrderCommand(tiles_order), TilesetCommand(tileset), MapLayersCommand(map_layers),
         index{0}, tile_reference{id}, image{}
     {
@@ -125,10 +135,11 @@ public:
         image = lockTileset()->value(tile_reference);
 
         auto layers = *lockMapLayers();
-        for (int j = 0; j < layers.length(); ++j)
-            for (int i = 0; i < layers.at(j).length(); ++i)
-                if (layers.at(j).at(i) == id)
-                    affected_tiles.insert({i, j}, layers.at(j).at(i));
+        for (int k = 0; k < layers.length(); ++k)
+            for (int j = 0; j < layers.at(k).length(); ++j)
+                for (int i = 0; i < layers.at(k).at(j).length(); ++i)
+                    if (layers.at(k).at(j).at(i) == id)
+                        affected_tiles.insert({i, j, k}, layers.at(k).at(j).at(i));
     }
 
     void undo() final override
@@ -136,8 +147,8 @@ public:
         lockTilesOrder()->insert(index, tile_reference);
         lockTileset()->insert(tile_reference, image);
 
-        for (auto &[i, j]: affected_tiles.keys())
-            (*lockMapLayers())[j][i] = affected_tiles[{i, j}];
+        for (auto &[i, j, k]: affected_tiles.keys())
+            (*lockMapLayers())[k][j][i] = affected_tiles[{i, j, k}];
     }
 
     void redo() final override
@@ -145,16 +156,25 @@ public:
         lockTilesOrder()->remove(index);
         lockTileset()->remove(tile_reference);
 
-        for (auto &[i, j]: affected_tiles.keys())
-            (*lockMapLayers())[j][i] = {};
+        for (auto &[i, j, k]: affected_tiles.keys())
+            (*lockMapLayers())[k][j][i] = {};
     }
 
 private:
     int index;
     TileReference tile_reference;
     QImage image;
-    QHash<QPoint, TileReference> affected_tiles;
+    QHash<Coordinates, TileReference> affected_tiles;
 };
+
+static inline uint qHash(const RemoveTileCommand::Coordinates &coords, const uint seed = 0)
+{
+    return seed ^ (
+        qHash(coords.i, seed) * 31
+      + qHash(coords.j, seed) * 37
+      + qHash(coords.k, seed) * 41
+    );
+}
 
 TilesetViewWidget::TilesetViewWidget(QWidget *parent):
     EditorWidget(parent),

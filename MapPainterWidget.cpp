@@ -37,12 +37,31 @@ private:
 class MapLayersCommand
 {
 public:
-    MapLayersCommand(QWeakPointer<MapLayer> map_layers): map_layers_ptr{map_layers} {}
-    QSharedPointer<MapLayer> lockMapLayers() { return lock_ptr(map_layers_ptr); }
+    struct Coordinates
+    {
+        int i, j, k;
+
+        bool operator==(const Coordinates &other) const
+        {
+            return i == other.i && j == other.j && k == other.k;
+        }
+    };
+
+    MapLayersCommand(QWeakPointer<MapLayers> map_layers): map_layers_ptr{map_layers} {}
+    QSharedPointer<MapLayers> lockMapLayers() { return lock_ptr(map_layers_ptr); }
 
 private:
-    QWeakPointer<MapLayer> map_layers_ptr;
+    QWeakPointer<MapLayers> map_layers_ptr;
 };
+
+static inline uint qHash(const MapLayersCommand::Coordinates &coords, const uint seed = 0)
+{
+    return seed ^ (
+        qHash(coords.i, seed) * 31
+      + qHash(coords.j, seed) * 37
+      + qHash(coords.k, seed) * 41
+    );
+}
 
 class ReplaceTilesCommand final: public QUndoCommand, public TilesetCommand
 {
@@ -105,22 +124,22 @@ private:
 class ReplaceReferencesCommand final: public QUndoCommand, public MapLayersCommand
 {
 public:
-    using Changes = QHash<QPoint, TileReference>;
+    using Changes = QHash<Coordinates, TileReference>;
 
-    ReplaceReferencesCommand(QWeakPointer<MapLayer> map_layers, const Changes &prev, const Changes &next):
+    ReplaceReferencesCommand(QWeakPointer<MapLayers> map_layers, const Changes &prev, const Changes &next):
         QUndoCommand(), MapLayersCommand(map_layers), prev{prev}, next{next}
     {}
 
     void undo() final override
     {
-        for (auto &p: prev.keys())
-            (*lockMapLayers())[p.y()][p.x()] = prev[p];
+        for (auto &[i, j, k]: prev.keys())
+            (*lockMapLayers())[k][j][i] = prev[{i, j, k}];
     }
 
     void redo() final override
     {
-        for (auto &p: next.keys())
-            (*lockMapLayers())[p.y()][p.x()] = next[p];
+        for (auto &[i, j, k]: next.keys())
+            (*lockMapLayers())[k][j][i] = next[{i, j, k}];
     }
 
 private:
@@ -156,9 +175,10 @@ void MapPainterWidget::resize()
 {
     Q_ASSERT(!map_layers.isNull());
 
-    const int h = map_layers->length();
-    Q_ASSERT(!map_layers->isEmpty());
-    const int w = map_layers->at(0).length();
+    Q_ASSERT(map_layers->length() > 0);
+    const int h = map_layers->at(0).length();
+    Q_ASSERT(map_layers->at(0).length() > 0);
+    const int w = map_layers->at(0).at(0).length();
 
     grid_aspect = {w, h};
     EditorWidget::resize();
@@ -614,7 +634,7 @@ void MapPainterWidget::drawSelectionOutline(QPainter &painter) const
 
 QImage MapPainterWidget::getDrawnLayer() const
 {
-    QImage original = getPaintedLayer();
+    QImage original = getPaintedLayer(current_layer);
     if (click_origin)
     {
         QPainter painter(&original);
@@ -648,13 +668,17 @@ QImage MapPainterWidget::getDrawnLayer() const
 
 void MapPainterWidget::paintEvent(QPaintEvent *)
 {
+    Q_ASSERT(!map_layers.isNull());
     QPainter painter(this);
 
     paintBackground(painter);
 
 //  we want these contents to be pixelised
     painter.scale(zoom, zoom);
+    for (int k = 0; k < current_layer; ++k)
+        painter.drawImage(0, 0, getPaintedLayer(k));
     painter.drawImage(0, 0, getDrawnLayer());
+
     if (draw_tool == SELECTION)
         drawSelectionPixels(painter);
     painter.resetTransform();
@@ -674,7 +698,7 @@ QColor MapPainterWidget::getColorAt(const QPoint &p) const
     else if (p.x() < 0 || p.y() < 0)
         return Qt::transparent;
 
-    const QImage layer = getPaintedLayer();
+    const QImage layer = getPaintedLayer(current_layer);
     if (p.x() < layer.width() && p.y() < layer.height())
         return layer.pixelColor(p);
     else
@@ -715,7 +739,7 @@ void MapPainterWidget::handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint
     const auto &[prev, next] = get_prev_next_images(
         changed_pixels,
         *tileset,
-        *map_layers,
+        map_layers->at(current_layer),
         [&] (TileReference id) { return !id.isEmpty(); }
     );
 
@@ -751,15 +775,17 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
     const auto &[prev_tiles, next_tiles] = get_prev_next_images(
         changed_pixels,
         *tileset,
-        *map_layers,
-        [&] (TileReference id) { return is_tile_unique(*map_layers, id) && !id.isEmpty(); }
+        map_layers->at(current_layer),
+        [&] (TileReference id) {
+            return is_tile_unique(map_layers->at(current_layer), id) && !id.isEmpty();
+        }
     );
 
     AddTilesCommand::Added added;
     ReplaceReferencesCommand::Changes prev_refs, next_refs;
     for (auto &q: changed_pixels.keys())
     {
-        const TileReference prev_id = map_layers->at(q.y()).at(q.x());
+        const TileReference prev_id = map_layers->at(current_layer).at(q.y()).at(q.x());
 
     //  faster than !is_tile_unique(*map_layers, prev_id)
         if (prev_id.isEmpty() || !prev_tiles.contains(prev_id))
@@ -773,8 +799,8 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
 
             const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
             added[uuid] = new_image;
-            prev_refs[q] = prev_id;
-            next_refs[q] = uuid;
+            prev_refs[{q.x(), q.y(), current_layer}] = prev_id;
+            next_refs[{q.x(), q.y(), current_layer}] = uuid;
         }
     }
 
@@ -815,7 +841,7 @@ void MapPainterWidget::blitSelection()
 {
     Q_ASSERT(selection_rect.has_value());
 
-    QImage original = getPaintedLayer();
+    QImage original = getPaintedLayer(current_layer);
     QImage drawn = original.copy();
     {
         QPainter painter(&drawn);
@@ -841,7 +867,7 @@ void MapPainterWidget::cutSelection()
 {
     Q_ASSERT(original_rect.has_value());
 
-    QImage original = getPaintedLayer();
+    QImage original = getPaintedLayer(current_layer);
     QImage drawn = original.copy();
     {
         QPainter painter(&drawn);
@@ -960,7 +986,7 @@ void MapPainterWidget::rotateSelection(const int angle)
 void MapPainterWidget::selectAll()
 {
     selection_rect = getWidgetRect();
-    selection_image = getPaintedLayer();
+    selection_image = getPaintedLayer(current_layer);
     original_selection_image = selection_image.copy();
     original_rect = selection_rect;
 
@@ -973,7 +999,8 @@ void MapPainterWidget::handleDrawChanges()
     Q_ASSERT(!tileset.isNull());
     Q_ASSERT(!map_layers.isNull());
 
-    const auto changed_pixels = get_changed_pixels(getPaintedLayer(), getDrawnLayer(), tilesize);
+    const auto changed_pixels =
+        get_changed_pixels(getPaintedLayer(current_layer), getDrawnLayer(), tilesize);
     if (changed_pixels.isEmpty())
         return;
 
@@ -1051,7 +1078,7 @@ void MapPainterWidget::handleSelectionMade()
             emit canCopy(true);
             if (has_selection(move_offset, selection_rect))
             {
-                QImage source = getPaintedLayer().copy(*selection_rect);
+                QImage source = getPaintedLayer(current_layer).copy(*selection_rect);
                 for (int i = 0; i < magic_points.length(); ++i)
                     magic_points[i] = magic_points[i] - selection_rect->topLeft();
 

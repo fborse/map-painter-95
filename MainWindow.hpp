@@ -13,6 +13,7 @@ using SelectedTiles = QVector<QVector<QString>>;
 
 using TileReference = QString;
 using MapLayer = QVector<QVector<TileReference>>;
+using MapLayers = QVector<MapLayer>;
 
 class MainWindow: public QMainWindow
 {
@@ -67,7 +68,7 @@ private:
     QSharedPointer<Names> tiles_order;
     QSharedPointer<Tileset> tileset;
     QSharedPointer<SelectedTiles> selected_tiles;
-    QSharedPointer<MapLayer> map_layers;
+    QSharedPointer<MapLayers> map_layers;
 
     void resetPointers();
     void resetBrushPixels();

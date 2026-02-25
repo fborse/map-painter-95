@@ -6,11 +6,21 @@
 class MapLayersCommand
 {
 public:
-    explicit MapLayersCommand(QWeakPointer<MapLayer> ptr):
+    struct Coordinates
+    {
+        int i, j, k;
+
+        bool operator==(const Coordinates &other) const
+        {
+            return i == other.i && j == other.j && k == other.k;
+        }
+    };
+
+    explicit MapLayersCommand(QWeakPointer<MapLayers> ptr):
         map_layers_ptr{ptr}
     {}
 
-    QSharedPointer<MapLayer> lockMapLayers()
+    QSharedPointer<MapLayers> lockMapLayers()
     {
         auto ptr = map_layers_ptr.toStrongRef();
         Q_ASSERT(!ptr.isNull());
@@ -19,28 +29,37 @@ public:
     }
 
 private:
-    QWeakPointer<MapLayer> map_layers_ptr;
+    QWeakPointer<MapLayers> map_layers_ptr;
 };
+
+static inline uint qHash(const MapLayersCommand::Coordinates &coords, const uint seed = 0)
+{
+    return seed ^ (
+        qHash(coords.i, seed) * 31
+      + qHash(coords.j, seed) * 37
+      + qHash(coords.k, seed) * 41
+    );
+}
 
 class SetTilesCommand final: public QUndoCommand, public MapLayersCommand
 {
 public:
-    using Changes = QHash<QPoint, TileReference>;
+    using Changes = QHash<Coordinates, TileReference>;
 
-    SetTilesCommand(QWeakPointer<MapLayer> map_layers, const Changes prev, const Changes next):
+    SetTilesCommand(QWeakPointer<MapLayers> map_layers, const Changes prev, const Changes next):
         QUndoCommand(), MapLayersCommand(map_layers), prev{prev}, next{next}
     {}
 
     void undo() final override
     {
-        for (auto &[i, j]: prev.keys())
-            (*lockMapLayers())[j][i] = prev.value({i, j});
+        for (auto &[i, j, k]: prev.keys())
+            (*lockMapLayers())[k][j][i] = prev.value({i, j, k});
     }
 
     void redo() final override
     {
-        for (auto &[i, j]: next.keys())
-            (*lockMapLayers())[j][i] = next.value({i, j});
+        for (auto &[i, j, k]: next.keys())
+            (*lockMapLayers())[k][j][i] = next.value({i, j, k});
     }
 
 private:
@@ -50,7 +69,7 @@ private:
 class SwapLayersCommand final: public QUndoCommand, public MapLayersCommand
 {
 public:
-    SwapLayersCommand(QWeakPointer<MapLayer> map_layers, const MapLayer &prev, const MapLayer &next):
+    SwapLayersCommand(QWeakPointer<MapLayers> map_layers, const MapLayers &prev, const MapLayers &next):
         QUndoCommand(), MapLayersCommand(map_layers), prev{prev}, next{next}
     {}
 
@@ -58,7 +77,7 @@ public:
     void redo() final override { *lockMapLayers() = next; }
 
 private:
-    MapLayer prev, next;
+    MapLayers prev, next;
 };
 
 MapEditorWidget::MapEditorWidget(QWidget *parent):
@@ -73,8 +92,10 @@ void MapEditorWidget::resize()
 //  here map_layers null is a legit case
     if (map_layers)
     {
-        const int h = map_layers->length();
-        const int w = map_layers->at(0).length();
+        Q_ASSERT(map_layers->length() > 0);
+        const int h = map_layers->at(0).length();
+        Q_ASSERT(map_layers->at(0).length() > 0);
+        const int w = map_layers->at(0).at(0).length();
 
         grid_aspect = {w, h};
         EditorWidget::resize();
@@ -134,13 +155,22 @@ void MapEditorWidget::paintRectOutlines(QPainter &painter)
 
 void MapEditorWidget::paintEvent(QPaintEvent *)
 {
+    Q_ASSERT(!map_layers.isNull());
     QPainter painter(this);
 
     paintBackground(painter);
 
     painter.scale(zoom, zoom);
     {
-        painter.drawImage(0, 0, getPaintedLayer());
+        for (int k = 0; k <= current_layer; ++k)
+            painter.drawImage(0, 0, getPaintedLayer(k));
+
+    //  TODO: toggle for painting layers above
+        painter.setOpacity(0.5);
+        for (int k = current_layer+1; k < map_layers->length(); ++k)
+            painter.drawImage(0, 0, getPaintedLayer(k));
+        painter.setOpacity(1);
+
         if (click_origin || right_click_origin)
             paintTileRects(painter);
     }
@@ -154,12 +184,16 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
 void MapEditorWidget::resizeMap(const QSize &size)
 {
     Q_ASSERT(!map_layers.isNull());
-    MapLayer prev = *map_layers;
+    MapLayers prev = *map_layers;
 
-    MapLayer next = prev;
-    next.resize(size.height(), {});
-    for (auto &row: next)
-        row.resize(size.width(), {});
+    MapLayers next = prev;
+    for (auto &layer: next)
+    {
+        layer.resize(size.height(), {});
+
+        for (auto &row: layer)
+            row.resize(size.width(), {});
+    }
 
     undo_stack->push(new SwapLayersCommand(map_layers, prev, next));
     emit mapResized();
@@ -170,6 +204,7 @@ void MapEditorWidget::handleTileSetting()
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
     Q_ASSERT(click_origin.has_value());
+    Q_ASSERT(current_layer < map_layers->length());
 
     const QRect selection = asLocalRect(*click_origin, mouse_cursor);
     const auto &[x, y] = selection.topLeft();
@@ -178,18 +213,20 @@ void MapEditorWidget::handleTileSetting()
     const int sh = selected_tiles->length();
     const int sw = selected_tiles->at(0).length();
 
+    const MapLayer &layer = map_layers->at(current_layer);
+
     SetTilesCommand::Changes prev, next;
     for (int j = 0; j < h; ++j)
     {
         for (int i = 0; i < w; ++i)
         {
-            const auto prev_id = map_layers->at(y+j).at(x+i);
+            const auto prev_id = layer.at(y+j).at(x+i);
             const auto next_id = selected_tiles->at(j % sh).at(i % sw);
 
             if (prev_id != next_id)
             {
-                prev[{x+i, y+j}] = prev_id;
-                next[{x+i, y+j}] = next_id;
+                prev[{x+i, y+j, current_layer}] = prev_id;
+                next[{x+i, y+j, current_layer}] = next_id;
             }
         }
     }
@@ -203,19 +240,21 @@ void MapEditorWidget::handleTileSelection()
 {
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
+    Q_ASSERT(current_layer < map_layers->length());
     Q_ASSERT(right_click_origin.has_value());
 
     const QRect selection = asLocalRect(*right_click_origin, mouse_cursor);
     const auto &[x1, y1] = selection.topLeft();
     const auto &[x2, y2] = selection.bottomRight();
 
+    const auto &layer = map_layers->at(current_layer);
     selected_tiles->clear();
     for (int j = y1; j <= y2; ++j)
     {
         selected_tiles->push_back({});
 
         for (int i = x1; i <= x2; ++i)
-            selected_tiles->back().push_back(map_layers->at(j).at(i));
+            selected_tiles->back().push_back(layer.at(j).at(i));
     }
 
     emit tileSelected();

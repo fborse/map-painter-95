@@ -5,7 +5,7 @@
 
 EditorWidget::EditorWidget(QWidget *parent):
     QWidget(parent),
-    grid_aspect{20, 16}, tilesize{32}, zoom{1},
+    grid_aspect{20, 16}, tilesize{32}, zoom{1}, current_layer{0},
     undo_stack{nullptr}, tiles_order{nullptr}, tileset{nullptr},
     selected_tiles{nullptr}, map_layers{nullptr}
 {
@@ -56,7 +56,7 @@ void EditorWidget::paintBackground(QPainter &painter) const
     }
 }
 
-QImage EditorWidget::getPaintedLayer() const
+QImage EditorWidget::getPaintedLayer(const int layer) const
 {
     Q_ASSERT(!map_layers.isNull());
     Q_ASSERT(!tileset.isNull());
@@ -64,12 +64,14 @@ QImage EditorWidget::getPaintedLayer() const
     QImage img(grid_aspect * tilesize, QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
 
+    const auto &_layer = map_layers->at(layer);
+
     QPainter painter(&img);
-    for (int j = 0; j < map_layers->length(); ++j)
+    for (int j = 0; j < _layer.length(); ++j)
     {
-        for (int i = 0; i < map_layers->at(j).length(); ++i)
+        for (int i = 0; i < _layer.at(j).length(); ++i)
         {
-            const auto id = map_layers->at(j).at(i);
+            const auto id = _layer.at(j).at(i);
 
             if (tileset->contains(id))
                 painter.drawImage(i * tilesize, j * tilesize, tileset->value(id));

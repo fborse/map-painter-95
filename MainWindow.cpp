@@ -36,12 +36,14 @@ MainWindow::MainWindow(QWidget *parent):
     selected_tiles = QSharedPointer<SelectedTiles>::create();
     for (auto *editor: editors)
         editor->setSelectedTilesPointer(selected_tiles);
-    map_layers = QSharedPointer<MapLayer>::create();
+    map_layers = QSharedPointer<MapLayers>::create();
     for (auto *editor: editors)
         editor->setMapLayersPointer(map_layers);
 
     {
+        map_layers->resize(1);
         setMapSize({20, 16});
+
         populateTileset(32);
         resetBrushPixels();
     }
@@ -176,9 +178,13 @@ void MainWindow::setMapSize(const QSize size)
     Q_ASSERT(!map_layers.isNull());
     Q_ASSERT(size.width() > 0 && size.height() > 0);
 
-    map_layers->resize(size.height());
-    for (auto &row: *map_layers)
-        row.resize(size.width());
+    for (auto &layer: *map_layers)
+    {
+        layer.resize(size.height());
+
+        for (auto &row: layer)
+            row.resize(size.width());
+    }
 
     ui->mapEditor->setGridAspect(size);
     ui->mapPainter->setGridAspect(size);
@@ -580,7 +586,7 @@ bool MainWindow::load(const QString &path) try
         tiles[id] = tile;
     }
 
-    MapLayer layers;
+    MapLayers layers;
     stream >> layers;
 
     resetPointers();

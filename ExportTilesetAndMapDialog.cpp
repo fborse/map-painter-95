@@ -51,7 +51,7 @@ int ExportTilesetAndMapDialog::getNumberOfColumns() const
     return ui->numberOfColumnsSpinBox->value();
 }
 
-static inline void save_map(const QString &filename, const QHash<QString, QPoint> &coords, const MapLayer &map_layers)
+static inline void save_map(const QString &filename, const QHash<QString, QPoint> &coords, const MapLayers &map_layers)
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly))
@@ -59,20 +59,23 @@ static inline void save_map(const QString &filename, const QHash<QString, QPoint
 
     QDataStream stream(&file);
     {
-        uint w = 0, h = 0;
-        h = map_layers.length();
-        if (map_layers.length() > 0)
-            w = map_layers[0].length();
+        uint w = 0, h = 0, n = 0;
+        n = map_layers.length();
+        if (n > 0)
+            h = map_layers[0].length();
+        if (n > 0 && h > 0)
+            w = map_layers[0][0].length();
 
-        stream << w << h;
+        stream << n << w << h;
     }
 
-    for (auto &row: map_layers)
-        for (auto &id: row)
-            if (id.isEmpty())
-                stream << uint(0) << uint(0);
-            else
-                stream << uint(coords[id].x()) << uint(coords[id].y());
+    for (auto &layer: map_layers)
+        for (auto &row: layer)
+            for (auto &id: row)
+                if (id.isEmpty())
+                    stream << uint(0) << uint(0);
+                else
+                    stream << uint(coords[id].x()) << uint(coords[id].y());
 }
 
 void ExportTilesetAndMapDialog::onAccept() try
@@ -84,7 +87,7 @@ void ExportTilesetAndMapDialog::onAccept() try
     if (drawn_tileset.isNull())
         throw std::runtime_error("The image generated for the tileset is empty !");
 
-    QSharedPointer<MapLayer> map_layers_ptr = map_layers.toStrongRef();
+    QSharedPointer<MapLayers> map_layers_ptr = map_layers.toStrongRef();
     Q_ASSERT(!map_layers_ptr.isNull());
 
     if (!drawn_tileset.save(getTilesetPath()))

@@ -10,6 +10,7 @@ using Tileset = QHash<QString, QImage>;
 
 using TileReference = QString;
 using MapLayer = QVector<QVector<TileReference>>;
+using MapLayers = QVector<MapLayer>;
 
 class ExportAsTexturesDialog: public QDialog
 {
@@ -19,26 +20,30 @@ public:
     ~ExportAsTexturesDialog();
 
     void setTilesetPointer(QWeakPointer<Tileset> ptr) { tileset = ptr; }
-    void setMapLayersPointer(QWeakPointer<MapLayer> ptr) { map_layers = ptr; redrawLayers(); }
+    void setMapLayersPointer(QWeakPointer<MapLayers> ptr) { map_layers = ptr; redrawLayers(); }
 
     QString getDirectory() const;
     QString getPattern() const;
 
-//  TODO: Implement in a distant future
     int getNumberOfLayers() const;
+//  TODO: Implement in a distant future
     int getNumberOfFrames() const;
 
 public slots:
     void onAccept();
+//  TODO:
+    void setCurrentLayer(const int layer) { current_layer = layer; updateLayerLabel(); }
 
 private:
     Ui::ExportAsTexturesDialog *ui;
 
     int tilesize;
-    QImage drawn_layers;
+    int current_layer;
+    QVector<QImage> drawn_layers;
 
     QWeakPointer<Tileset> tileset;
-    QWeakPointer<MapLayer> map_layers;
+    QWeakPointer<MapLayers> map_layers;
 
     void redrawLayers();
+    void updateLayerLabel();
 };
