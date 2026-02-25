@@ -51,3 +51,5 @@ A typical command would be (replace 9 with the number of CPUs available on your 
 ```
 make -j9
 ```
+
+This should create an executable `map-painter-95`.
