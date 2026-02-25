@@ -35,21 +35,19 @@ purpose drawing tools.
 
 ## Usage
 
-TBD
+### Obtaining an executable
 
-## Program architecture
+*Map Painter 95* is written in *C++*, depends on *Qt6*, and uses `qmake`.
+This means that in order to obtain a runnable executable, one has to first run qmake :
+```
+qmake map-painter-95.pro
+```
 
-### MainWindow and data sharing model
+Note that many Linux distributions package Qt6 differently from Qt5, and that it may be necessary to
+call `qmake6` explicitly.
 
-The main window contains the editor widgets. Additionally, it also owns pointers to the data (and an
-undo stack), which are shared to the editor widgets on construction of MainWindow.
-All pointers here are `QSharedPointer<T>`.
-It is always assumed that changes on the data by one editor widget could impact the rendering of all
-other widgets, and thus one would need to update their view.
-
-Additionally, in order for undo/redo operations to affect the shared data, the pointers are stored
-by any undo command as `QWeakPointer<T>`.
-
-### Tileset and map data models
-
-TBD
+This generates a *Makefile*, which contains the usual compilation rules.
+A typical command would be (replace 9 with the number of CPUs available on your machine plus 1) :
+```
+make -j9
+```
