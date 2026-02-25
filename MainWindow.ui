@@ -38,6 +38,29 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <item>
+               <widget class="QLabel" name="currentLayerLabel1">
+                <property name="text">
+                 <string>Layer :</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="currentLayerComboBox1">
+                <item>
+                 <property name="text">
+                  <string>1</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="showAboveLayersCheckBox">
+                <property name="text">
+                 <string>Show Above Layers</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <spacer name="horizontalSpacer_2">
                 <property name="orientation">
                  <enum>Qt::Orientation::Horizontal</enum>
@@ -94,7 +117,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>357</width>
+                 <width>395</width>
                  <height>595</height>
                 </rect>
                </property>
@@ -189,7 +212,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>571</width>
+                 <width>533</width>
                  <height>595</height>
                 </rect>
                </property>
@@ -232,6 +255,29 @@
                <property name="checked">
                 <bool>true</bool>
                </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="Line" name="line_2">
+               <property name="orientation">
+                <enum>Qt::Orientation::Vertical</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="currentLayerLabel2">
+               <property name="text">
+                <string>Layer :</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="currentLayerComboBox2">
+               <item>
+                <property name="text">
+                 <string>1</string>
+                </property>
+               </item>
               </widget>
              </item>
              <item>
@@ -643,7 +689,7 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>66</width>
+                         <width>98</width>
                          <height>28</height>
                         </rect>
                        </property>
@@ -1145,6 +1191,8 @@
     <signal>zoomSet(double)</signal>
     <signal>mapResized()</signal>
     <slot>setZoom(double)</slot>
+    <slot>setCurrentLayer(int)</slot>
+    <slot>setShowAboveLayers(bool)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -1174,6 +1222,7 @@
     <slot>setDarken(bool)</slot>
     <slot>setSelectionShape(int)</slot>
     <slot>setSelectionColorKey(bool)</slot>
+    <slot>setCurrentLayer(int)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -1428,7 +1477,7 @@
    <slot>setZoom(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>334</x>
+     <x>372</x>
      <y>122</y>
     </hint>
     <hint type="destinationlabel">
@@ -2200,8 +2249,8 @@
      <y>437</y>
     </hint>
     <hint type="destinationlabel">
-     <x>78</x>
-     <y>92</y>
+     <x>-1</x>
+     <y>-1</y>
     </hint>
    </hints>
   </connection>
@@ -2410,6 +2459,54 @@
     <hint type="destinationlabel">
      <x>-1</x>
      <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentLayerComboBox2</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setCurrentLayer(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>226</x>
+     <y>125</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>226</x>
+     <y>240</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentLayerComboBox1</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>mapEditor</receiver>
+   <slot>setCurrentLayer(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>115</x>
+     <y>126</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>118</x>
+     <y>211</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>showAboveLayersCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mapEditor</receiver>
+   <slot>setShowAboveLayers(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>238</x>
+     <y>120</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>236</x>
+     <y>220</y>
     </hint>
    </hints>
   </connection>

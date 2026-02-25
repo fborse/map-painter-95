@@ -377,6 +377,30 @@ void MainWindow::refreshViews()
         *selected_tiles = {{{}}};   //  {{empty tile}}
 }
 
+static inline void resize_cb(QComboBox *box, const int n)
+{
+    const int current = box->currentIndex();
+
+    box->blockSignals(true);
+    box->clear();
+    for (int i = 0; i < n; ++i)
+        box->addItem(QString::number(i + 1));
+    box->blockSignals(false);
+
+    if (current < n)
+        box->setCurrentIndex(current);
+    else
+        box->setCurrentIndex(n - 1);
+}
+
+void MainWindow::updateLayersBoxes()
+{
+    Q_ASSERT(!map_layers.isNull());
+
+    resize_cb(ui->currentLayerComboBox1, map_layers->length());
+    resize_cb(ui->currentLayerComboBox2, map_layers->length());
+}
+
 void MainWindow::updateDrawOptions(const int draw_tool)
 {
 //  TODO: find a way to remove the magic aspect of this magic value

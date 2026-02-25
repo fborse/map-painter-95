@@ -12,6 +12,9 @@ public:
     void resize() final override;
     void resizeMap(const QSize &size);
 
+public slots:
+    void setShowAboveLayers(const bool yes) { show_above_layers = yes; update(); }
+
 signals:
 //  only purposes is to tell MainWindow to refresh the relevant editor widgets
     void tileSelected();
@@ -19,6 +22,8 @@ signals:
     void mapResized();
 
 private:
+    bool show_above_layers;
+
     QPoint mouse_cursor;
 //  right click is really just a desktop thing => names accordingly
     std::optional<QPoint> click_origin, right_click_origin;

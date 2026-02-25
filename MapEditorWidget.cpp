@@ -82,6 +82,7 @@ private:
 
 MapEditorWidget::MapEditorWidget(QWidget *parent):
     EditorWidget(parent),
+    show_above_layers{true},
     mouse_cursor{}, click_origin{}, right_click_origin{}
 {
     resize();
@@ -165,11 +166,13 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
         for (int k = 0; k <= current_layer; ++k)
             painter.drawImage(0, 0, getPaintedLayer(k));
 
-    //  TODO: toggle for painting layers above
-        painter.setOpacity(0.5);
-        for (int k = current_layer+1; k < map_layers->length(); ++k)
-            painter.drawImage(0, 0, getPaintedLayer(k));
-        painter.setOpacity(1);
+        if (show_above_layers)
+        {
+            painter.setOpacity(0.5);
+            for (int k = current_layer+1; k < map_layers->length(); ++k)
+                painter.drawImage(0, 0, getPaintedLayer(k));
+            painter.setOpacity(1);
+        }
 
         if (click_origin || right_click_origin)
             paintTileRects(painter);

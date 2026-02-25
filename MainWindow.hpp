@@ -55,6 +55,8 @@ public slots:
 //  centralises undo/redo changes
     void refreshViews();
 
+    void updateLayersBoxes();
+
     void updateColorWidgets(const QColor color);
     void updateDrawOptions(const int draw_tool);
 
