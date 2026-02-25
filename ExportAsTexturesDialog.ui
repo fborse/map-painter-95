@@ -81,6 +81,39 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLabel" name="currentLayerLabel">
+            <property name="text">
+             <string>Layer :</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="currentLayerComboBox">
+            <item>
+             <property name="text">
+              <string>1</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
          <widget class="QScrollArea" name="scrollArea">
           <property name="widgetResizable">
            <bool>true</bool>
@@ -94,7 +127,7 @@
              <x>0</x>
              <y>0</y>
              <width>438</width>
-             <height>501</height>
+             <height>467</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -138,8 +171,8 @@
    <slot>onAccept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>257</x>
+     <y>590</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -154,8 +187,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>325</x>
+     <y>590</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -163,8 +196,25 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>currentLayerComboBox</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>ExportAsTexturesDialog</receiver>
+   <slot>setCurrentLayer(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>423</x>
+     <y>53</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>422</x>
+     <y>5</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onAccept()</slot>
+  <slot>setCurrentLayer(int)</slot>
  </slots>
 </ui>

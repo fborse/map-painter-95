@@ -129,8 +129,14 @@ void ExportAsTexturesDialog::redrawLayers()
     Q_ASSERT(!map_layers_ptr.isNull());
     Q_ASSERT(current_layer < map_layers_ptr->length());
 
+    ui->currentLayerComboBox->blockSignals(true);
+    ui->currentLayerComboBox->clear();
     for (int k = 0; k < map_layers_ptr->length(); ++k)
+    {
         drawn_layers.push_back(gen_layer(tilesize, *tileset_ptr, map_layers_ptr->at(k)));
+        ui->currentLayerComboBox->addItem(QString::number(k + 1));
+    }
+    ui->currentLayerComboBox->blockSignals(false);
 
     updateLayerLabel();
 }
