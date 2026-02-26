@@ -4,7 +4,8 @@
 #include <QUndoStack>
 
 using Names = QVector<QString>;
-using Tileset = QHash<QString, QImage>;
+using Tile = QVector<QImage>;
+using Tileset = QHash<QString, Tile>;
 using SelectedTiles = QVector<QVector<QString>>;
 
 using TileReference = QString;
@@ -33,6 +34,7 @@ public slots:
     void setTilesize(const int size) { tilesize = size; resize(); }
     virtual void setZoom(const double z) { zoom = z; resize(); }
     void setCurrentLayer(const int layer);
+    void setCurrentFrame(const int frame);
 
 signals:
     void zoomSet(const double zoom);
@@ -43,6 +45,7 @@ protected:
 
     double zoom;
     int current_layer;
+    int current_frame;
 
     QSharedPointer<QUndoStack> undo_stack;
     QSharedPointer<Names> tiles_order;

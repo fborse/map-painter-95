@@ -3,15 +3,15 @@
 #include <QDialog>
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class AddTileDialog; }
+namespace Ui { class AddRectDialog; }
 QT_END_NAMESPACE
 
-class AddTileDialog: public QDialog
+class AddRectDialog: public QDialog
 {
     Q_OBJECT
 public:
-    explicit AddTileDialog(const int tilesize, QWidget *parent = nullptr);
-    ~AddTileDialog();
+    explicit AddRectDialog(const int tilesize, QWidget *parent = nullptr);
+    ~AddRectDialog();
 
     QColor getColor() const { return current; }
 
@@ -23,7 +23,7 @@ signals:
     void colorSelected(const QColor color);
 
 private:
-    Ui::AddTileDialog *ui;
+    Ui::AddRectDialog *ui;
 
     int tilesize;
     QColor current;

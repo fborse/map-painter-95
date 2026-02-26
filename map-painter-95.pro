@@ -9,7 +9,7 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    AddTileDialog.cpp \
+    AddRectDialog.cpp \
     BrushDisplayWidget.cpp \
     BrushEditorDialog.cpp \
     BrushEditorWidget.cpp \
@@ -32,7 +32,7 @@ SOURCES += \
     MainWindow.cpp
 
 HEADERS += \
-    AddTileDialog.hpp \
+    AddRectDialog.hpp \
     BrushDisplayWidget.hpp \
     BrushEditorDialog.hpp \
     BrushEditorWidget.hpp \
@@ -54,7 +54,7 @@ HEADERS += \
     TilesetViewWidget.hpp
 
 FORMS += \
-    AddTileDialog.ui \
+    AddRectDialog.ui \
     BrushEditorDialog.ui \
     ExportAsTexturesDialog.ui \
     ExportTilesetAndMapDialog.ui \

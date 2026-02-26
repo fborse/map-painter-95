@@ -66,7 +66,7 @@ static inline uint qHash(const MapLayersCommand::Coordinates &coords, const uint
 class ReplaceTilesCommand final: public QUndoCommand, public TilesetCommand
 {
 public:
-    using Changes = QHash<TileReference, QImage>;
+    using Changes = QHash<TileReference, Tile>;
 
     ReplaceTilesCommand(QWeakPointer<Tileset> tileset, const Changes &prev, const Changes &next):
         QUndoCommand(), TilesetCommand(tileset), prev{prev}, next{next}
@@ -91,7 +91,7 @@ private:
 class AddTilesCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand
 {
 public:
-    using Added = QMap<TileReference, QImage>;
+    using Added = QMap<TileReference, Tile>;
 
     AddTilesCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, const Added &added):
         QUndoCommand(), TilesOrderCommand(tiles_order), TilesetCommand(tileset), added{added}
@@ -705,7 +705,7 @@ QColor MapPainterWidget::getColorAt(const QPoint &p) const
         return Qt::transparent;
 }
 
-static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor>> &changes, const Tileset &tileset, const MapLayer &map_layers, std::function<bool(TileReference)> fn)
+static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor>> &changes, const Tileset &tileset, const MapLayer &map_layer, const int current_frame, std::function<bool(TileReference)> fn)
 {
     ReplaceTilesCommand::Changes prev, next;
 
@@ -713,7 +713,7 @@ static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor
     {
         for (auto &p: changes[q].keys())
         {
-            const auto id = map_layers.at(q.y()).at(q.x());
+            const auto id = map_layer.at(q.y()).at(q.x());
 
             if (fn(id))
             {
@@ -723,7 +723,9 @@ static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor
                     next.insert(id, tileset.value(id));
                 }
 
-                next[id].setPixelColor(p, changes[q][p]);
+                auto &frames = next[id];
+                const int n = frames.length();
+                frames[qMin(current_frame, n)].setPixelColor(p, changes[q][p]);
             }
         }
     }
@@ -740,6 +742,7 @@ void MapPainterWidget::handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint
         changed_pixels,
         *tileset,
         map_layers->at(current_layer),
+        current_frame,
         [&] (TileReference id) { return !id.isEmpty(); }
     );
 
@@ -776,6 +779,7 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
         changed_pixels,
         *tileset,
         map_layers->at(current_layer),
+        current_frame,
         [&] (TileReference id) {
             return is_tile_unique(map_layers->at(current_layer), id) && !id.isEmpty();
         }
@@ -790,12 +794,14 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
     //  faster than !is_tile_unique(*map_layers, prev_id)
         if (prev_id.isEmpty() || !prev_tiles.contains(prev_id))
         {
-            QImage new_image = prev_id.isEmpty()?
-                gen_empty(tilesize, tilesize)
+            Tile new_image = prev_id.isEmpty()?
+                Tile{gen_empty(tilesize, tilesize)}
               : tileset->value(prev_id);
 
+            const int n = new_image.length();
             for (auto &p: changed_pixels[q].keys())
-                new_image.setPixelColor(p, changed_pixels[q][p]);
+                new_image[qMin(current_frame, n)]
+                    .setPixelColor(p, changed_pixels[q][p]);
 
             const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
             added[uuid] = new_image;

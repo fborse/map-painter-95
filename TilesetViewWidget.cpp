@@ -88,9 +88,9 @@ private:
 class AddTileCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand
 {
 public:
-    AddTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, const QImage &pixels):
+    AddTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, const Tile &tile):
         QUndoCommand(), TilesOrderCommand(tiles_order), TilesetCommand(tileset),
-        index{0}, id{}, image{pixels}
+        index{0}, id{}, tile{tile}
     {
         index = lockTilesOrder()->length();
         id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -105,13 +105,13 @@ public:
     void redo() final override
     {
         lockTilesOrder()->push_back(id);
-        lockTileset()->insert(id, image);
+        lockTileset()->insert(id, tile);
     }
 
 private:
     int index;
     TileReference id;
-    QImage image;
+    Tile tile;
 };
 
 class RemoveTileCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand, public MapLayersCommand
@@ -129,10 +129,10 @@ public:
 
     RemoveTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, QWeakPointer<MapLayers> map_layers, const TileReference &id):
         QUndoCommand(), TilesOrderCommand(tiles_order), TilesetCommand(tileset), MapLayersCommand(map_layers),
-        index{0}, tile_reference{id}, image{}
+        index{0}, tile_reference{id}, tile{}
     {
         index = lockTilesOrder()->indexOf(tile_reference);
-        image = lockTileset()->value(tile_reference);
+        tile = lockTileset()->value(tile_reference);
 
         auto layers = *lockMapLayers();
         for (int k = 0; k < layers.length(); ++k)
@@ -145,7 +145,7 @@ public:
     void undo() final override
     {
         lockTilesOrder()->insert(index, tile_reference);
-        lockTileset()->insert(tile_reference, image);
+        lockTileset()->insert(tile_reference, tile);
 
         for (auto &[i, j, k]: affected_tiles.keys())
             (*lockMapLayers())[k][j][i] = affected_tiles[{i, j, k}];
@@ -163,7 +163,7 @@ public:
 private:
     int index;
     TileReference tile_reference;
-    QImage image;
+    Tile tile;
     QHash<Coordinates, TileReference> affected_tiles;
 };
 
@@ -203,7 +203,7 @@ void TilesetViewWidget::resize()
     EditorWidget::resize();
 }
 
-void TilesetViewWidget::addTiles(const QVector<QImage> &images, const bool undoable)
+void TilesetViewWidget::addTiles(const QVector<Tile> &images, const bool undoable)
 {
     Q_ASSERT(!undo_stack.isNull());
     Q_ASSERT(!tiles_order.isNull());
@@ -307,7 +307,11 @@ void TilesetViewWidget::paintTileset(QPainter &painter)
     {
         const QString id = displayed[i];
         const auto p = toIJ(i);
-        painter.drawImage(*p * tilesize, tileset->value(id));
+
+        Q_ASSERT(tileset->contains(id));
+        const auto &frames = (*tileset)[id];
+        const int n = frames.length();
+        painter.drawImage(*p * tilesize, frames[qMin(current_frame, n)]);
     }
 }
 

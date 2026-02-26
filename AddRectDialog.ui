@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>AddTileDialog</class>
- <widget class="QDialog" name="AddTileDialog">
+ <class>AddRectDialog</class>
+ <widget class="QDialog" name="AddRectDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Add tile</string>
+   <string>Add Rect</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -19,13 +19,13 @@
      <item>
       <widget class="QGroupBox" name="colorGroupBox">
        <property name="title">
-        <string>Tile Color</string>
+        <string>Color</string>
        </property>
        <layout class="QFormLayout" name="formLayout">
         <item row="0" column="0">
          <widget class="QLabel" name="tileColorLabel">
           <property name="text">
-           <string>Tile Color :</string>
+           <string>Color :</string>
           </property>
          </widget>
         </item>
@@ -38,7 +38,7 @@
      <item>
       <widget class="QGroupBox" name="tileViewGroupBox">
        <property name="title">
-        <string>Tile View</string>
+        <string>View</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
@@ -109,7 +109,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>AddTileDialog</receiver>
+   <receiver>AddRectDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -125,7 +125,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>AddTileDialog</receiver>
+   <receiver>AddRectDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -141,7 +141,7 @@
   <connection>
    <sender>colorSelectionWidget</sender>
    <signal>clicked(QColor)</signal>
-   <receiver>AddTileDialog</receiver>
+   <receiver>AddRectDialog</receiver>
    <slot>onSelectColor()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -155,9 +155,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>AddTileDialog</sender>
+   <sender>AddRectDialog</sender>
    <signal>colorSelected(QColor)</signal>
-   <receiver>AddTileDialog</receiver>
+   <receiver>AddRectDialog</receiver>
    <slot>onColorSelected(QColor)</slot>
    <hints>
     <hint type="sourcelabel">

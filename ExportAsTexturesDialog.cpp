@@ -7,7 +7,7 @@
 
 ExportAsTexturesDialog::ExportAsTexturesDialog(const int tilesize, QWidget *parent):
     QDialog(parent), ui(new Ui::ExportAsTexturesDialog),
-    tilesize{tilesize}, current_layer{0}, drawn_layers{},
+    tilesize{tilesize}, current_layer{0}, drawn_textures{},
     tileset{nullptr}, map_layers{nullptr}
 {
     ui->setupUi(this);
@@ -24,6 +24,14 @@ ExportAsTexturesDialog::ExportAsTexturesDialog(const int tilesize, QWidget *pare
 ExportAsTexturesDialog::~ExportAsTexturesDialog()
 {
     delete ui;
+}
+
+void ExportAsTexturesDialog::setMapLayersPointer(QWeakPointer<MapLayers> ptr)
+{
+    map_layers = ptr;
+    redrawTextures();
+    updateLayersComboBox();
+    updateDisplayedTexture();
 }
 
 QString ExportAsTexturesDialog::getDirectory() const
@@ -44,10 +52,59 @@ int ExportAsTexturesDialog::getNumberOfLayers() const
     return map_layers_ptr->length();
 }
 
-//  TODO: the combinatorics for every used tile
+static inline int product(const QSet<int> &xs)
+{
+    int prod = 1;
+
+    for (auto &x: xs)
+        prod *= x;
+
+    return prod;
+}
+
+static inline bool all_divisible_by(const QSet<int> &xs, const int y)
+{
+    for (auto &x: xs)
+        if (y % x != 0)
+            return false;
+
+    return true;
+}
+
+static inline int naive_ppmc(const QSet<int> &xs)
+{
+    const int max = product(xs);
+    for (int i = 1; i < max; ++i)
+        if (all_divisible_by(xs, i))
+            return i;
+
+    return max;
+}
+
+static inline QSet<int> get_unique_lengths(const Tileset &tileset, const MapLayer &layer)
+{
+    QSet<int> lengths;
+
+    for (auto &row: layer)
+        for (auto &id: row)
+            if (tileset.contains(id))
+                lengths.insert(tileset[id].length());
+
+    return lengths;
+}
+
 int ExportAsTexturesDialog::getNumberOfFrames() const
 {
-    return 1;
+    auto tileset_ptr = tileset.toStrongRef();
+    Q_ASSERT(!tileset_ptr.isNull());
+    auto map_layers_ptr = map_layers.toStrongRef();
+    Q_ASSERT(!map_layers_ptr.isNull());
+
+    QSet<int> lengths;
+    for (auto &layer: *map_layers_ptr)
+        lengths += get_unique_lengths(*tileset_ptr, layer);
+
+    return naive_ppmc(lengths);
 }
 
 void ExportAsTexturesDialog::onAccept() try
@@ -65,9 +122,18 @@ void ExportAsTexturesDialog::onAccept() try
     if (getPattern().count('%') > 1)
         throw std::runtime_error("The file name pattern contains more than one frame number placeholder ! ('%')");
 
+    auto tileset_ptr = tileset.toStrongRef();
+    Q_ASSERT(!tileset_ptr.isNull());
+    auto map_layers_ptr = map_layers.toStrongRef();
+    Q_ASSERT(!map_layers_ptr.isNull());
+    Q_ASSERT(!map_layers_ptr->isEmpty());
+
     for (int l = 0; l < getNumberOfLayers(); ++l)
     {
-        for (int f = 0; f < getNumberOfFrames(); ++f)
+        Q_ASSERT(!map_layers_ptr->at(l).isEmpty());
+        const int n_frames = naive_ppmc(get_unique_lengths(*tileset_ptr, map_layers_ptr->at(l)));
+
+        for (int f = 0; f < n_frames; ++f)
         {
             const QDir dir(getDirectory());
             QString pattern = getPattern();
@@ -78,7 +144,7 @@ void ExportAsTexturesDialog::onAccept() try
         //  TODO: provide a replace/discard/rename/cancel dialog
 /*            if (dir.exists(pattern))
                 throw QString("A file with that name exists already !");
-            else*/ if (!drawn_layers[l].save(path))
+            else*/ if (!drawn_textures[l][f].save(path))
                 throw QString("Could not save to '%1' !").arg(path);
         }
     }
@@ -96,7 +162,7 @@ catch (const QString &errstr)
     QMessageBox::warning(this, tr(title), tr(errstr.toStdString().c_str()));
 }
 
-static inline QImage gen_layer(const int tilesize, const Tileset &tileset, const MapLayer &layer)
+static inline QImage gen_layer(const int tilesize, const Tileset &tileset, const MapLayer &layer, const int frame)
 {
     const int h = layer.length();
     if (layer.isEmpty())
@@ -114,31 +180,53 @@ static inline QImage gen_layer(const int tilesize, const Tileset &tileset, const
             const auto id = layer[j][i];
 
             if (!id.isEmpty())
-                painter.drawImage(i * tilesize, j * tilesize, tileset.value(layer[j][i]));
+            {
+                const auto &frames = tileset[id];
+                const int n = frames.length();
+                painter.drawImage(i * tilesize, j * tilesize, frames[qMin(frame, n)]);
+            }
         }
     }
 
     return image;
 }
 
-void ExportAsTexturesDialog::redrawLayers()
+void ExportAsTexturesDialog::redrawTextures()
 {
     QSharedPointer<Tileset> tileset_ptr = tileset.toStrongRef();
     Q_ASSERT(!tileset_ptr.isNull());
     QSharedPointer<MapLayers> map_layers_ptr = map_layers.toStrongRef();
     Q_ASSERT(!map_layers_ptr.isNull());
-    Q_ASSERT(current_layer < map_layers_ptr->length());
+    const int n_layers = map_layers_ptr->length();
+
+//  TODO: uncouple the textures from the combo boxes
+    ui->currentLayerComboBox->blockSignals(true);
+    ui->currentLayerComboBox->clear();
+    for (int l = 0; l < n_layers; ++l)
+    {
+        const auto &layer = map_layers_ptr->at(l);
+        Q_ASSERT(!layer.isEmpty());
+        const int n_frames = naive_ppmc(get_unique_lengths(*tileset_ptr, layer));
+
+        QVector<QImage> drawn_frames;
+        for (int f = 0; f < n_frames; ++f)
+            drawn_frames.push_back(gen_layer(tilesize, *tileset_ptr, layer, f));
+        drawn_textures.push_back(std::move(drawn_frames));
+
+        ui->currentLayerComboBox->addItem(QString::number(l + 1));
+    }
+    ui->currentLayerComboBox->blockSignals(false);
+}
+
+void ExportAsTexturesDialog::updateLayersComboBox()
+{
+    Q_ASSERT(drawn_textures.length() > 0);
 
     ui->currentLayerComboBox->blockSignals(true);
     ui->currentLayerComboBox->clear();
-    for (int k = 0; k < map_layers_ptr->length(); ++k)
-    {
-        drawn_layers.push_back(gen_layer(tilesize, *tileset_ptr, map_layers_ptr->at(k)));
-        ui->currentLayerComboBox->addItem(QString::number(k + 1));
-    }
+    for (int l = 0; l < drawn_textures.length(); ++l)
+        ui->currentLayerComboBox->addItem(QString::number(l + 1));
     ui->currentLayerComboBox->blockSignals(false);
-
-    updateLayerLabel();
 }
 
 static inline QImage gen_background(const QSize &size, const int tilesize)
@@ -163,10 +251,13 @@ static inline QImage gen_background(const QSize &size, const int tilesize)
     return image;
 }
 
-void ExportAsTexturesDialog::updateLayerLabel()
+void ExportAsTexturesDialog::updateDisplayedTexture()
 {
-    Q_ASSERT(current_layer < drawn_layers.length());
-    QImage &img = drawn_layers[current_layer];
+    Q_ASSERT(drawn_textures.length() > 0);
+    Q_ASSERT(current_layer < drawn_textures.length());
+    Q_ASSERT(drawn_textures[current_layer].length() > 0);
+    Q_ASSERT(current_frame < drawn_textures[current_layer].length());
+    QImage &img = drawn_textures[current_layer][current_frame];
 
     QImage generated = gen_background(img.size(), tilesize);
     QPainter painter(&generated);

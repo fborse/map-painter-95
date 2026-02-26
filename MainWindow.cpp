@@ -8,7 +8,7 @@
 #include <QUuid>
 
 #include "NewMapDialog.hpp"
-#include "AddTileDialog.hpp"
+#include "AddRectDialog.hpp"
 #include "ResizeMapDialog.hpp"
 #include "ScaleSelectionDialog.hpp"
 #include "ImportTilesInBulkDialog.hpp"
@@ -66,6 +66,7 @@ MainWindow::MainWindow(QWidget *parent):
 
     refreshViews();
     updateLayersBoxes();
+    updateFramesBoxes();
 
     ui->leftColorWidget->setColor(Qt::black);
     connect(ui->leftColorWidget, &ColorSelectionWidget::clicked, [&] {
@@ -170,7 +171,7 @@ void MainWindow::populateTileset(const int tilesize)
         tiles_order->push_back(id);
 
         img.fill(color);
-        tileset->insert(id, img);
+        tileset->insert(id, {img});
     }
 }
 
@@ -245,6 +246,7 @@ void MainWindow::onNew()
             resetBrushPixels();
             ui->mapPainter->resetSelection();
             updateLayersBoxes();
+            updateFramesBoxes();
             refreshViews();
         }
     }
@@ -398,11 +400,32 @@ static inline void resize_cb(QComboBox *box, const int n)
 void MainWindow::updateLayersBoxes()
 {
     Q_ASSERT(!map_layers.isNull());
+    const int n = map_layers->length();
 
-    resize_cb(ui->currentLayerComboBox1, map_layers->length());
-    resize_cb(ui->currentLayerComboBox2, map_layers->length());
+    resize_cb(ui->currentLayerComboBox1, n);
+    resize_cb(ui->currentLayerComboBox2, n);
 
-    ui->actionRemoveLayer->setEnabled(map_layers->length() > 1);
+    ui->actionRemoveLayer->setEnabled(n > 1);
+}
+
+static inline int get_max_frames(const Tileset &/*tileset*/)
+{
+    int max = 0;
+
+/*    for (auto &tile: tileset.values())
+        if (max < tile.length())
+            max = tile.length();*/
+
+    return max;
+}
+
+void MainWindow::updateFramesBoxes()
+{
+    Q_ASSERT(!tileset.isNull());
+    const int n = get_max_frames(*tileset);
+
+    resize_cb(ui->currentFrameComboBox1, n);
+    resize_cb(ui->currentFrameComboBox2, n);
 }
 
 void MainWindow::updateDrawOptions(const int draw_tool)
@@ -429,6 +452,7 @@ void MainWindow::onUndo()
 
     undo_stack->undo();
     updateLayersBoxes();
+    updateFramesBoxes();
     refreshViews();
 }
 
@@ -439,6 +463,7 @@ void MainWindow::onRedo()
 
     undo_stack->redo();
     updateLayersBoxes();
+    updateFramesBoxes();
     refreshViews();
 }
 
@@ -481,13 +506,14 @@ void MainWindow::onAddTile()
     const int tilesize = ui->tilesetView->getTilesize();
     Q_ASSERT(tilesize > 0);
 
-    AddTileDialog dialog(tilesize, this);
+    AddRectDialog dialog(tilesize, this);
+    dialog.setWindowTitle("Add Tile");
     if (dialog.exec() == QDialog::Accepted)
     {
         QImage tile(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
         tile.fill(dialog.getColor());
 
-        ui->tilesetView->addTiles({tile}, true);
+        ui->tilesetView->addTiles({{tile}}, true);
     }
 }
 
@@ -512,7 +538,7 @@ void MainWindow::onCloneSelectedTiles()
     if (uniques.isEmpty())
         return;
 
-    QVector<QImage> tiles;
+    QVector<Tile> tiles;
     for (auto &id: uniques)
     {
         Q_ASSERT(tileset->contains(id));
@@ -539,6 +565,61 @@ void MainWindow::onRemoveSelectedTiles()
     }
 
     ui->tilesetView->removeTiles(tiles);
+}
+
+static inline bool is_1x1(const SelectedTiles &tiles)
+{
+    return (tiles.length() == 1) && (tiles.at(0).length() == 1);
+}
+
+void MainWindow::onAddFrame()
+{
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(is_1x1(*selected_tiles));
+    const auto id = selected_tiles->at(0).at(0);
+    Q_ASSERT(tileset->contains(id));
+
+    const int tilesize = ui->tilesetView->getTilesize();
+    Q_ASSERT(tilesize > 0);
+
+    AddRectDialog dialog(tilesize, this);
+    dialog.setWindowTitle("Add Frame");
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        QImage frame(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
+        frame.fill(dialog.getColor());
+
+//        ui->tilesetView->addFrame(frame);
+    }
+}
+
+void MainWindow::onCloneCurrentFrame()
+{
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(is_1x1(*selected_tiles));
+    const auto id = selected_tiles->at(0).at(0);
+    Q_ASSERT(tileset->contains(id));
+
+    const int current_frame = ui->currentFrameComboBox1->currentIndex();
+    auto &frames = (*tileset)[id];
+    const int n = frames.length();
+
+    QImage frame = frames[qMin(current_frame, n)];
+
+//    ui->tilesetView->addFrame(frame);
+}
+
+void MainWindow::onRemoveCurrentFrame()
+{
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(is_1x1(*selected_tiles));
+    const auto id = selected_tiles->at(0).at(0);
+    Q_ASSERT(tileset->contains(id));
+
+//    ui->tilesetView->removeCurrentFrame();
 }
 
 void MainWindow::onResizeMap()
@@ -636,7 +717,7 @@ bool MainWindow::load(const QString &path) try
     for (int i = 0; i < n_tiles; ++i)
     {
         TileReference id;
-        QImage tile;
+        Tile tile;
 
         stream >> id >> tile;
         order.push_back(id);
@@ -660,6 +741,7 @@ bool MainWindow::load(const QString &path) try
     resetBrushPixels();
     ui->mapPainter->resetSelection();
     updateLayersBoxes();
+    updateFramesBoxes();
     refreshViews();
     return true;
 }

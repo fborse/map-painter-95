@@ -51,7 +51,7 @@ int ExportTilesetAndMapDialog::getNumberOfColumns() const
     return ui->numberOfColumnsSpinBox->value();
 }
 
-static inline void save_map(const QString &filename, const QHash<QString, QPoint> &coords, const MapLayers &map_layers)
+static inline void save_map(const QString &filename, const QHash<QString, QVector<QPoint>> &coords, const MapLayers &map_layers)
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly))
@@ -75,7 +75,8 @@ static inline void save_map(const QString &filename, const QHash<QString, QPoint
                 if (id.isEmpty())
                     stream << uint(0) << uint(0);
                 else
-                    stream << uint(coords[id].x()) << uint(coords[id].y());
+                    for (auto &p: coords[id])
+                        stream << uint(p.x()) << uint(p.y());
 }
 
 void ExportTilesetAndMapDialog::onAccept() try
@@ -107,7 +108,7 @@ catch (const QString &errstr)
     QMessageBox::warning(this, tr(title), tr(errstr.toStdString().c_str()));
 }
 
-using OrderedTileset = QVector<QPair<QString, QImage>>;
+using OrderedTileset = QVector<QPair<QString, Tile>>;
 
 static inline OrderedTileset linearise_tiles(QWeakPointer<Names> tiles_order_ptr, QWeakPointer<Tileset> tileset_ptr)
 {
@@ -122,7 +123,7 @@ static inline OrderedTileset linearise_tiles(QWeakPointer<Names> tiles_order_ptr
         return linearised;
 
     for (auto &id: *tiles_order)
-        linearised.push_back({id, tileset->value(id).copy()});
+        linearised.push_back({id, tileset->value(id)});
 
     return linearised;
 }
@@ -132,7 +133,7 @@ static inline QPoint toIJ(const int index, const int n_columns)
     return {(index + 1) % n_columns, (index + 1) / n_columns};
 }
 
-static inline QImage gen_tileset(const OrderedTileset &tiles, const int ncol, const int tilesize, QHash<QString, QPoint> &coords)
+static inline QImage gen_tileset(const OrderedTileset &tiles, const int ncol, const int tilesize, QHash<QString, QVector<QPoint>> &coords)
 {
     const int n = qCeil((tiles.length() + 1) / float(ncol));
     const int w = (tiles.length() + 1 < ncol)? tiles.length() + 1 : ncol;
@@ -142,12 +143,19 @@ static inline QImage gen_tileset(const OrderedTileset &tiles, const int ncol, co
     tileset.fill(Qt::transparent);
 
     QPainter painter(&tileset);
-    for (int i = 0; i < tiles.length(); ++i)
-    {
-        const QPoint p = toIJ(i, ncol) * tilesize;
 
-        coords[tiles[i].first] = p;
-        painter.drawImage(p, tiles[i].second);
+    int i = 0;
+    for (auto &tile: tiles)
+    {
+        for (auto &frame: tile.second)
+        {
+            const QPoint p = toIJ(i, ncol) * tilesize;
+
+            coords[tile.first].push_back(p);
+            painter.drawImage(p, frame);
+
+            ++i;
+        }
     }
 
     return tileset;

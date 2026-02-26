@@ -34,9 +34,9 @@ ImportTilesArea &ImportTilesInBulkWidget::getAreaAt(const int index)
     return areas[index];
 }
 
-QVector<QImage> ImportTilesInBulkWidget::getTiles() const
+QVector<Tile> ImportTilesInBulkWidget::getTiles() const
 {
-    QVector<QImage> tiles;
+    QVector<Tile> tiles;
 
     for (auto &area: areas)
     {
@@ -51,7 +51,7 @@ QVector<QImage> ImportTilesInBulkWidget::getTiles() const
                 const QPoint dp(i * dx, j * dy);
                 const QSize s(tilesize, tilesize);
 
-                tiles.push_back(displayed_texture.copy(QRect(o + p + dp, s)));
+                tiles.push_back({displayed_texture.copy(QRect(o + p + dp, s))});
             }
         }
     }
@@ -377,7 +377,7 @@ QVector<ImportTilesArea> ImportTilesInBulkDialog::getTileAreas() const
     return ui->rectanglesViewWidget->getAreas();
 }
 
-QVector<QImage> ImportTilesInBulkDialog::getTiles() const
+QVector<Tile> ImportTilesInBulkDialog::getTiles() const
 {
     return ui->rectanglesViewWidget->getTiles();
 }

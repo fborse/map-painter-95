@@ -209,7 +209,16 @@ void MapEditorWidget::paintTileRects(QPainter &painter)
                 const auto id = selected_tiles->at(j % sh).at(i % sw);
 
                 if (tileset->contains(id))
-                    painter.drawImage(x + i * tilesize, y + j * tilesize, tileset->value(id));
+                {
+                    const auto &frames = (*tileset)[id];
+                    const int n = frames.length();
+
+                    painter.drawImage(
+                        x + i * tilesize,
+                        y + j * tilesize,
+                        frames[qMin(current_frame, n)]
+                    );
+                }
             }
         }
     }

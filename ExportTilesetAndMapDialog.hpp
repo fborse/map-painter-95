@@ -7,7 +7,8 @@ namespace Ui { class ExportTilesetAndMapDialog; }
 QT_END_NAMESPACE
 
 using Names = QVector<QString>;
-using Tileset = QHash<QString, QImage>;
+using Tile = QVector<QImage>;
+using Tileset = QHash<QString, Tile>;
 
 using TileReference = QString;
 using MapLayer = QVector<QVector<TileReference>>;
@@ -38,7 +39,7 @@ private:
 
     int tilesize;
 
-    QHash<QString, QPoint> tile_coordinates;
+    QHash<QString, QVector<QPoint>> tile_coordinates;
     QImage drawn_tileset;
 
     QWeakPointer<Names> tiles_order;

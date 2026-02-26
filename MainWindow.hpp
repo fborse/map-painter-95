@@ -8,7 +8,8 @@ namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
 using Names = QVector<QString>;
-using Tileset = QHash<QString, QImage>;
+using Tile = QVector<QImage>;
+using Tileset = QHash<QString, Tile>;
 using SelectedTiles = QVector<QVector<QString>>;
 
 using TileReference = QString;
@@ -43,6 +44,9 @@ public slots:
     void onAddTile();
     void onCloneSelectedTiles();
     void onRemoveSelectedTiles();
+    void onAddFrame();
+    void onCloneCurrentFrame();
+    void onRemoveCurrentFrame();
 
     void onResizeMap();
     void onAddLayer();
@@ -58,6 +62,7 @@ public slots:
     void refreshViews();
 
     void updateLayersBoxes();
+    void updateFramesBoxes();
 
     void updateColorWidgets(const QColor color);
     void updateDrawOptions(const int draw_tool);

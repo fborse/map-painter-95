@@ -6,7 +6,8 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class ExportAsTexturesDialog; }
 QT_END_NAMESPACE
 
-using Tileset = QHash<QString, QImage>;
+using Tile = QVector<QImage>;
+using Tileset = QHash<QString, Tile>;
 
 using TileReference = QString;
 using MapLayer = QVector<QVector<TileReference>>;
@@ -20,7 +21,7 @@ public:
     ~ExportAsTexturesDialog();
 
     void setTilesetPointer(QWeakPointer<Tileset> ptr) { tileset = ptr; }
-    void setMapLayersPointer(QWeakPointer<MapLayers> ptr) { map_layers = ptr; redrawLayers(); }
+    void setMapLayersPointer(QWeakPointer<MapLayers> ptr);
 
     QString getDirectory() const;
     QString getPattern() const;
@@ -31,19 +32,22 @@ public:
 
 public slots:
     void onAccept();
-//  TODO:
-    void setCurrentLayer(const int layer) { current_layer = layer; updateLayerLabel(); }
+    void setCurrentLayer(const int layer) { current_layer = layer; updateDisplayedTexture(); }
+    void setCurrentFrame(const int frame) { current_frame = frame; updateDisplayedTexture(); }
 
 private:
     Ui::ExportAsTexturesDialog *ui;
 
     int tilesize;
     int current_layer;
-    QVector<QImage> drawn_layers;
+    int current_frame;
+    QVector<QVector<QImage>> drawn_textures;
 
     QWeakPointer<Tileset> tileset;
     QWeakPointer<MapLayers> map_layers;
 
-    void redrawLayers();
-    void updateLayerLabel();
+    void redrawTextures();
+//  this one is only called when setting map_layers
+    void updateLayersComboBox();
+    void updateDisplayedTexture();
 };

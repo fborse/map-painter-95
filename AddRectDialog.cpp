@@ -1,11 +1,11 @@
-#include "AddTileDialog.hpp"
-#include "ui_AddTileDialog.h"
+#include "AddRectDialog.hpp"
+#include "ui_AddRectDialog.h"
 
 #include <QColorDialog>
 #include <QPainter>
 
-AddTileDialog::AddTileDialog(const int tilesize, QWidget *parent):
-    QDialog(parent), ui(new Ui::AddTileDialog),
+AddRectDialog::AddRectDialog(const int tilesize, QWidget *parent):
+    QDialog(parent), ui(new Ui::AddRectDialog),
     tilesize{tilesize}, current{}
 {
     ui->setupUi(this);
@@ -13,12 +13,12 @@ AddTileDialog::AddTileDialog(const int tilesize, QWidget *parent):
     onColorSelected(Qt::transparent);
 }
 
-AddTileDialog::~AddTileDialog()
+AddRectDialog::~AddRectDialog()
 {
     delete ui;
 }
 
-void AddTileDialog::onSelectColor()
+void AddRectDialog::onSelectColor()
 {
     const QColor color = QColorDialog::getColor(current, this);
     if (color.isValid() && color != current)
@@ -46,7 +46,7 @@ static inline QPixmap create_the_pixmap(const int tilesize, const QColor &color)
     return QPixmap::fromImage(image);
 }
 
-void AddTileDialog::onColorSelected(const QColor color)
+void AddRectDialog::onColorSelected(const QColor color)
 {
     Q_ASSERT(color.isValid());
     current = color;

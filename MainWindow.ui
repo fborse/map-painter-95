@@ -38,6 +38,29 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <item>
+               <widget class="QLabel" name="currentFrameLabel1">
+                <property name="text">
+                 <string>Frame :</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="currentFrameComboBox1">
+                <item>
+                 <property name="text">
+                  <string>1</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_3">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QLabel" name="currentLayerLabel1">
                 <property name="text">
                  <string>Layer :</string>
@@ -120,7 +143,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>558</width>
+                 <width>608</width>
                  <height>595</height>
                 </rect>
                </property>
@@ -215,7 +238,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>370</width>
+                 <width>320</width>
                  <height>595</height>
                 </rect>
                </property>
@@ -262,6 +285,29 @@
              </item>
              <item>
               <widget class="Line" name="line_2">
+               <property name="orientation">
+                <enum>Qt::Orientation::Vertical</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="currentFrameLabel2">
+               <property name="text">
+                <string>Frame :</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="currentFrameComboBox2">
+               <item>
+                <property name="text">
+                 <string>1</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item>
+              <widget class="Line" name="line_4">
                <property name="orientation">
                 <enum>Qt::Orientation::Vertical</enum>
                </property>
@@ -871,6 +917,9 @@
      </property>
      <addaction name="actionAddTile"/>
      <addaction name="actionCloneSelectedTiles"/>
+     <addaction name="separator"/>
+     <addaction name="actionAddFrame"/>
+     <addaction name="actionCloneCurrentFrame"/>
     </widget>
     <widget class="QMenu" name="menuRemove">
      <property name="title">
@@ -880,6 +929,8 @@
       <iconset theme="QIcon::ThemeIcon::ListRemove"/>
      </property>
      <addaction name="actionRemoveSelectedTiles"/>
+     <addaction name="separator"/>
+     <addaction name="actionRemoveCurrentFrame"/>
     </widget>
     <addaction name="menuAdd"/>
     <addaction name="menuRemove"/>
@@ -1180,6 +1231,36 @@
     <string>Ctrl+R, Ctrl+L</string>
    </property>
   </action>
+  <action name="actionAddFrame">
+   <property name="text">
+    <string>&amp;Frame...</string>
+   </property>
+   <property name="toolTip">
+    <string>Add Frame</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A, Ctrl+F</string>
+   </property>
+  </action>
+  <action name="actionRemoveCurrentFrame">
+   <property name="text">
+    <string>Current &amp;Frame</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove Current Frame</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R, Ctrl+F</string>
+   </property>
+  </action>
+  <action name="actionCloneCurrentFrame">
+   <property name="text">
+    <string>&amp;Clone Current &amp;Frame</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A, Ctrl+C, Ctrl+F</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -1206,6 +1287,7 @@
     <signal>tilesRemoved()</signal>
     <slot>setDragMode(int)</slot>
     <slot>setNumberOfColumns(int)</slot>
+    <slot>setCurrentFrame(int)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -1221,6 +1303,7 @@
     <slot>setZoom(double)</slot>
     <slot>setCurrentLayer(int)</slot>
     <slot>setShowAboveLayers(bool)</slot>
+    <slot>setCurrentFrame(int)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -1251,6 +1334,7 @@
     <slot>setSelectionShape(int)</slot>
     <slot>setSelectionColorKey(bool)</slot>
     <slot>setCurrentLayer(int)</slot>
+    <slot>setCurrentFrame(int)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -1425,7 +1509,7 @@
    <slot>setDragMode(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>629</x>
+     <x>830</x>
      <y>130</y>
     </hint>
     <hint type="destinationlabel">
@@ -1441,12 +1525,12 @@
    <slot>setNumberOfColumns(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>528</x>
+     <x>729</x>
      <y>131</y>
     </hint>
     <hint type="destinationlabel">
-     <x>615</x>
-     <y>210</y>
+     <x>981</x>
+     <y>340</y>
     </hint>
    </hints>
   </connection>
@@ -1493,8 +1577,8 @@
      <y>174</y>
     </hint>
     <hint type="destinationlabel">
-     <x>380</x>
-     <y>109</y>
+     <x>590</x>
+     <y>131</y>
     </hint>
    </hints>
   </connection>
@@ -1505,8 +1589,8 @@
    <slot>setZoom(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>372</x>
-     <y>122</y>
+     <x>590</x>
+     <y>131</y>
     </hint>
     <hint type="destinationlabel">
      <x>330</x>
@@ -2017,8 +2101,8 @@
    <slot>setBrushPixels(QImage)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>840</x>
-     <y>637</y>
+     <x>863</x>
+     <y>628</y>
     </hint>
     <hint type="destinationlabel">
      <x>664</x>
@@ -2033,12 +2117,12 @@
    <slot>setBrushPixels(QImage)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>840</x>
-     <y>637</y>
+     <x>863</x>
+     <y>628</y>
     </hint>
     <hint type="destinationlabel">
-     <x>840</x>
-     <y>637</y>
+     <x>863</x>
+     <y>628</y>
     </hint>
    </hints>
   </connection>
@@ -2497,8 +2581,8 @@
    <slot>setCurrentLayer(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>226</x>
-     <y>125</y>
+     <x>367</x>
+     <y>130</y>
     </hint>
     <hint type="destinationlabel">
      <x>226</x>
@@ -2513,8 +2597,8 @@
    <slot>setCurrentLayer(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>115</x>
-     <y>126</y>
+     <x>259</x>
+     <y>130</y>
     </hint>
     <hint type="destinationlabel">
      <x>118</x>
@@ -2529,8 +2613,8 @@
    <slot>setShowAboveLayers(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>238</x>
-     <y>120</y>
+     <x>407</x>
+     <y>129</y>
     </hint>
     <hint type="destinationlabel">
      <x>236</x>
@@ -2577,12 +2661,12 @@
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>96</x>
-     <y>117</y>
+     <x>259</x>
+     <y>130</y>
     </hint>
     <hint type="destinationlabel">
-     <x>204</x>
-     <y>117</y>
+     <x>367</x>
+     <y>130</y>
     </hint>
    </hints>
   </connection>
@@ -2593,12 +2677,140 @@
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>204</x>
+     <x>367</x>
+     <y>130</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>259</x>
+     <y>130</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentFrameComboBox1</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>mapEditor</receiver>
+   <slot>setCurrentFrame(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>121</x>
+     <y>126</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>121</x>
+     <y>176</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentFrameComboBox2</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setCurrentFrame(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>229</x>
+     <y>120</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>233</x>
+     <y>173</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentFrameComboBox2</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>currentFrameComboBox1</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>232</x>
      <y>117</y>
     </hint>
     <hint type="destinationlabel">
-     <x>96</x>
+     <x>124</x>
      <y>117</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentFrameComboBox1</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>currentFrameComboBox2</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>124</x>
+     <y>117</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>232</x>
+     <y>117</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAddFrame</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onAddFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionRemoveCurrentFrame</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onRemoveCurrentFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionCloneCurrentFrame</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onCloneCurrentFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentFrameComboBox1</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>tilesetView</receiver>
+   <slot>setCurrentFrame(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>101</x>
+     <y>117</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>830</x>
+     <y>437</y>
     </hint>
    </hints>
   </connection>
@@ -2632,5 +2844,8 @@
   <slot>onExportAsTextures()</slot>
   <slot>onAddLayer()</slot>
   <slot>onRemoveCurrentLayer()</slot>
+  <slot>onAddFrame()</slot>
+  <slot>onCloneCurrentFrame()</slot>
+  <slot>onRemoveCurrentFrame()</slot>
  </slots>
 </ui>

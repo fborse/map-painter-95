@@ -19,7 +19,7 @@ public:
 
     void resize() final override;
 
-    void addTiles(const QVector<QImage> &images, const bool undoable);
+    void addTiles(const QVector<Tile> &tiles, const bool undoable);
     void removeTiles(const QVector<TileReference> &tiles);
 
 public slots:

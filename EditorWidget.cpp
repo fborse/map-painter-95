@@ -5,7 +5,8 @@
 
 EditorWidget::EditorWidget(QWidget *parent):
     QWidget(parent),
-    grid_aspect{20, 16}, tilesize{32}, zoom{1}, current_layer{0},
+    grid_aspect{20, 16}, tilesize{32}, zoom{1},
+    current_layer{0}, current_frame{0},
     undo_stack{nullptr}, tiles_order{nullptr}, tileset{nullptr},
     selected_tiles{nullptr}, map_layers{nullptr}
 {
@@ -17,6 +18,16 @@ void EditorWidget::setCurrentLayer(const int layer)
         current_layer = 0;
     else
         current_layer = layer;
+
+    update();
+}
+
+void EditorWidget::setCurrentFrame(const int frame)
+{
+    if (frame < 0)
+        current_frame = 0;
+    else
+        current_frame = frame;
 
     update();
 }
@@ -84,7 +95,11 @@ QImage EditorWidget::getPaintedLayer(const int layer) const
             const auto id = _layer.at(j).at(i);
 
             if (tileset->contains(id))
-                painter.drawImage(i * tilesize, j * tilesize, tileset->value(id));
+            {
+                const auto &frames = (*tileset)[id];
+                const int n = frames.length();
+                painter.drawImage(i * tilesize, j * tilesize, frames[qMin(current_frame, n)]);
+            }
         }
     }
 
