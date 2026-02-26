@@ -223,6 +223,8 @@ void MainWindow::onNew()
         if (dialog.exec() == QDialog::Accepted)
         {
             resetPointers();
+            Q_ASSERT(!map_layers.isNull());
+            map_layers->resize(1);
             Q_ASSERT(dialog.getMapSize().width() > 0);
             Q_ASSERT(dialog.getMapSize().height() > 0);
             setMapSize(dialog.getMapSize());
@@ -242,6 +244,7 @@ void MainWindow::onNew()
 
             resetBrushPixels();
             ui->mapPainter->resetSelection();
+            updateLayersBoxes();
             refreshViews();
         }
     }
@@ -656,8 +659,8 @@ bool MainWindow::load(const QString &path) try
 
     resetBrushPixels();
     ui->mapPainter->resetSelection();
-    refreshViews();
     updateLayersBoxes();
+    refreshViews();
     return true;
 }
 catch (const QString &errstr)
