@@ -58,6 +58,9 @@
                 <property name="text">
                  <string>Show Above Layers</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
@@ -117,7 +120,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>395</width>
+                 <width>558</width>
                  <height>595</height>
                 </rect>
                </property>
@@ -212,7 +215,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>533</width>
+                 <width>370</width>
                  <height>595</height>
                 </rect>
                </property>
@@ -886,6 +889,9 @@
      <string>&amp;Map</string>
     </property>
     <addaction name="actionResizeMap"/>
+    <addaction name="separator"/>
+    <addaction name="actionAddLayer"/>
+    <addaction name="actionRemoveLayer"/>
    </widget>
    <widget class="QMenu" name="menuDrawing">
     <property name="title">
@@ -1150,6 +1156,28 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+E, Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actionAddLayer">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ListAdd"/>
+   </property>
+   <property name="text">
+    <string>&amp;Add &amp;Layer</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A, Ctrl+L</string>
+   </property>
+  </action>
+  <action name="actionRemoveLayer">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ListRemove"/>
+   </property>
+   <property name="text">
+    <string>&amp;Remove Current &amp;Layer</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R, Ctrl+L</string>
    </property>
   </action>
  </widget>
@@ -1989,8 +2017,8 @@
    <slot>setBrushPixels(QImage)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>863</x>
-     <y>628</y>
+     <x>840</x>
+     <y>637</y>
     </hint>
     <hint type="destinationlabel">
      <x>664</x>
@@ -2005,12 +2033,12 @@
    <slot>setBrushPixels(QImage)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>863</x>
-     <y>628</y>
+     <x>840</x>
+     <y>637</y>
     </hint>
     <hint type="destinationlabel">
-     <x>863</x>
-     <y>628</y>
+     <x>840</x>
+     <y>637</y>
     </hint>
    </hints>
   </connection>
@@ -2510,6 +2538,70 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionRemoveLayer</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onRemoveCurrentLayer()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAddLayer</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onAddLayer()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentLayerComboBox1</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>currentLayerComboBox2</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>96</x>
+     <y>117</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>204</x>
+     <y>117</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentLayerComboBox2</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>currentLayerComboBox1</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>204</x>
+     <y>117</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>96</x>
+     <y>117</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -2538,5 +2630,7 @@
   <slot>onImportTilesInBulk()</slot>
   <slot>onExportTilesetAndMap()</slot>
   <slot>onExportAsTextures()</slot>
+  <slot>onAddLayer()</slot>
+  <slot>onRemoveCurrentLayer()</slot>
  </slots>
 </ui>

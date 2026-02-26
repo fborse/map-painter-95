@@ -12,6 +12,9 @@ public:
     void resize() final override;
     void resizeMap(const QSize &size);
 
+    void insertLayer(const int index);
+    void removeLayer(const int index);
+
 public slots:
     void setShowAboveLayers(const bool yes) { show_above_layers = yes; update(); }
 

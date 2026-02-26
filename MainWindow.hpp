@@ -45,6 +45,8 @@ public slots:
     void onRemoveSelectedTiles();
 
     void onResizeMap();
+    void onAddLayer();
+    void onRemoveCurrentLayer();
 
     void onFlipHorizontally();
     void onFlipVertically();

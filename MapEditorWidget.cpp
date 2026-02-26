@@ -80,6 +80,52 @@ private:
     MapLayers prev, next;
 };
 
+class InsertLayerCommand final: public QUndoCommand, public MapLayersCommand
+{
+public:
+    InsertLayerCommand(QWeakPointer<MapLayers> map_layers, const int index):
+        QUndoCommand(), MapLayersCommand(map_layers), index{index}
+    {
+        const auto &layers = *lockMapLayers();
+        Q_ASSERT(!layers.isEmpty());
+        Q_ASSERT(!layers.at(0).isEmpty());
+
+        h = layers.at(0).length();
+        w = layers.at(0).at(0).length();
+    }
+
+    void undo() final override { lockMapLayers()->remove(index); }
+
+    void redo() final override
+    {
+        lockMapLayers()->insert(index, MapLayer(h));
+        for (auto &row: (*lockMapLayers())[index])
+            row.resize(w, {});
+    }
+
+private:
+    int index;
+    int w, h;
+};
+
+class RemoveLayerCommand final: public QUndoCommand, public MapLayersCommand
+{
+public:
+    RemoveLayerCommand(QWeakPointer<MapLayers> map_layers, const int index):
+        QUndoCommand(), MapLayersCommand(map_layers), index{index}
+    {
+        Q_ASSERT(index < lockMapLayers()->length());
+        removed = lockMapLayers()->at(index);
+    }
+
+    void undo() final override { lockMapLayers()->insert(index, removed); }
+    void redo() final override { lockMapLayers()->remove(index); }
+
+private:
+    int index;
+    MapLayer removed;
+};
+
 MapEditorWidget::MapEditorWidget(QWidget *parent):
     EditorWidget(parent),
     show_above_layers{true},
@@ -101,6 +147,43 @@ void MapEditorWidget::resize()
         grid_aspect = {w, h};
         EditorWidget::resize();
     }
+}
+
+void MapEditorWidget::resizeMap(const QSize &size)
+{
+    Q_ASSERT(!map_layers.isNull());
+    MapLayers prev = *map_layers;
+
+    MapLayers next = prev;
+    for (auto &layer: next)
+    {
+        layer.resize(size.height(), {});
+
+        for (auto &row: layer)
+            row.resize(size.width(), {});
+    }
+
+    undo_stack->push(new SwapLayersCommand(map_layers, prev, next));
+    emit mapResized();
+}
+
+void MapEditorWidget::insertLayer(const int index)
+{
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(!map_layers.isNull());
+//  The +1 is because we may be adding at the end
+    Q_ASSERT(0 <= index && index < map_layers->length() + 1);
+
+    undo_stack->push(new InsertLayerCommand(map_layers, index));
+}
+
+void MapEditorWidget::removeLayer(const int index)
+{
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(!map_layers.isNull());
+    Q_ASSERT(0 <= index && index < map_layers->length());
+
+    undo_stack->push(new RemoveLayerCommand(map_layers, index));
 }
 
 void MapEditorWidget::paintTileRects(QPainter &painter)
@@ -182,24 +265,6 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
     paintGrid(painter);
     if (click_origin || right_click_origin)
         paintRectOutlines(painter);
-}
-
-void MapEditorWidget::resizeMap(const QSize &size)
-{
-    Q_ASSERT(!map_layers.isNull());
-    MapLayers prev = *map_layers;
-
-    MapLayers next = prev;
-    for (auto &layer: next)
-    {
-        layer.resize(size.height(), {});
-
-        for (auto &row: layer)
-            row.resize(size.width(), {});
-    }
-
-    undo_stack->push(new SwapLayersCommand(map_layers, prev, next));
-    emit mapResized();
 }
 
 void MapEditorWidget::handleTileSetting()

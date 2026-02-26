@@ -11,6 +11,16 @@ EditorWidget::EditorWidget(QWidget *parent):
 {
 }
 
+void EditorWidget::setCurrentLayer(const int layer)
+{
+    if (layer < 0)
+        current_layer = 0;
+    else
+        current_layer = layer;
+
+    update();
+}
+
 void EditorWidget::resize()
 {
     setFixedSize(grid_aspect * tilesize * zoom);

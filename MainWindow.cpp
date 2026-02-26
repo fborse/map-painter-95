@@ -65,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent):
     ui->actionScale->setEnabled(false);
 
     refreshViews();
+    updateLayersBoxes();
 
     ui->leftColorWidget->setColor(Qt::black);
     connect(ui->leftColorWidget, &ColorSelectionWidget::clicked, [&] {
@@ -82,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent):
     });
 
 //  TODO: is there *really* no better way to set this kind of stuff ???
-    ui->splitter->setStretchFactor(0, 5);
+    ui->splitter->setStretchFactor(0, 3);
     ui->splitter->setStretchFactor(1, 1);
 }
 
@@ -381,11 +382,9 @@ static inline void resize_cb(QComboBox *box, const int n)
 {
     const int current = box->currentIndex();
 
-    box->blockSignals(true);
     box->clear();
     for (int i = 0; i < n; ++i)
         box->addItem(QString::number(i + 1));
-    box->blockSignals(false);
 
     if (current < n)
         box->setCurrentIndex(current);
@@ -399,6 +398,8 @@ void MainWindow::updateLayersBoxes()
 
     resize_cb(ui->currentLayerComboBox1, map_layers->length());
     resize_cb(ui->currentLayerComboBox2, map_layers->length());
+
+    ui->actionRemoveLayer->setEnabled(map_layers->length() > 1);
 }
 
 void MainWindow::updateDrawOptions(const int draw_tool)
@@ -424,6 +425,7 @@ void MainWindow::onUndo()
     Q_ASSERT(undo_stack->canUndo());
 
     undo_stack->undo();
+    updateLayersBoxes();
     refreshViews();
 }
 
@@ -433,6 +435,7 @@ void MainWindow::onRedo()
     Q_ASSERT(undo_stack->canRedo());
 
     undo_stack->redo();
+    updateLayersBoxes();
     refreshViews();
 }
 
@@ -549,6 +552,33 @@ void MainWindow::onResizeMap()
         ui->mapEditor->resizeMap(dialog.getSize());
 }
 
+void MainWindow::onAddLayer()
+{
+    Q_ASSERT(!map_layers.isNull());
+    const int current_layer = ui->currentLayerComboBox1->currentIndex();
+    Q_ASSERT(0 <= current_layer);
+    Q_ASSERT(current_layer < map_layers->length());
+
+    ui->mapEditor->insertLayer(current_layer + 1);
+    Q_ASSERT(current_layer + 1 < map_layers->length());
+    updateLayersBoxes();
+    ui->currentLayerComboBox1->setCurrentIndex(current_layer + 1);
+}
+
+void MainWindow::onRemoveCurrentLayer()
+{
+    Q_ASSERT(!map_layers.isNull());
+    const int current_layer = ui->currentLayerComboBox1->currentIndex();
+    Q_ASSERT(0 <= current_layer);
+    Q_ASSERT(current_layer < map_layers->length());
+
+    ui->mapEditor->removeLayer(current_layer);
+    Q_ASSERT(current_layer - 1 < map_layers->length());
+    if (current_layer == map_layers->length())
+        ui->currentLayerComboBox1->setCurrentIndex(current_layer - 1);
+    updateLayersBoxes();
+}
+
 void MainWindow::onFlipHorizontally()
 {
     ui->mapPainter->flipSelection(true, false);
@@ -627,6 +657,7 @@ bool MainWindow::load(const QString &path) try
     resetBrushPixels();
     ui->mapPainter->resetSelection();
     refreshViews();
+    updateLayersBoxes();
     return true;
 }
 catch (const QString &errstr)
