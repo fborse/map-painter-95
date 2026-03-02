@@ -128,18 +128,30 @@ static inline OrderedTileset linearise_tiles(QWeakPointer<Names> tiles_order_ptr
     return linearised;
 }
 
+static inline int get_n_images(const OrderedTileset &tiles)
+{
+    int n = 0;
+
+    for (auto &tile: tiles)
+        n += tile.second.length();
+
+    return n;
+}
+
 static inline QPoint toIJ(const int index, const int n_columns)
 {
     return {(index + 1) % n_columns, (index + 1) / n_columns};
 }
 
+//  both draws the tileset and creates and index of coordinates which the map refers to
 static inline QImage gen_tileset(const OrderedTileset &tiles, const int ncol, const int tilesize, QHash<QString, QVector<QPoint>> &coords)
 {
-    const int n = qCeil((tiles.length() + 1) / float(ncol));
-    const int w = (tiles.length() + 1 < ncol)? tiles.length() + 1 : ncol;
+    const int n = get_n_images(tiles);
+    const int h = qCeil((n + 1) / float(ncol));
+    const int w = (n + 1 < ncol)? n + 1 : ncol;
     coords.clear();
 
-    QImage tileset(w * tilesize, n * tilesize, QImage::Format_ARGB32_Premultiplied);
+    QImage tileset(w * tilesize, h * tilesize, QImage::Format_ARGB32_Premultiplied);
     tileset.fill(Qt::transparent);
 
     QPainter painter(&tileset);
