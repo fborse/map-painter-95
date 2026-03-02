@@ -64,6 +64,12 @@ MainWindow::MainWindow(QWidget *parent):
     ui->actionRotate90CCW->setEnabled(false);
     ui->actionScale->setEnabled(false);
 
+    ui->actionCloneSelectedTiles->setEnabled(false);
+    ui->actionAddFrame->setEnabled(false);
+    ui->actionCloneCurrentFrame->setEnabled(false);
+    ui->actionRemoveSelectedTiles->setEnabled(false);
+    ui->actionRemoveCurrentFrame->setEnabled(false);
+
     refreshViews();
     updateLayersBoxes();
     updateFramesBoxes();
@@ -366,6 +372,49 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
+static inline bool not_empty(const SelectedTiles &tiles)
+{
+    return (tiles.length() > 0) && (tiles.at(0).length() > 0);
+}
+
+static inline bool is_1x1(const SelectedTiles &tiles)
+{
+    return (tiles.length() == 1) && (tiles.at(0).length() == 1);
+}
+
+static inline bool can_add_frames(const Tileset &tileset, const SelectedTiles &tiles)
+{
+    if (!is_1x1(tiles))
+        return false;
+    else
+        return tileset.contains(tiles[0][0]);
+}
+
+static inline bool can_remove_frames(const Tileset &tileset, const SelectedTiles &tiles)
+{
+    if (!is_1x1(tiles))
+        return false;
+    else if (!tileset.contains(tiles[0][0]))
+        return false;
+    else
+        return (tileset.value(tiles[0][0]).length() > 1);
+}
+
+void MainWindow::onSelectedChanged()
+{
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+
+    ui->tilesetView->update();
+
+    ui->actionCloneSelectedTiles->setEnabled(not_empty(*selected_tiles));
+    ui->actionRemoveSelectedTiles->setEnabled(not_empty(*selected_tiles));
+
+    ui->actionAddFrame->setEnabled(can_add_frames(*tileset, *selected_tiles));
+    ui->actionCloneCurrentFrame->setEnabled(can_add_frames(*tileset, *selected_tiles));
+    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*tileset, *selected_tiles));
+}
+
 void MainWindow::refreshViews()
 {
     ui->mapEditor->resize();
@@ -567,11 +616,6 @@ void MainWindow::onRemoveSelectedTiles()
     ui->tilesetView->removeTiles(tiles);
 }
 
-static inline bool is_1x1(const SelectedTiles &tiles)
-{
-    return (tiles.length() == 1) && (tiles.at(0).length() == 1);
-}
-
 void MainWindow::onAddFrame()
 {
     Q_ASSERT(!tileset.isNull());
@@ -593,7 +637,9 @@ void MainWindow::onAddFrame()
         frame.fill(dialog.getColor());
 
         ui->tilesetView->addFrames({{current_frame + 1, frame}});
+
         updateFramesBoxes();
+        ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*tileset, *selected_tiles));
     }
 }
 
@@ -612,7 +658,9 @@ void MainWindow::onCloneCurrentFrame()
     QImage frame = frames[qMin(current_frame, n)];
 
     ui->tilesetView->addFrames({{current_frame + 1, frame}});
+
     updateFramesBoxes();
+    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*tileset, *selected_tiles));
 }
 
 void MainWindow::onRemoveCurrentFrame()
@@ -626,7 +674,9 @@ void MainWindow::onRemoveCurrentFrame()
     const int current_frame = ui->currentFrameComboBox1->currentIndex();
 
     ui->tilesetView->removeFrames({current_frame});
+
     updateFramesBoxes();
+    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*tileset, *selected_tiles));
 }
 
 void MainWindow::onResizeMap()

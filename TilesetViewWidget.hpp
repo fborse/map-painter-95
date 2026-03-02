@@ -31,6 +31,7 @@ public slots:
 
 signals:
     void tilesRemoved();
+    void selectedChanged();
 
 private:
     int n_columns;

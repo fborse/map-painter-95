@@ -503,6 +503,8 @@ void TilesetViewWidget::handleTilesSelected()
             if (const auto idx = toIndex({i, j}))
                 selected_tiles->back().push_back((idx < 0)? "" : tiles_order->at(*idx));
     }
+
+    emit selectedChanged();
 }
 
 void TilesetViewWidget::handleTileModifications()

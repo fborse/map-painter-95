@@ -58,6 +58,8 @@ public slots:
     void onRotate90CCW();
     void onScale();
 
+    void onSelectedChanged();
+
 //  centralises undo/redo changes
     void refreshViews();
 

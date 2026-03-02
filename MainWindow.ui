@@ -1285,6 +1285,7 @@
    <container>1</container>
    <slots>
     <signal>tilesRemoved()</signal>
+    <signal>selectedChanged()</signal>
     <slot>setDragMode(int)</slot>
     <slot>setNumberOfColumns(int)</slot>
     <slot>setCurrentFrame(int)</slot>
@@ -1525,28 +1526,12 @@
    <slot>setNumberOfColumns(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>729</x>
+     <x>779</x>
      <y>131</y>
     </hint>
     <hint type="destinationlabel">
      <x>981</x>
      <y>340</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>mapEditor</sender>
-   <signal>tileSelected()</signal>
-   <receiver>tilesetView</receiver>
-   <slot>update()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>301</x>
-     <y>409</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>644</x>
-     <y>449</y>
     </hint>
    </hints>
   </connection>
@@ -1609,8 +1594,8 @@
      <y>131</y>
     </hint>
     <hint type="destinationlabel">
-     <x>722</x>
-     <y>334</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -1621,8 +1606,8 @@
    <slot>setValue(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>722</x>
-     <y>556</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>731</x>
@@ -1641,8 +1626,8 @@
      <y>129</y>
     </hint>
     <hint type="destinationlabel">
-     <x>76</x>
-     <y>238</y>
+     <x>99</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -1702,7 +1687,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>989</x>
-     <y>152</y>
+     <y>135</y>
     </hint>
     <hint type="destinationlabel">
      <x>989</x>
@@ -1717,8 +1702,8 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>888</x>
-     <y>144</y>
+     <x>864</x>
+     <y>135</y>
     </hint>
     <hint type="destinationlabel">
      <x>989</x>
@@ -1733,8 +1718,8 @@
    <slot>setSaturation(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>888</x>
-     <y>144</y>
+     <x>864</x>
+     <y>135</y>
     </hint>
     <hint type="destinationlabel">
      <x>989</x>
@@ -1750,11 +1735,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>989</x>
-     <y>241</y>
+     <y>135</y>
     </hint>
     <hint type="destinationlabel">
-     <x>888</x>
-     <y>144</y>
+     <x>864</x>
+     <y>135</y>
     </hint>
    </hints>
   </connection>
@@ -1769,8 +1754,8 @@
      <y>291</y>
     </hint>
     <hint type="destinationlabel">
-     <x>891</x>
-     <y>336</y>
+     <x>853</x>
+     <y>344</y>
     </hint>
    </hints>
   </connection>
@@ -1785,8 +1770,8 @@
      <y>291</y>
     </hint>
     <hint type="destinationlabel">
-     <x>891</x>
-     <y>336</y>
+     <x>853</x>
+     <y>344</y>
     </hint>
    </hints>
   </connection>
@@ -1797,8 +1782,8 @@
    <slot>setColor(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>891</x>
-     <y>336</y>
+     <x>853</x>
+     <y>344</y>
     </hint>
     <hint type="destinationlabel">
      <x>989</x>
@@ -1817,8 +1802,8 @@
      <y>291</y>
     </hint>
     <hint type="destinationlabel">
-     <x>396</x>
-     <y>437</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -1845,7 +1830,7 @@
    <slot>updateDrawOptions(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>990</x>
+     <x>863</x>
      <y>471</y>
     </hint>
     <hint type="destinationlabel">
@@ -1861,8 +1846,8 @@
    <slot>setColor(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>396</x>
-     <y>437</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>989</x>
@@ -1877,12 +1862,12 @@
    <slot>setPenSize(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>929</x>
-     <y>509</y>
+     <x>963</x>
+     <y>497</y>
     </hint>
     <hint type="destinationlabel">
-     <x>685</x>
-     <y>510</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -1893,12 +1878,12 @@
    <slot>setAntiAliasing(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>911</x>
-     <y>540</y>
+     <x>963</x>
+     <y>530</y>
     </hint>
     <hint type="destinationlabel">
-     <x>681</x>
-     <y>537</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -1909,12 +1894,12 @@
    <slot>setRoundPenCorners(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>914</x>
-     <y>562</y>
+     <x>963</x>
+     <y>554</y>
     </hint>
     <hint type="destinationlabel">
-     <x>676</x>
-     <y>560</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -1925,12 +1910,12 @@
    <slot>setDrawTool(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>807</x>
-     <y>459</y>
+     <x>863</x>
+     <y>471</y>
     </hint>
     <hint type="destinationlabel">
-     <x>700</x>
-     <y>459</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -1941,12 +1926,12 @@
    <slot>setEllipseShape(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>864</x>
-     <y>617</y>
+     <x>873</x>
+     <y>638</y>
     </hint>
     <hint type="destinationlabel">
-     <x>633</x>
-     <y>631</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -1957,12 +1942,12 @@
    <slot>setFillShape(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>864</x>
-     <y>623</y>
+     <x>873</x>
+     <y>638</y>
     </hint>
     <hint type="destinationlabel">
-     <x>653</x>
-     <y>657</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -1973,12 +1958,12 @@
    <slot>setRectRadius(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>864</x>
-     <y>629</y>
+     <x>873</x>
+     <y>638</y>
     </hint>
     <hint type="destinationlabel">
-     <x>679</x>
-     <y>689</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -1989,8 +1974,8 @@
    <slot>updateColorWidgets(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>106</x>
-     <y>430</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>8</x>
@@ -2005,8 +1990,8 @@
    <slot>updateColorWidgets(QColor)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>968</x>
-     <y>360</y>
+     <x>853</x>
+     <y>344</y>
     </hint>
     <hint type="destinationlabel">
      <x>1021</x>
@@ -2037,12 +2022,12 @@
    <slot>setRetroactive(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>77</x>
-     <y>117</y>
+     <x>101</x>
+     <y>129</y>
     </hint>
     <hint type="destinationlabel">
-     <x>82</x>
-     <y>297</y>
+     <x>105</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -2053,12 +2038,12 @@
    <slot>setFillTolerance(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>864</x>
-     <y>499</y>
+     <x>873</x>
+     <y>517</y>
     </hint>
     <hint type="destinationlabel">
-     <x>679</x>
-     <y>509</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -2069,12 +2054,12 @@
    <slot>setFillThisTileOnly(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>864</x>
-     <y>508</y>
+     <x>873</x>
+     <y>517</y>
     </hint>
     <hint type="destinationlabel">
-     <x>661</x>
-     <y>536</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -2085,12 +2070,12 @@
    <slot>setDarken(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>864</x>
-     <y>617</y>
+     <x>873</x>
+     <y>638</y>
     </hint>
     <hint type="destinationlabel">
-     <x>667</x>
-     <y>645</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -2105,8 +2090,8 @@
      <y>628</y>
     </hint>
     <hint type="destinationlabel">
-     <x>664</x>
-     <y>667</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -2197,8 +2182,8 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>382</x>
-     <y>437</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -2213,8 +2198,8 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>382</x>
-     <y>437</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -2229,12 +2214,12 @@
    <slot>setSelectionShape(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>864</x>
-     <y>499</y>
+     <x>873</x>
+     <y>517</y>
     </hint>
     <hint type="destinationlabel">
-     <x>582</x>
-     <y>509</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -2245,12 +2230,12 @@
    <slot>setSelectionColorKey(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>864</x>
-     <y>508</y>
+     <x>873</x>
+     <y>517</y>
     </hint>
     <hint type="destinationlabel">
-     <x>603</x>
-     <y>536</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -2357,8 +2342,8 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>382</x>
-     <y>437</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -2501,8 +2486,8 @@
    <slot>refreshViews()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>381</x>
-     <y>649</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>381</x>
@@ -2517,8 +2502,8 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>382</x>
-     <y>437</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -2533,8 +2518,8 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>382</x>
-     <y>437</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -2549,8 +2534,8 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>382</x>
-     <y>437</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -2565,8 +2550,8 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>382</x>
-     <y>437</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -2581,12 +2566,12 @@
    <slot>setCurrentLayer(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>367</x>
+     <x>322</x>
      <y>130</y>
     </hint>
     <hint type="destinationlabel">
-     <x>226</x>
-     <y>240</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -2597,7 +2582,7 @@
    <slot>setCurrentLayer(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>259</x>
+     <x>214</x>
      <y>130</y>
     </hint>
     <hint type="destinationlabel">
@@ -2613,7 +2598,7 @@
    <slot>setShowAboveLayers(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>407</x>
+     <x>362</x>
      <y>129</y>
     </hint>
     <hint type="destinationlabel">
@@ -2661,11 +2646,11 @@
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>259</x>
+     <x>214</x>
      <y>130</y>
     </hint>
     <hint type="destinationlabel">
-     <x>367</x>
+     <x>322</x>
      <y>130</y>
     </hint>
    </hints>
@@ -2677,11 +2662,11 @@
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>367</x>
+     <x>322</x>
      <y>130</y>
     </hint>
     <hint type="destinationlabel">
-     <x>259</x>
+     <x>214</x>
      <y>130</y>
     </hint>
    </hints>
@@ -2693,8 +2678,8 @@
    <slot>setCurrentFrame(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>121</x>
-     <y>126</y>
+     <x>118</x>
+     <y>130</y>
     </hint>
     <hint type="destinationlabel">
      <x>121</x>
@@ -2709,12 +2694,12 @@
    <slot>setCurrentFrame(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>229</x>
-     <y>120</y>
+     <x>226</x>
+     <y>130</y>
     </hint>
     <hint type="destinationlabel">
-     <x>233</x>
-     <y>173</y>
+     <x>121</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>
@@ -2725,12 +2710,12 @@
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>232</x>
-     <y>117</y>
+     <x>226</x>
+     <y>130</y>
     </hint>
     <hint type="destinationlabel">
-     <x>124</x>
-     <y>117</y>
+     <x>118</x>
+     <y>130</y>
     </hint>
    </hints>
   </connection>
@@ -2741,12 +2726,12 @@
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>124</x>
-     <y>117</y>
+     <x>118</x>
+     <y>130</y>
     </hint>
     <hint type="destinationlabel">
-     <x>232</x>
-     <y>117</y>
+     <x>226</x>
+     <y>130</y>
     </hint>
    </hints>
   </connection>
@@ -2814,6 +2799,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>tilesetView</sender>
+   <signal>selectedChanged()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onSelectedChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>977</x>
+     <y>720</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1020</x>
+     <y>725</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mapEditor</sender>
+   <signal>tileSelected()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onSelectedChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>48</x>
+     <y>720</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2</x>
+     <y>725</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -2847,5 +2864,6 @@
   <slot>onAddFrame()</slot>
   <slot>onCloneCurrentFrame()</slot>
   <slot>onRemoveCurrentFrame()</slot>
+  <slot>onSelectedChanged()</slot>
  </slots>
 </ui>
