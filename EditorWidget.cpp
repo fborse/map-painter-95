@@ -98,7 +98,7 @@ QImage EditorWidget::getPaintedLayer(const int layer) const
             {
                 const auto &frames = (*tileset)[id];
                 const int n = frames.length();
-                painter.drawImage(i * tilesize, j * tilesize, frames[qMin(current_frame, n)]);
+                painter.drawImage(i * tilesize, j * tilesize, frames[qMin(current_frame, n-1)]);
             }
         }
     }

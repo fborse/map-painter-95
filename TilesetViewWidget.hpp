@@ -22,6 +22,9 @@ public:
     void addTiles(const QVector<Tile> &tiles, const bool undoable);
     void removeTiles(const QVector<TileReference> &tiles);
 
+    void addFrames(const QHash<int, QImage> &frames);
+    void removeFrames(const QVector<int> &indexes);
+
 public slots:
     void setNumberOfColumns(const int n) { n_columns = n; resize(); }
     void setDragMode(const int index);

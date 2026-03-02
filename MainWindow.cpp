@@ -408,13 +408,13 @@ void MainWindow::updateLayersBoxes()
     ui->actionRemoveLayer->setEnabled(n > 1);
 }
 
-static inline int get_max_frames(const Tileset &/*tileset*/)
+static inline int get_max_frames(const Tileset &tileset)
 {
     int max = 0;
 
-/*    for (auto &tile: tileset.values())
+    for (auto &tile: tileset.values())
         if (max < tile.length())
-            max = tile.length();*/
+            max = tile.length();
 
     return max;
 }
@@ -583,6 +583,8 @@ void MainWindow::onAddFrame()
     const int tilesize = ui->tilesetView->getTilesize();
     Q_ASSERT(tilesize > 0);
 
+    const int current_frame = ui->currentFrameComboBox1->currentIndex();
+
     AddRectDialog dialog(tilesize, this);
     dialog.setWindowTitle("Add Frame");
     if (dialog.exec() == QDialog::Accepted)
@@ -590,7 +592,8 @@ void MainWindow::onAddFrame()
         QImage frame(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
         frame.fill(dialog.getColor());
 
-//        ui->tilesetView->addFrame(frame);
+        ui->tilesetView->addFrames({{current_frame + 1, frame}});
+        updateFramesBoxes();
     }
 }
 
@@ -608,7 +611,8 @@ void MainWindow::onCloneCurrentFrame()
 
     QImage frame = frames[qMin(current_frame, n)];
 
-//    ui->tilesetView->addFrame(frame);
+    ui->tilesetView->addFrames({{current_frame + 1, frame}});
+    updateFramesBoxes();
 }
 
 void MainWindow::onRemoveCurrentFrame()
@@ -619,7 +623,10 @@ void MainWindow::onRemoveCurrentFrame()
     const auto id = selected_tiles->at(0).at(0);
     Q_ASSERT(tileset->contains(id));
 
-//    ui->tilesetView->removeCurrentFrame();
+    const int current_frame = ui->currentFrameComboBox1->currentIndex();
+
+    ui->tilesetView->removeFrames({current_frame});
+    updateFramesBoxes();
 }
 
 void MainWindow::onResizeMap()

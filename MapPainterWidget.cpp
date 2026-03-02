@@ -725,7 +725,7 @@ static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor
 
                 auto &frames = next[id];
                 const int n = frames.length();
-                frames[qMin(current_frame, n)].setPixelColor(p, changes[q][p]);
+                frames[qMin(current_frame, n-1)].setPixelColor(p, changes[q][p]);
             }
         }
     }
@@ -800,7 +800,7 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
 
             const int n = new_image.length();
             for (auto &p: changed_pixels[q].keys())
-                new_image[qMin(current_frame, n)]
+                new_image[qMin(current_frame, n-1)]
                     .setPixelColor(p, changed_pixels[q][p]);
 
             const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);

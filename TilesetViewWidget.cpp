@@ -176,6 +176,58 @@ static inline uint qHash(const RemoveTileCommand::Coordinates &coords, const uin
     );
 }
 
+class AddFrameCommand final: public QUndoCommand, public TilesetCommand
+{
+public:
+    AddFrameCommand(QWeakPointer<Tileset> tileset, const TileReference &id, const int index, const QImage &frame):
+        QUndoCommand(), TilesetCommand(tileset), tile_reference{id}, frame_index{index}, frame_image{frame}
+    {}
+
+    void undo() final override
+    {
+        (*lockTileset())[tile_reference].remove(frame_index);
+    }
+
+    void redo() final override
+    {
+        (*lockTileset())[tile_reference].insert(frame_index, frame_image);
+    }
+
+private:
+    TileReference tile_reference;
+    int frame_index;
+    QImage frame_image;
+};
+
+class RemoveFrameCommand final: public QUndoCommand, public TilesetCommand
+{
+public:
+    RemoveFrameCommand(QWeakPointer<Tileset> tileset, const TileReference &id, const int index):
+        QUndoCommand(), TilesetCommand(tileset), tile_reference{id}, frame_index{index}, removed_image{}
+    {
+        Q_ASSERT(lockTileset()->contains(id));
+        const auto &tile = lockTileset()->value(id);
+        Q_ASSERT(tile.length() > 1);
+        Q_ASSERT(0 <= index && index < tile.length());
+        removed_image = tile.at(index);
+    }
+
+    void undo() final override
+    {
+        (*lockTileset())[tile_reference].insert(frame_index, removed_image);
+    }
+
+    void redo() final override
+    {
+        (*lockTileset())[tile_reference].remove(frame_index);
+    }
+
+private:
+    TileReference tile_reference;
+    int frame_index;
+    QImage removed_image;
+};
+
 TilesetViewWidget::TilesetViewWidget(QWidget *parent):
     EditorWidget(parent),
     n_columns{8}, drag_mode{SELECTION_MODE},
@@ -235,6 +287,8 @@ void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
     Q_ASSERT(!tiles_order.isNull());
     Q_ASSERT(!tileset.isNull());
     Q_ASSERT(!map_layers.isNull());
+    for (auto &id: tiles)
+        Q_ASSERT(tileset->contains(id));
 
     undo_stack->beginMacro("Remove tiles");
     for (auto &id: tiles)
@@ -242,6 +296,48 @@ void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
     undo_stack->endMacro();
 
     emit tilesRemoved();
+}
+
+static inline bool is_1x1(const SelectedTiles &selected)
+{
+    return (selected.length() == 1) && (selected[0].length() == 1);
+}
+
+void TilesetViewWidget::addFrames(const QHash<int, QImage> &frames)
+{
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(is_1x1(*selected_tiles));
+    const auto id = selected_tiles->at(0).at(0);
+    Q_ASSERT(tileset->contains(id));
+    const auto tile = tileset->value(id);
+    for (auto &index: frames.keys())
+    //  +1 because we may want to add at the end
+        Q_ASSERT(0 <= index && index < tile.length() + 1);
+
+    undo_stack->beginMacro("Add Frames");
+    for (auto &index: frames.keys())
+        undo_stack->push(new AddFrameCommand(tileset, id, index, frames[index]));
+    undo_stack->endMacro();
+}
+
+void TilesetViewWidget::removeFrames(const QVector<int> &indexes)
+{
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(is_1x1(*selected_tiles));
+    const auto id = selected_tiles->at(0).at(0);
+    Q_ASSERT(tileset->contains(id));
+    const auto tile = tileset->value(id);
+    for (auto &index: indexes)
+        Q_ASSERT(0 <= index && index < tile.length() + 1);
+
+    undo_stack->beginMacro("Remove Frames");
+    for (auto &index: indexes)
+        undo_stack->push(new RemoveFrameCommand(tileset, id, index));
+    undo_stack->endMacro();
 }
 
 std::optional<QPoint> TilesetViewWidget::toIJ(const int idx) const
@@ -311,7 +407,7 @@ void TilesetViewWidget::paintTileset(QPainter &painter)
         Q_ASSERT(tileset->contains(id));
         const auto &frames = (*tileset)[id];
         const int n = frames.length();
-        painter.drawImage(*p * tilesize, frames[qMin(current_frame, n)]);
+        painter.drawImage(*p * tilesize, frames[qMin(current_frame, n-1)]);
     }
 }
 

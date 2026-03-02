@@ -216,7 +216,7 @@ void MapEditorWidget::paintTileRects(QPainter &painter)
                     painter.drawImage(
                         x + i * tilesize,
                         y + j * tilesize,
-                        frames[qMin(current_frame, n)]
+                        frames[qMin(current_frame, n-1)]
                     );
                 }
             }
