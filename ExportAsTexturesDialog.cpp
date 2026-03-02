@@ -266,8 +266,8 @@ void ExportAsTexturesDialog::updateFramesComboBox()
         ui->currentFrameComboBox->addItem(QString::number(f + 1));
     ui->currentFrameComboBox->blockSignals(false);
 
-    if (current_frame <= ui->currentFrameComboBox->count())
-        setCurrentFrame(ui->currentFrameComboBox->count() - 1);
+    if (current_frame >= n)
+        setCurrentFrame(n - 1);
 }
 
 static inline QImage gen_background(const QSize &size, const int tilesize)
