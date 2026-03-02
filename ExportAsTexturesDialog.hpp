@@ -27,13 +27,12 @@ public:
     QString getPattern() const;
 
     int getNumberOfLayers() const;
-//  TODO: Implement in a distant future
     int getNumberOfFrames() const;
 
 public slots:
     void onAccept();
-    void setCurrentLayer(const int layer) { current_layer = layer; updateDisplayedTexture(); }
-    void setCurrentFrame(const int frame) { current_frame = frame; updateDisplayedTexture(); }
+    void setCurrentLayer(const int layer);
+    void setCurrentFrame(const int frame);
 
 private:
     Ui::ExportAsTexturesDialog *ui;
@@ -49,5 +48,6 @@ private:
     void redrawTextures();
 //  this one is only called when setting map_layers
     void updateLayersComboBox();
+    void updateFramesComboBox();
     void updateDisplayedTexture();
 };

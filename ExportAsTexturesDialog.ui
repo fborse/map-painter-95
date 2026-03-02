@@ -99,6 +99,29 @@
            </widget>
           </item>
           <item>
+           <widget class="Line" name="line">
+            <property name="orientation">
+             <enum>Qt::Orientation::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="currentFrameLabel">
+            <property name="text">
+             <string>Frame :</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="currentFrameComboBox">
+            <item>
+             <property name="text">
+              <string>1</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
            <spacer name="horizontalSpacer">
             <property name="orientation">
              <enum>Qt::Orientation::Horizontal</enum>
@@ -203,8 +226,8 @@
    <slot>setCurrentLayer(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>423</x>
-     <y>53</y>
+     <x>419</x>
+     <y>69</y>
     </hint>
     <hint type="destinationlabel">
      <x>422</x>
@@ -212,9 +235,26 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>currentFrameComboBox</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>ExportAsTexturesDialog</receiver>
+   <slot>setCurrentFrame(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>564</x>
+     <y>46</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>563</x>
+     <y>2</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onAccept()</slot>
   <slot>setCurrentLayer(int)</slot>
+  <slot>setCurrentFrame(int)</slot>
  </slots>
 </ui>
