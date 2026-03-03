@@ -11,7 +11,7 @@ public:
     QColor getColor() const { return QColor::fromHsv(hue, saturation, value, alpha); }
 
 public slots:
-    void setHue(const int h);
+    void setHue(const double h);
     void setSaturation(const int s);
     void setValue(const int v);
     void setAlpha(const int a);

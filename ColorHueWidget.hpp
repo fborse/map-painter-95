@@ -8,17 +8,17 @@ class ColorHueWidget: public QWidget
 public:
     explicit ColorHueWidget(QWidget *parent = nullptr);
 
-    int getHueAt(const int y) const { return y * 360 / height(); }
-    int getHue() const { return getHueAt(hue); }
-
 public slots:
-    void setHueHeight(const int y) { hue = y; update(); }
+    void setHue(const double h) { hue = h; update(); }
 
 signals:
-    void hueChanged(const int hue);
+    void hueChanged(const double hue);
 
 private:
-    int hue;
+    double hue;
+
+//  only used for painting the widget
+    int getHueAt(const int y) const { return y * 360 / height(); }
 
     void paintEvent(QPaintEvent *event) override;
 

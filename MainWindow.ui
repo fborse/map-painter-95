@@ -738,7 +738,7 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>98</width>
+                         <width>66</width>
                          <height>28</height>
                         </rect>
                        </property>
@@ -1271,7 +1271,7 @@
    <slots>
     <signal>clicked(QColor)</signal>
     <signal>colorChanged(QColor)</signal>
-    <slot>setHue(int)</slot>
+    <slot>setHue(double)</slot>
     <slot>setSaturation(int)</slot>
     <slot>setValue(int)</slot>
     <slot>setAlpha(int)</slot>
@@ -1346,7 +1346,7 @@
    <slots>
     <signal>saturationChanged(int)</signal>
     <signal>valueChanged(int)</signal>
-    <slot>setHue(int)</slot>
+    <slot>setHue(double)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -1355,7 +1355,7 @@
    <header>ColorHueWidget.hpp</header>
    <container>1</container>
    <slots>
-    <signal>hueChanged(int)</signal>
+    <signal>hueChanged(double)</signal>
    </slots>
   </customwidget>
   <customwidget>
@@ -1681,9 +1681,9 @@
   </connection>
   <connection>
    <sender>hueWidget</sender>
-   <signal>hueChanged(int)</signal>
+   <signal>hueChanged(double)</signal>
    <receiver>colorSelectionWidget</receiver>
-   <slot>setHue(int)</slot>
+   <slot>setHue(double)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>989</x>
@@ -1729,9 +1729,9 @@
   </connection>
   <connection>
    <sender>hueWidget</sender>
-   <signal>hueChanged(int)</signal>
+   <signal>hueChanged(double)</signal>
    <receiver>saturationValueWidget</receiver>
-   <slot>setHue(int)</slot>
+   <slot>setHue(double)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>989</x>

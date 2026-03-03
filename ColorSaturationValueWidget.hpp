@@ -15,7 +15,7 @@ public:
     int getValue() const { return getValueAt(value); }
 
 public slots:
-    void setHue(const int h) { hue = h; update(); }
+    void setHue(const double h) { hue = h; update(); }
     void setSaturation(const int x) { saturation = x; update(); }
     void setValue(const int y) { value = y; update(); }
 
@@ -24,7 +24,8 @@ signals:
     void valueChanged(const int value);
 
 private:
-    int hue, saturation, value;
+    double hue;
+    int saturation, value;
 
     void paintEvent(QPaintEvent *) override;
 

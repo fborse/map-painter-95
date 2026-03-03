@@ -21,9 +21,9 @@ void ColorSelectionWidget::changeColor(const int h, const int s, const int v, co
     update();
 }
 
-void ColorSelectionWidget::setHue(const int h)
+void ColorSelectionWidget::setHue(const double h)
 {
-    changeColor(h, saturation, value, alpha);
+    changeColor(h * 360, saturation, value, alpha);
 }
 
 void ColorSelectionWidget::setSaturation(const int s)

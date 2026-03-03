@@ -27,7 +27,7 @@ void ColorSaturationValueWidget::paintEvent(QPaintEvent *)
 
     for (int y = 0; y < height(); ++y)
         for (int x = 0; x < width(); ++x)
-            painter.fillRect(x, y, 1, 1, QColor::fromHsv(hue, getSaturationAt(x), getValueAt(y)));
+            painter.fillRect(x, y, 1, 1, QColor::fromHsv(hue * 360, getSaturationAt(x), getValueAt(y)));
 
     painter.setPen(pen(Qt::black, 4));
     painter.drawPoint(saturation, value);
