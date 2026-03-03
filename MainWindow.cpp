@@ -113,6 +113,18 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::onMapWidgetScrolled(const QPoint p)
+{
+    const auto &[x, y] = p.toPointF();
+    const auto &[w, h] = ui->mapEditor->size();
+
+    QScrollBar *he = ui->mapViewScrollArea->horizontalScrollBar();
+    QScrollBar *ve = ui->mapViewScrollArea->verticalScrollBar();
+
+    he->setValue(x * he->maximum() / w);
+    ve->setValue(y * ve->maximum() / h);
+}
+
 void MainWindow::updateColorWidgets(const QColor color)
 {
     ui->hueWidget->setHue(color.hsvHueF());

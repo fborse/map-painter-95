@@ -70,6 +70,8 @@ public slots:
     void updateColorWidgets(const QColor color);
     void updateDrawOptions(const int draw_tool);
 
+    void onMapWidgetScrolled(const QPoint p);
+
 private:
     Ui::MainWindow *ui;
 

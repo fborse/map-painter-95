@@ -38,6 +38,7 @@ public slots:
 
 signals:
     void zoomSet(const double zoom);
+    void scrolledAt(const QPoint p);
 
 protected:
     QSize grid_aspect;

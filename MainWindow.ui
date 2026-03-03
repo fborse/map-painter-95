@@ -1316,6 +1316,7 @@
     <signal>tilesSet()</signal>
     <signal>zoomSet(double)</signal>
     <signal>mapResized()</signal>
+    <signal>scrolledAt(QPoint)</signal>
     <slot>setZoom(double)</slot>
     <slot>setCurrentLayer(int)</slot>
     <slot>setShowAboveLayers(bool)</slot>
@@ -1332,6 +1333,7 @@
     <signal>colorChanged(QColor)</signal>
     <signal>canCopy(bool)</signal>
     <signal>tilesAdded()</signal>
+    <signal>scrolledAt(QPoint)</signal>
     <slot>setZoom(double)</slot>
     <slot>setShowGrid(bool)</slot>
     <slot>setDrawColor(QColor)</slot>
@@ -2894,6 +2896,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>mapPainter</sender>
+   <signal>scrolledAt(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onMapWidgetScrolled(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>717</x>
+     <y>717</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>717</x>
+     <y>761</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mapEditor</sender>
+   <signal>scrolledAt(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onMapWidgetScrolled(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>348</x>
+     <y>688</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>348</x>
+     <y>768</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -2929,5 +2963,6 @@
   <slot>onRemoveCurrentFrame()</slot>
   <slot>onSelectedChanged()</slot>
   <slot>onImportSingleTile()</slot>
+  <slot>onMapWidgetScrolled(QPoint)</slot>
  </slots>
 </ui>

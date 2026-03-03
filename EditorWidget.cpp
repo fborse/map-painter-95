@@ -129,6 +129,7 @@ void EditorWidget::wheelEvent(QWheelEvent *event)
     {
         const double dy = event->angleDelta().y() / 30.0;
         emit zoomSet(zoom + dy / 10);
+        emit scrolledAt(event->position().toPoint());
     }
     else
     {
