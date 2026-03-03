@@ -8,7 +8,7 @@ class ColorSelectionWidget: public QWidget
 public:
     explicit ColorSelectionWidget(QWidget *parent = nullptr);
 
-    QColor getColor() const { return QColor::fromHsv(hue, saturation, value, alpha); }
+    QColor getColor() const { return QColor::fromHsvF(hue, saturation, value, alpha / 255.0); }
 
 public slots:
     void setHue(const double h);
@@ -23,10 +23,11 @@ signals:
     void colorChanged(const QColor color);
 
 private:
-    int hue, saturation, value, alpha;
+    double hue, saturation, value;
+    int alpha;
 
 //  used by setHue, setSaturation, setValue and setAlpha
-    void changeColor(const int h, const int s, const int v, const int a);
+    void changeColor(const double h, const double s, const double v, const int a);
 
     void paintEvent(QPaintEvent *) override;
     void mousePressEvent(QMouseEvent *event) override;

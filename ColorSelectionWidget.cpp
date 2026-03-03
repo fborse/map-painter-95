@@ -5,12 +5,12 @@
 
 ColorSelectionWidget::ColorSelectionWidget(QWidget *parent):
     QWidget(parent),
-    hue{0}, saturation{255}, value{255}, alpha{255}
+    hue{0}, saturation{1}, value{1}, alpha{255}
 {
     setFixedSize(16, 16);
 }
 
-void ColorSelectionWidget::changeColor(const int h, const int s, const int v, const int a)
+void ColorSelectionWidget::changeColor(const double h, const double s, const double v, const int a)
 {
     hue = h;
     saturation = s;
@@ -23,17 +23,17 @@ void ColorSelectionWidget::changeColor(const int h, const int s, const int v, co
 
 void ColorSelectionWidget::setHue(const double h)
 {
-    changeColor(h * 360, saturation, value, alpha);
+    changeColor(h, saturation, value, alpha);
 }
 
 void ColorSelectionWidget::setSaturation(const double s)
 {
-    changeColor(hue, s * 255, value, alpha);
+    changeColor(hue, s, value, alpha);
 }
 
 void ColorSelectionWidget::setValue(const double v)
 {
-    changeColor(hue, saturation, v * 255, alpha);
+    changeColor(hue, saturation, v, alpha);
 }
 
 void ColorSelectionWidget::setAlpha(const int a)
@@ -43,9 +43,7 @@ void ColorSelectionWidget::setAlpha(const int a)
 
 void ColorSelectionWidget::setColor(const QColor color)
 {
-    color.getHsv(&hue, &saturation, &value, &alpha);
-    emit colorChanged(getColor());
-    update();
+    changeColor(color.hsvHueF(), color.saturationF(), color.valueF(), color.alpha());
 }
 
 void ColorSelectionWidget::paintEvent(QPaintEvent *)
