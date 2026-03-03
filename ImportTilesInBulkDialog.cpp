@@ -87,8 +87,7 @@ static inline void apply_color_key(QImage &texture, const QColor &ck)
 {
     for (int j = 0; j < texture.height(); ++j)
         for (int i = 0; i < texture.width(); ++i)
-        //  TODO: buggy
-            if (texture.pixelColor(i, j) == ck)
+            if (texture.pixelColor(i, j).toHsv() == ck)
                 texture.setPixelColor(i, j, Qt::transparent);
 }
 
@@ -403,7 +402,6 @@ void ImportTilesInBulkDialog::onChangeColorKey()
     const QColor ck = QColorDialog::getColor(initial, this, tr(title));
 
     if (ck.isValid())
-    //  TODO: This step here is buggy
         ui->colorKeyWidget->setColor(ck.toRgb());
 }
 
