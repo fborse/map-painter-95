@@ -12,8 +12,8 @@ public:
 
 public slots:
     void setHue(const double h);
-    void setSaturation(const int s);
-    void setValue(const int v);
+    void setSaturation(const double s);
+    void setValue(const double v);
     void setAlpha(const int a);
 
     void setColor(const QColor color);

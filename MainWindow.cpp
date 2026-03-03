@@ -99,25 +99,14 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-static inline void update_saturation_value_widget(ColorSaturationValueWidget *widget, const QColor &color)
-{
-    Q_ASSERT(widget != nullptr);
-
-    const double hue = color.hsvHueF();
-    const int saturation = color.hsvSaturation();
-    const int value = color.value();
-    const auto &[w, h] = widget->size();
-
-    widget->setHue(hue);
-    widget->setSaturation(saturation * w / 255);
-    widget->setValue(h - (value * h / 255));
-}
-
 void MainWindow::updateColorWidgets(const QColor color)
 {
     ui->hueWidget->setHue(color.hsvHueF());
 
-    update_saturation_value_widget(ui->saturationValueWidget, color);
+    ui->saturationValueWidget->setHue(color.hsvHueF());
+    ui->saturationValueWidget->setSaturation(color.hsvSaturationF());
+    ui->saturationValueWidget->setValue(color.valueF());
+
     ui->alphaSpinBox->setValue(color.alpha());
 }
 
