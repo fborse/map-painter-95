@@ -6,13 +6,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class ExportTilesetAndMapDialog; }
 QT_END_NAMESPACE
 
-using Names = QVector<QString>;
-using Tile = QVector<QImage>;
-using Tileset = QHash<QString, Tile>;
-
-using TileReference = QString;
-using MapLayer = QVector<QVector<TileReference>>;
-using MapLayers = QVector<MapLayer>;
+#include "Tileset.hpp"
 
 class ExportTilesetAndMapDialog: public QDialog
 {

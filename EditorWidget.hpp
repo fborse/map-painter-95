@@ -3,14 +3,7 @@
 #include <QWidget>
 #include <QUndoStack>
 
-using Names = QVector<QString>;
-using Tile = QVector<QImage>;
-using Tileset = QHash<QString, Tile>;
-using SelectedTiles = QVector<QVector<QString>>;
-
-using TileReference = QString;
-using MapLayer = QVector<QVector<TileReference>>;
-using MapLayers = QVector<MapLayer>;
+#include "Tileset.hpp"
 
 class EditorWidget: public QWidget
 {

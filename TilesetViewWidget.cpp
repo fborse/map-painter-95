@@ -88,7 +88,7 @@ private:
 class AddTileCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand
 {
 public:
-    AddTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, const Tile &tile):
+    AddTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, const SimpleTile &tile):
         QUndoCommand(), TilesOrderCommand(tiles_order), TilesetCommand(tileset),
         index{0}, id{}, tile{tile}
     {
@@ -111,7 +111,7 @@ public:
 private:
     int index;
     TileReference id;
-    Tile tile;
+    SimpleTile tile;
 };
 
 class RemoveTileCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand, public MapLayersCommand
@@ -163,7 +163,7 @@ public:
 private:
     int index;
     TileReference tile_reference;
-    Tile tile;
+    SimpleTile tile;
     QHash<Coordinates, TileReference> affected_tiles;
 };
 
@@ -255,7 +255,7 @@ void TilesetViewWidget::resize()
     EditorWidget::resize();
 }
 
-void TilesetViewWidget::addTiles(const QVector<Tile> &images, const bool undoable)
+void TilesetViewWidget::addTiles(const QVector<SimpleTile> &images, const bool undoable)
 {
     Q_ASSERT(!undo_stack.isNull());
     Q_ASSERT(!tiles_order.isNull());

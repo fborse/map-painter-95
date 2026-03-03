@@ -108,7 +108,7 @@ catch (const QString &errstr)
     QMessageBox::warning(this, tr(title), tr(errstr.toStdString().c_str()));
 }
 
-using OrderedTileset = QVector<QPair<QString, Tile>>;
+using OrderedTileset = QVector<QPair<QString, SimpleTile>>;
 
 static inline OrderedTileset linearise_tiles(QWeakPointer<Names> tiles_order_ptr, QWeakPointer<Tileset> tileset_ptr)
 {

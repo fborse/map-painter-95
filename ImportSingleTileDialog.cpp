@@ -34,9 +34,9 @@ QPoint &ImportSingleTileWidget::getFrameAt(const int index)
     return frames[index];
 }
 
-Tile ImportSingleTileWidget::getTile() const
+SimpleTile ImportSingleTileWidget::getTile() const
 {
-    Tile tile;
+    SimpleTile tile;
 
     for (auto &[x, y]: frames)
         tile.push_back(displayed_texture.copy(QRect(x * scaling, y * scaling, tilesize, tilesize)));
@@ -302,7 +302,7 @@ QVector<QPoint> ImportSingleTileDialog::getFrames() const
     return ui->tileView->getFrames();
 }
 
-Tile ImportSingleTileDialog::getTile() const
+SimpleTile ImportSingleTileDialog::getTile() const
 {
     return ui->tileView->getTile();
 }

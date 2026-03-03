@@ -608,7 +608,7 @@ void MainWindow::onCloneSelectedTiles()
     if (uniques.isEmpty())
         return;
 
-    QVector<Tile> tiles;
+    QVector<SimpleTile> tiles;
     for (auto &id: uniques)
     {
         Q_ASSERT(tileset->contains(id));
@@ -795,7 +795,7 @@ bool MainWindow::load(const QString &path) try
     for (int i = 0; i < n_tiles; ++i)
     {
         TileReference id;
-        Tile tile;
+        SimpleTile tile;
 
         stream >> id >> tile;
         order.push_back(id);

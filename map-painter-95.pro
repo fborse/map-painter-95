@@ -53,6 +53,7 @@ HEADERS += \
     NewMapDialog.hpp \
     ResizeMapDialog.hpp \
     ScaleSelectionDialog.hpp \
+    Tileset.hpp \
     TilesetViewWidget.hpp
 
 FORMS += \

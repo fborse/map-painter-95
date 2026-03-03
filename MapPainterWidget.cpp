@@ -66,7 +66,7 @@ static inline uint qHash(const MapLayersCommand::Coordinates &coords, const uint
 class ReplaceTilesCommand final: public QUndoCommand, public TilesetCommand
 {
 public:
-    using Changes = QHash<TileReference, Tile>;
+    using Changes = QHash<TileReference, SimpleTile>;
 
     ReplaceTilesCommand(QWeakPointer<Tileset> tileset, const Changes &prev, const Changes &next):
         QUndoCommand(), TilesetCommand(tileset), prev{prev}, next{next}
@@ -91,7 +91,7 @@ private:
 class AddTilesCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand
 {
 public:
-    using Added = QMap<TileReference, Tile>;
+    using Added = QMap<TileReference, SimpleTile>;
 
     AddTilesCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, const Added &added):
         QUndoCommand(), TilesOrderCommand(tiles_order), TilesetCommand(tileset), added{added}
@@ -792,8 +792,8 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
     //  faster than !is_tile_unique(*map_layers, prev_id)
         if (prev_id.isEmpty() || !prev_tiles.contains(prev_id))
         {
-            Tile new_image = prev_id.isEmpty()?
-                Tile{gen_empty(tilesize, tilesize)}
+            SimpleTile new_image = prev_id.isEmpty()?
+                SimpleTile{gen_empty(tilesize, tilesize)}
               : tileset->value(prev_id);
 
             const int n = new_image.length();

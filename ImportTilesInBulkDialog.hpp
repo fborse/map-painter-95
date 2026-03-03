@@ -6,7 +6,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class ImportTilesInBulkDialog; }
 QT_END_NAMESPACE
 
-using Tile = QVector<QImage>;
+#include "Tileset.hpp"
 
 struct ImportTilesArea { int x, y, w, h, dx, dy; };
 
@@ -24,7 +24,7 @@ public:
     void removeAreaAt(const int index);
     ImportTilesArea &getAreaAt(const int index);
 
-    QVector<Tile> getTiles() const;
+    QVector<SimpleTile> getTiles() const;
 
 public slots:
     void setZoom(const double z) { zoom = z; updateDisplayedTexture(); }
@@ -82,7 +82,7 @@ public:
     QString getTexturePath() const;
     QVector<ImportTilesArea> getTileAreas() const;
 
-    QVector<Tile> getTiles() const;
+    QVector<SimpleTile> getTiles() const;
 
 public slots:
     void onChangeTexturePath();

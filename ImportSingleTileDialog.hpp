@@ -6,7 +6,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class ImportSingleTileDialog; }
 QT_END_NAMESPACE
 
-using Tile = QVector<QImage>;
+#include "Tileset.hpp"
 
 class ImportSingleTileWidget final: public QWidget
 {
@@ -22,7 +22,7 @@ public:
     void removeFrameAt(const int index);
     QPoint &getFrameAt(const int index);
 
-    Tile getTile() const;
+    SimpleTile getTile() const;
 
 public slots:
     void setZoom(const double z) { zoom = z; updateDisplayedTexture(); }
@@ -78,7 +78,7 @@ public:
     QString getTexturePath() const;
     QVector<QPoint> getFrames() const;
 
-    Tile getTile() const;
+    SimpleTile getTile() const;
 
 public slots:
     void onChangeTexturePath();
