@@ -210,7 +210,7 @@ void MapEditorWidget::paintTileRects(QPainter &painter)
 
                 if (tileset->contains(id))
                 {
-                    const auto &frames = (*tileset)[id];
+                    const auto &frames = (*tileset)[id].frames;
                     const int n = frames.length();
 
                     painter.drawImage(

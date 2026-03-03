@@ -132,8 +132,8 @@ static inline int get_n_images(const OrderedTileset &tiles)
 {
     int n = 0;
 
-    for (auto &tile: tiles)
-        n += tile.second.length();
+    for (auto &[_, tile]: tiles)
+        n += tile.frames.length();
 
     return n;
 }
@@ -157,13 +157,13 @@ static inline QImage gen_tileset(const OrderedTileset &tiles, const int ncol, co
     QPainter painter(&tileset);
 
     int i = 0;
-    for (auto &tile: tiles)
+    for (auto &[id, tile]: tiles)
     {
-        for (auto &frame: tile.second)
+        for (auto &frame: tile.frames)
         {
             const QPoint p = toIJ(i, ncol) * tilesize;
 
-            coords[tile.first].push_back(p);
+            coords[id].push_back(p);
             painter.drawImage(p, frame);
 
             ++i;

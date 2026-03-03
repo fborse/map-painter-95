@@ -721,7 +721,7 @@ static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor
                     next.insert(id, tileset.value(id));
                 }
 
-                auto &frames = next[id];
+                auto &frames = next[id].frames;
                 const int n = frames.length();
                 frames[qMin(current_frame, n-1)].setPixelColor(p, changes[q][p]);
             }
@@ -793,12 +793,12 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
         if (prev_id.isEmpty() || !prev_tiles.contains(prev_id))
         {
             SimpleTile new_image = prev_id.isEmpty()?
-                SimpleTile{gen_empty(tilesize, tilesize)}
+                SimpleTile{{gen_empty(tilesize, tilesize)}}
               : tileset->value(prev_id);
 
-            const int n = new_image.length();
+            const int n = new_image.frames.length();
             for (auto &p: changed_pixels[q].keys())
-                new_image[qMin(current_frame, n-1)]
+                new_image.frames[qMin(current_frame, n-1)]
                     .setPixelColor(p, changed_pixels[q][p]);
 
             const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);

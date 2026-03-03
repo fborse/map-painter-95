@@ -96,7 +96,7 @@ QImage EditorWidget::getPaintedLayer(const int layer) const
 
             if (tileset->contains(id))
             {
-                const auto &frames = (*tileset)[id];
+                const auto &frames = (*tileset)[id].frames;
                 const int n = frames.length();
                 painter.drawImage(i * tilesize, j * tilesize, frames[qMin(current_frame, n-1)]);
             }

@@ -39,7 +39,9 @@ SimpleTile ImportSingleTileWidget::getTile() const
     SimpleTile tile;
 
     for (auto &[x, y]: frames)
-        tile.push_back(displayed_texture.copy(QRect(x * scaling, y * scaling, tilesize, tilesize)));
+        tile.frames.push_back(
+            displayed_texture.copy(QRect(x * scaling, y * scaling, tilesize, tilesize))
+        );
 
     return tile;
 }

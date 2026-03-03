@@ -185,12 +185,12 @@ public:
 
     void undo() final override
     {
-        (*lockTileset())[tile_reference].remove(frame_index);
+        (*lockTileset())[tile_reference].frames.remove(frame_index);
     }
 
     void redo() final override
     {
-        (*lockTileset())[tile_reference].insert(frame_index, frame_image);
+        (*lockTileset())[tile_reference].frames.insert(frame_index, frame_image);
     }
 
 private:
@@ -206,20 +206,20 @@ public:
         QUndoCommand(), TilesetCommand(tileset), tile_reference{id}, frame_index{index}, removed_image{}
     {
         Q_ASSERT(lockTileset()->contains(id));
-        const auto &tile = lockTileset()->value(id);
-        Q_ASSERT(tile.length() > 1);
-        Q_ASSERT(0 <= index && index < tile.length());
-        removed_image = tile.at(index);
+        const auto &frames = lockTileset()->value(id).frames;
+        Q_ASSERT(frames.length() > 1);
+        Q_ASSERT(0 <= index && index < frames.length());
+        removed_image = frames.at(index);
     }
 
     void undo() final override
     {
-        (*lockTileset())[tile_reference].insert(frame_index, removed_image);
+        (*lockTileset())[tile_reference].frames.insert(frame_index, removed_image);
     }
 
     void redo() final override
     {
-        (*lockTileset())[tile_reference].remove(frame_index);
+        (*lockTileset())[tile_reference].frames.remove(frame_index);
     }
 
 private:
@@ -314,7 +314,7 @@ void TilesetViewWidget::addFrames(const QHash<int, QImage> &frames)
     const auto tile = tileset->value(id);
     for (auto &index: frames.keys())
     //  +1 because we may want to add at the end
-        Q_ASSERT(0 <= index && index < tile.length() + 1);
+        Q_ASSERT(0 <= index && index < tile.frames.length() + 1);
 
     undo_stack->beginMacro("Add Frames");
     for (auto &index: frames.keys())
@@ -332,7 +332,7 @@ void TilesetViewWidget::removeFrames(const QVector<int> &indexes)
     Q_ASSERT(tileset->contains(id));
     const auto tile = tileset->value(id);
     for (auto &index: indexes)
-        Q_ASSERT(0 <= index && index < tile.length() + 1);
+        Q_ASSERT(0 <= index && index < tile.frames.length() + 1);
 
     undo_stack->beginMacro("Remove Frames");
     for (auto &index: indexes)
@@ -405,7 +405,7 @@ void TilesetViewWidget::paintTileset(QPainter &painter)
         const auto p = toIJ(i);
 
         Q_ASSERT(tileset->contains(id));
-        const auto &frames = (*tileset)[id];
+        const auto &frames = (*tileset)[id].frames;
         const int n = frames.length();
         painter.drawImage(*p * tilesize, frames[qMin(current_frame, n-1)]);
     }

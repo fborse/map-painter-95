@@ -185,7 +185,7 @@ void MainWindow::populateTileset(const int tilesize)
         tiles_order->push_back(id);
 
         img.fill(color);
-        tileset->insert(id, {img});
+        tileset->insert(id, SimpleTile{{img}});
     }
 }
 
@@ -418,7 +418,7 @@ static inline bool can_remove_frames(const Tileset &tileset, const SelectedTiles
     else if (!tileset.contains(tiles[0][0]))
         return false;
     else
-        return (tileset.value(tiles[0][0]).length() > 1);
+        return (tileset.value(tiles[0][0]).frames.length() > 1);
 }
 
 void MainWindow::onSelectedChanged()
@@ -483,8 +483,8 @@ static inline int get_max_frames(const Tileset &tileset)
     int max = 0;
 
     for (auto &tile: tileset.values())
-        if (max < tile.length())
-            max = tile.length();
+        if (max < tile.frames.length())
+            max = tile.frames.length();
 
     return max;
 }
@@ -583,7 +583,7 @@ void MainWindow::onAddTile()
         QImage tile(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
         tile.fill(dialog.getColor());
 
-        ui->tilesetView->addTiles({{tile}}, true);
+        ui->tilesetView->addTiles({SimpleTile{{tile}}}, true);
     }
 }
 
@@ -673,7 +673,7 @@ void MainWindow::onCloneCurrentFrame()
     Q_ASSERT(tileset->contains(id));
 
     const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
-    auto &frames = (*tileset)[id];
+    auto &frames = (*tileset)[id].frames;
     const int n = frames.length();
 
     QImage frame = frames[qMin(current_frame, n)];
@@ -797,7 +797,7 @@ bool MainWindow::load(const QString &path) try
         TileReference id;
         SimpleTile tile;
 
-        stream >> id >> tile;
+        stream >> id >> tile.frames;
         order.push_back(id);
         tiles[id] = tile;
     }
@@ -862,7 +862,7 @@ bool MainWindow::save(const QString &path)
         stream << tilesize << n_columns << n_tiles;
 
         for (auto &id: *tiles_order)
-            stream << id << tileset->value(id);
+            stream << id << tileset->value(id).frames;
     }
 
     {

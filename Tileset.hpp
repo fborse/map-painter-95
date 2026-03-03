@@ -4,9 +4,14 @@
 #include <QHash>
 #include <QImage>
 
+struct SimpleTile
+{
+    QVector<QImage> frames;
+};
+
 using Names = QVector<QString>;
-using SimpleTile = QVector<QImage>;
 using Tileset = QHash<QString, SimpleTile>;
+
 using SelectedTiles = QVector<QVector<QString>>;
 
 using TileReference = QString;

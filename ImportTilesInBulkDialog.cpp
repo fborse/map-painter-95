@@ -49,7 +49,7 @@ QVector<SimpleTile> ImportTilesInBulkWidget::getTiles() const
                 const QPoint dp(i * dx, j * dy);
                 const QSize s(tilesize, tilesize);
 
-                tiles.push_back({displayed_texture.copy(QRect(o + p + dp, s))});
+                tiles.push_back(SimpleTile{{displayed_texture.copy(QRect(o + p + dp, s))}});
             }
         }
     }

@@ -90,7 +90,7 @@ static inline QSet<int> get_unique_lengths(const Tileset &tileset, const MapLaye
     for (auto &row: layer)
         for (auto &id: row)
             if (tileset.contains(id))
-                lengths.insert(tileset[id].length());
+                lengths.insert(tileset[id].frames.length());
 
     return lengths;
 }
@@ -197,7 +197,7 @@ static inline QImage gen_layer(const int tilesize, const Tileset &tileset, const
 
             if (!id.isEmpty())
             {
-                const auto &frames = tileset[id];
+                const auto &frames = tileset[id].frames;
                 const int n = frames.length();
                 painter.drawImage(i * tilesize, j * tilesize, frames[qMin(frame, n-1)]);
             }
