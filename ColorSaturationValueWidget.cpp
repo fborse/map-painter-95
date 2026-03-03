@@ -5,7 +5,7 @@
 
 ColorSaturationValueWidget::ColorSaturationValueWidget(QWidget *parent):
     QWidget(parent),
-    hue{0}, saturation{1}, value{0}
+    hue{0}, saturation{1}, value{1}
 {
 }
 
