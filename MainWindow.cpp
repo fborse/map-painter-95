@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <QCloseEvent>
 #include <QClipboard>
+#include <QScrollBar>
 #include <QUuid>
 
 #include "NewMapDialog.hpp"
@@ -89,6 +90,18 @@ MainWindow::MainWindow(QWidget *parent):
     connect(ui->shapeComboBox, &QComboBox::currentIndexChanged, [&] (const int index) {
         ui->cornerRadiusSpinBox->setEnabled(index == 0);
     });
+
+    {
+        QScrollBar *h1 = ui->mapViewScrollArea->horizontalScrollBar();
+        QScrollBar *h2 = ui->mapPainterScrollArea->horizontalScrollBar();
+        connect(h1, &QScrollBar::valueChanged, h2, &QScrollBar::setValue);
+        connect(h2, &QScrollBar::valueChanged, h1, &QScrollBar::setValue);
+
+        QScrollBar *v1 = ui->mapViewScrollArea->verticalScrollBar();
+        QScrollBar *v2 = ui->mapPainterScrollArea->verticalScrollBar();
+        connect(v1, &QScrollBar::valueChanged, v2, &QScrollBar::setValue);
+        connect(v2, &QScrollBar::valueChanged, v1, &QScrollBar::setValue);
+    }
 
 //  TODO: is there *really* no better way to set this kind of stuff ???
     ui->splitter->setStretchFactor(0, 3);
@@ -447,8 +460,8 @@ void MainWindow::updateLayersBoxes()
     Q_ASSERT(!map_layers.isNull());
     const int n = map_layers->length();
 
-    resize_cb(ui->currentLayerComboBox1, n);
-    resize_cb(ui->currentLayerComboBox2, n);
+    resize_cb(ui->currentLayerMapViewComboBox, n);
+    resize_cb(ui->currentLayerMapPainterComboBox, n);
 
     ui->actionRemoveLayer->setEnabled(n > 1);
 }
@@ -469,8 +482,8 @@ void MainWindow::updateFramesBoxes()
     Q_ASSERT(!tileset.isNull());
     const int n = get_max_frames(*tileset);
 
-    resize_cb(ui->currentFrameComboBox1, n);
-    resize_cb(ui->currentFrameComboBox2, n);
+    resize_cb(ui->currentFrameMapViewComboBox, n);
+    resize_cb(ui->currentFrameMapPainterComboBox, n);
 }
 
 void MainWindow::updateDrawOptions(const int draw_tool)
@@ -623,7 +636,7 @@ void MainWindow::onAddFrame()
     const int tilesize = ui->tilesetView->getTilesize();
     Q_ASSERT(tilesize > 0);
 
-    const int current_frame = ui->currentFrameComboBox1->currentIndex();
+    const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
 
     AddRectDialog dialog(tilesize, this);
     dialog.setWindowTitle("Add Frame");
@@ -647,7 +660,7 @@ void MainWindow::onCloneCurrentFrame()
     const auto id = selected_tiles->at(0).at(0);
     Q_ASSERT(tileset->contains(id));
 
-    const int current_frame = ui->currentFrameComboBox1->currentIndex();
+    const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
     auto &frames = (*tileset)[id];
     const int n = frames.length();
 
@@ -667,7 +680,7 @@ void MainWindow::onRemoveCurrentFrame()
     const auto id = selected_tiles->at(0).at(0);
     Q_ASSERT(tileset->contains(id));
 
-    const int current_frame = ui->currentFrameComboBox1->currentIndex();
+    const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
 
     ui->tilesetView->removeFrames({current_frame});
 
@@ -692,27 +705,27 @@ void MainWindow::onResizeMap()
 void MainWindow::onAddLayer()
 {
     Q_ASSERT(!map_layers.isNull());
-    const int current_layer = ui->currentLayerComboBox1->currentIndex();
+    const int current_layer = ui->currentLayerMapViewComboBox->currentIndex();
     Q_ASSERT(0 <= current_layer);
     Q_ASSERT(current_layer < map_layers->length());
 
     ui->mapEditor->insertLayer(current_layer + 1);
     Q_ASSERT(current_layer + 1 < map_layers->length());
     updateLayersBoxes();
-    ui->currentLayerComboBox1->setCurrentIndex(current_layer + 1);
+    ui->currentLayerMapViewComboBox->setCurrentIndex(current_layer + 1);
 }
 
 void MainWindow::onRemoveCurrentLayer()
 {
     Q_ASSERT(!map_layers.isNull());
-    const int current_layer = ui->currentLayerComboBox1->currentIndex();
+    const int current_layer = ui->currentLayerMapViewComboBox->currentIndex();
     Q_ASSERT(0 <= current_layer);
     Q_ASSERT(current_layer < map_layers->length());
 
     ui->mapEditor->removeLayer(current_layer);
     Q_ASSERT(current_layer - 1 < map_layers->length());
     if (current_layer == map_layers->length())
-        ui->currentLayerComboBox1->setCurrentIndex(current_layer - 1);
+        ui->currentLayerMapViewComboBox->setCurrentIndex(current_layer - 1);
     updateLayersBoxes();
 }
 

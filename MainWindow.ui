@@ -38,14 +38,14 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <item>
-               <widget class="QLabel" name="currentFrameLabel1">
+               <widget class="QLabel" name="currentFrameMapViewLabel">
                 <property name="text">
                  <string>Frame :</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="currentFrameComboBox1">
+               <widget class="QComboBox" name="currentFrameMapViewComboBox">
                 <item>
                  <property name="text">
                   <string>1</string>
@@ -61,14 +61,14 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="currentLayerLabel1">
+               <widget class="QLabel" name="currentLayerMapViewLabel">
                 <property name="text">
                  <string>Layer :</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="currentLayerComboBox1">
+               <widget class="QComboBox" name="currentLayerMapViewComboBox">
                 <item>
                  <property name="text">
                   <string>1</string>
@@ -291,14 +291,14 @@
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="currentFrameLabel2">
+              <widget class="QLabel" name="currentFrameMapPainterLabel">
                <property name="text">
                 <string>Frame :</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QComboBox" name="currentFrameComboBox2">
+              <widget class="QComboBox" name="currentFrameMapPainterComboBox">
                <item>
                 <property name="text">
                  <string>1</string>
@@ -314,14 +314,14 @@
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="currentLayerLabel2">
+              <widget class="QLabel" name="currentLayerMapPainterLabel">
                <property name="text">
                 <string>Layer :</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QComboBox" name="currentLayerComboBox2">
+              <widget class="QComboBox" name="currentLayerMapPainterComboBox">
                <item>
                 <property name="text">
                  <string>1</string>
@@ -1288,6 +1288,9 @@
     <slot>setValue(double)</slot>
     <slot>setAlpha(int)</slot>
     <slot>setColor(QColor)</slot>
+    <slot>setHue(int)</slot>
+    <slot>setSaturation(int)</slot>
+    <slot>setValue(int)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -1938,8 +1941,8 @@
    <slot>setEllipseShape(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>873</x>
-     <y>638</y>
+     <x>864</x>
+     <y>617</y>
     </hint>
     <hint type="destinationlabel">
      <x>121</x>
@@ -1954,8 +1957,8 @@
    <slot>setFillShape(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>873</x>
-     <y>638</y>
+     <x>864</x>
+     <y>623</y>
     </hint>
     <hint type="destinationlabel">
      <x>121</x>
@@ -1970,8 +1973,8 @@
    <slot>setRectRadius(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>873</x>
-     <y>638</y>
+     <x>864</x>
+     <y>629</y>
     </hint>
     <hint type="destinationlabel">
      <x>121</x>
@@ -2050,8 +2053,8 @@
    <slot>setFillTolerance(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>873</x>
-     <y>517</y>
+     <x>864</x>
+     <y>499</y>
     </hint>
     <hint type="destinationlabel">
      <x>121</x>
@@ -2066,8 +2069,8 @@
    <slot>setFillThisTileOnly(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>873</x>
-     <y>517</y>
+     <x>864</x>
+     <y>508</y>
     </hint>
     <hint type="destinationlabel">
      <x>121</x>
@@ -2082,8 +2085,8 @@
    <slot>setDarken(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>873</x>
-     <y>638</y>
+     <x>864</x>
+     <y>617</y>
     </hint>
     <hint type="destinationlabel">
      <x>121</x>
@@ -2098,8 +2101,8 @@
    <slot>setBrushPixels(QImage)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>863</x>
-     <y>628</y>
+     <x>840</x>
+     <y>637</y>
     </hint>
     <hint type="destinationlabel">
      <x>121</x>
@@ -2114,12 +2117,12 @@
    <slot>setBrushPixels(QImage)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>863</x>
-     <y>628</y>
+     <x>840</x>
+     <y>637</y>
     </hint>
     <hint type="destinationlabel">
-     <x>863</x>
-     <y>628</y>
+     <x>840</x>
+     <y>637</y>
     </hint>
    </hints>
   </connection>
@@ -2226,8 +2229,8 @@
    <slot>setSelectionShape(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>873</x>
-     <y>517</y>
+     <x>864</x>
+     <y>499</y>
     </hint>
     <hint type="destinationlabel">
      <x>121</x>
@@ -2242,8 +2245,8 @@
    <slot>setSelectionColorKey(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>873</x>
-     <y>517</y>
+     <x>864</x>
+     <y>508</y>
     </hint>
     <hint type="destinationlabel">
      <x>121</x>
@@ -2572,7 +2575,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>currentLayerComboBox2</sender>
+   <sender>currentLayerMapPainterComboBox</sender>
    <signal>currentIndexChanged(int)</signal>
    <receiver>mapPainter</receiver>
    <slot>setCurrentLayer(int)</slot>
@@ -2588,7 +2591,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>currentLayerComboBox1</sender>
+   <sender>currentLayerMapViewComboBox</sender>
    <signal>currentIndexChanged(int)</signal>
    <receiver>mapEditor</receiver>
    <slot>setCurrentLayer(int)</slot>
@@ -2652,9 +2655,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>currentLayerComboBox1</sender>
+   <sender>currentLayerMapViewComboBox</sender>
    <signal>currentIndexChanged(int)</signal>
-   <receiver>currentLayerComboBox2</receiver>
+   <receiver>currentLayerMapPainterComboBox</receiver>
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2668,9 +2671,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>currentLayerComboBox2</sender>
+   <sender>currentLayerMapPainterComboBox</sender>
    <signal>currentIndexChanged(int)</signal>
-   <receiver>currentLayerComboBox1</receiver>
+   <receiver>currentLayerMapViewComboBox</receiver>
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2684,7 +2687,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>currentFrameComboBox1</sender>
+   <sender>currentFrameMapViewComboBox</sender>
    <signal>currentIndexChanged(int)</signal>
    <receiver>mapEditor</receiver>
    <slot>setCurrentFrame(int)</slot>
@@ -2700,7 +2703,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>currentFrameComboBox2</sender>
+   <sender>currentFrameMapPainterComboBox</sender>
    <signal>currentIndexChanged(int)</signal>
    <receiver>mapPainter</receiver>
    <slot>setCurrentFrame(int)</slot>
@@ -2716,9 +2719,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>currentFrameComboBox2</sender>
+   <sender>currentFrameMapPainterComboBox</sender>
    <signal>currentIndexChanged(int)</signal>
-   <receiver>currentFrameComboBox1</receiver>
+   <receiver>currentFrameMapViewComboBox</receiver>
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2732,9 +2735,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>currentFrameComboBox1</sender>
+   <sender>currentFrameMapViewComboBox</sender>
    <signal>currentIndexChanged(int)</signal>
-   <receiver>currentFrameComboBox2</receiver>
+   <receiver>currentFrameMapPainterComboBox</receiver>
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2796,7 +2799,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>currentFrameComboBox1</sender>
+   <sender>currentFrameMapViewComboBox</sender>
    <signal>currentIndexChanged(int)</signal>
    <receiver>tilesetView</receiver>
    <slot>setCurrentFrame(int)</slot>
@@ -2856,6 +2859,38 @@
     <hint type="destinationlabel">
      <x>511</x>
      <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>zoomMapPainterDoubleSpinBox</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>zoomMapViewDoubleSpinBox</receiver>
+   <slot>setValue(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>701</x>
+     <y>118</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>610</x>
+     <y>118</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>zoomMapViewDoubleSpinBox</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>zoomMapPainterDoubleSpinBox</receiver>
+   <slot>setValue(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>610</x>
+     <y>118</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>701</x>
+     <y>118</y>
     </hint>
    </hints>
   </connection>
