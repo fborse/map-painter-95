@@ -237,18 +237,6 @@ void MapPainterWidget::setSelectionColorKey(const bool yes)
     update();
 }
 
-static inline bool similar(const QColor &c1, const QColor &c2, const double tolerance)
-{
-    const double dr = c1.redF() - c2.redF();
-    const double dg = c1.greenF() - c2.greenF();
-    const double db = c1.blueF() - c2.blueF();
-    const double da = c1.alphaF() - c2.alphaF();
-
-    const double dist = dr*dr + dg*dg + db*db + da*da;
-
-    return (dist <= tolerance/100 * tolerance/100);
-}
-
 void MapPainterWidget::redrawDisplayedSelectionImage()
 {
     selection_image = original_selection_image.copy();
@@ -256,9 +244,7 @@ void MapPainterWidget::redrawDisplayedSelectionImage()
     if (selection_color_key)
         for (int i = 0; i < selection_image.width(); ++i)
             for (int j = 0; j < selection_image.height(); ++j)
-            //  TODO: find a non-hacky way to tackle the problem
-            //  colour selection going to Color*Widget seems to alter it
-                if (similar(selection_image.pixelColor(i, j), draw_color, 2))
+                if (selection_image.pixelColor(i, j).toHsv() == draw_color)
                     selection_image.setPixelColor(i, j, Qt::transparent);
 
     update();
@@ -516,6 +502,18 @@ void MapPainterWidget::drawShape(QPainter &painter) const
         painter.drawEllipse(r);
     else
         painter.drawRoundedRect(r, rect_radius, rect_radius);
+}
+
+static inline bool similar(const QColor &c1, const QColor &c2, const double tolerance)
+{
+    const double dr = c1.redF() - c2.redF();
+    const double dg = c1.greenF() - c2.greenF();
+    const double db = c1.blueF() - c2.blueF();
+    const double da = c1.alphaF() - c2.alphaF();
+
+    const double dist = dr*dr + dg*dg + db*db + da*da;
+
+    return (dist <= tolerance/100 * tolerance/100);
 }
 
 void MapPainterWidget::drawFill(QImage &original) const
