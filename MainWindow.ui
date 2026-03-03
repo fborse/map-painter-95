@@ -871,6 +871,7 @@
      <property name="title">
       <string>&amp;Import</string>
      </property>
+     <addaction name="actionImportSingleTile"/>
      <addaction name="actionImportTilesInBulk"/>
     </widget>
     <widget class="QMenu" name="menuExport">
@@ -1259,6 +1260,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+A, Ctrl+C, Ctrl+F</string>
+   </property>
+  </action>
+  <action name="actionImportSingleTile">
+   <property name="text">
+    <string>Single &amp;Tile...</string>
+   </property>
+   <property name="toolTip">
+    <string>Import Single Tile</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I, Ctrl+T</string>
    </property>
   </action>
  </widget>
@@ -2831,6 +2843,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionImportSingleTile</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onImportSingleTile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -2865,5 +2893,6 @@
   <slot>onCloneCurrentFrame()</slot>
   <slot>onRemoveCurrentFrame()</slot>
   <slot>onSelectedChanged()</slot>
+  <slot>onImportSingleTile()</slot>
  </slots>
 </ui>

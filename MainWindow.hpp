@@ -29,6 +29,7 @@ public slots:
 //  see handleUnsavedChanges() for why bool
     bool onSave();
     bool onSaveAs();
+    void onImportSingleTile();
     void onImportTilesInBulk();
     void onExportTilesetAndMap();
     void onExportAsTextures();

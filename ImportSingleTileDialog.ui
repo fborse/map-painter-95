@@ -1,0 +1,629 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ImportSingleTileDialog</class>
+ <widget class="QDialog" name="ImportSingleTileDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Import Single Tile</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,3">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QGroupBox" name="texturePropertiesGroupBox">
+         <property name="title">
+          <string>Texture Properties</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QLineEdit" name="texturePathLineEdit">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="texturePathPushButton">
+              <property name="text">
+               <string>Change Path...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_7">
+            <item>
+             <layout class="QFormLayout" name="formLayout">
+              <item row="0" column="0">
+               <widget class="QLabel" name="scalingLabel">
+                <property name="text">
+                 <string>Scaling :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="scalingDoubleSpinBox">
+                <property name="suffix">
+                 <string>x</string>
+                </property>
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="minimum">
+                 <double>0.100000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>16.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.500000000000000</double>
+                </property>
+                <property name="value">
+                 <double>1.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="colorKeyLabel">
+                <property name="text">
+                 <string>Color Key :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="ColorSelectionWidget" name="colorKeyWidget" native="true"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Orientation::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="framesGroupBox">
+         <property name="title">
+          <string>Frames</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="QListWidget" name="framesListWidget"/>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QPushButton" name="addFramePushButton">
+              <property name="text">
+               <string>Add</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="removeFramePushButton">
+              <property name="text">
+               <string>Remove</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="frameGroupBox">
+         <property name="title">
+          <string>Frame</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="QLabel" name="xLabel">
+            <property name="text">
+             <string>x :</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="xSpinBox">
+            <property name="suffix">
+             <string>px</string>
+            </property>
+            <property name="maximum">
+             <number>65535</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="yLabel">
+            <property name="text">
+             <string>y :</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="ySpinBox">
+            <property name="suffix">
+             <string>px</string>
+            </property>
+            <property name="maximum">
+             <number>65535</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="tileViewGroupBox">
+       <property name="title">
+        <string>Tile View</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QCheckBox" name="magneticCheckBox">
+            <property name="text">
+             <string>Snap to nearest tile</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="zoomLabel">
+            <property name="text">
+             <string>Zoom :</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="zoomDoubleSpinBox">
+            <property name="suffix">
+             <string>x</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="minimum">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>16.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.500000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QScrollArea" name="scrollArea">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>438</width>
+             <height>466</height>
+            </rect>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="ImportSingleTileWidget" name="tileView" native="true">
+              <property name="mouseTracking">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ColorSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>ColorSelectionWidget.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>clicked(QColor)</signal>
+    <signal>colorChanged(QColor)</signal>
+    <slot>setHue(double)</slot>
+    <slot>setSaturation(double)</slot>
+    <slot>setValue(double)</slot>
+    <slot>setAlpha(int)</slot>
+    <slot>setColor(QColor)</slot>
+    <slot>setHue(int)</slot>
+    <slot>setSaturation(int)</slot>
+    <slot>setValue(int)</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>ImportSingleTileWidget</class>
+   <extends>QWidget</extends>
+   <header>ImportSingleTileDialog.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>frameSelected(int)</signal>
+    <signal>frameAdded(QPoint)</signal>
+    <signal>frameRemoved(int)</signal>
+    <signal>frameChanged(QPoint)</signal>
+    <slot>setZoom(double)</slot>
+    <slot>setScaling(double)</slot>
+    <slot>setColorKey(QColor)</slot>
+    <slot>setMagnetic(bool)</slot>
+    <slot>setSelectedFrame(int)</slot>
+   </slots>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onAccept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>227</x>
+     <y>579</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>295</x>
+     <y>585</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>texturePathPushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onChangeTexturePath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>256</x>
+     <y>53</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>255</x>
+     <y>6</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorKeyWidget</sender>
+   <signal>clicked(QColor)</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onChangeColorKey()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>102</x>
+     <y>121</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>3</x>
+     <y>121</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>addFramePushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onAddFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>99</x>
+     <y>450</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>4</x>
+     <y>453</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>removeFramePushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onRemoveFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>242</x>
+     <y>452</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>242</x>
+     <y>595</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>framesListWidget</sender>
+   <signal>currentRowChanged(int)</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onSelectedFrameChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>135</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1</x>
+     <y>306</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>scalingDoubleSpinBox</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>tileView</receiver>
+   <slot>setScaling(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>134</x>
+     <y>92</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>448</x>
+     <y>94</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>zoomDoubleSpinBox</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>tileView</receiver>
+   <slot>setZoom(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>723</x>
+     <y>65</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>717</x>
+     <y>211</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorKeyWidget</sender>
+   <signal>colorChanged(QColor)</signal>
+   <receiver>tileView</receiver>
+   <slot>setColorKey(QColor)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>124</x>
+     <y>121</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>381</x>
+     <y>125</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>xSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onChangeFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>82</x>
+     <y>535</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>83</x>
+     <y>594</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ySpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onChangeFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>211</x>
+     <y>540</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>211</x>
+     <y>599</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>magneticCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>tileView</receiver>
+   <slot>setMagnetic(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>405</x>
+     <y>55</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>411</x>
+     <y>162</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tileView</sender>
+   <signal>frameAdded(QPoint)</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onAddFrame(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>752</x>
+     <y>183</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>794</x>
+     <y>186</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tileView</sender>
+   <signal>frameChanged(QPoint)</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onFrameChanged(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>743</x>
+     <y>444</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>792</x>
+     <y>441</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tileView</sender>
+   <signal>frameRemoved(int)</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onRemoveFrame(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>741</x>
+     <y>522</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>799</x>
+     <y>535</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tileView</sender>
+   <signal>frameSelected(int)</signal>
+   <receiver>ImportSingleTileDialog</receiver>
+   <slot>onSelectFrame(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>758</x>
+     <y>96</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>797</x>
+     <y>88</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>onChangeTexturePath()</slot>
+  <slot>onChangeColorKey()</slot>
+  <slot>onAccept()</slot>
+  <slot>onAddFrame()</slot>
+  <slot>onAddFrame(QPoint)</slot>
+  <slot>onRemoveFrame()</slot>
+  <slot>onRemoveFrame(int)</slot>
+  <slot>onSelectedFrameChanged(int)</slot>
+  <slot>onSelectFrame(int)</slot>
+  <slot>onChangeFrame()</slot>
+  <slot>onFrameChanged(QPoint)</slot>
+ </slots>
+</ui>

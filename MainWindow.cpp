@@ -11,6 +11,7 @@
 #include "AddRectDialog.hpp"
 #include "ResizeMapDialog.hpp"
 #include "ScaleSelectionDialog.hpp"
+#include "ImportSingleTileDialog.hpp"
 #include "ImportTilesInBulkDialog.hpp"
 #include "ExportTilesetAndMapDialog.hpp"
 #include "ExportAsTexturesDialog.hpp"
@@ -288,6 +289,19 @@ bool MainWindow::onSaveAs()
     save_path = path;
     undo_stack->setClean();
     return true;
+}
+
+void MainWindow::onImportSingleTile()
+{
+    const int tilesize = ui->tilesetView->getTilesize();
+
+    ImportSingleTileDialog dialog(tilesize, this);
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        ui->tilesetView->addTiles({dialog.getTile()}, true);
+        refreshViews();
+        updateFramesBoxes();
+    }
 }
 
 void MainWindow::onImportTilesInBulk()

@@ -38,10 +38,8 @@ QVector<Tile> ImportTilesInBulkWidget::getTiles() const
 {
     QVector<Tile> tiles;
 
-    for (auto &area: areas)
+    for (auto &[x, y, w, h, dx, dy]: areas)
     {
-        const auto &[x, y, w, h, dx, dy] = area;
-
         for (int j = 0; j < h; ++j)
         {
             for (int i = 0; i < w; ++i)
@@ -409,7 +407,7 @@ void ImportTilesInBulkDialog::onAccept() try
 {
     if (getTexturePath().isEmpty())
         throw std::runtime_error("Cannot import tiles without texture !");
-    if (ui->rectanglesViewWidget->getAreas().isEmpty())
+    if (getTileAreas().isEmpty())
         throw std::runtime_error("No tile area found !");
 
     accept();
@@ -437,11 +435,11 @@ void ImportTilesInBulkDialog::enableAreasWidgets(const bool enabled)
 
 void ImportTilesInBulkDialog::onAddArea(const ImportTilesArea area)
 {
+    ui->rectanglesViewWidget->addArea(area);
     const QString rect = QString("(%1, %2) %3x%4 +%5+%6")
         .arg(area.x).arg(area.y)
         .arg(area.w).arg(area.w)
         .arg(area.dx).arg(area.dy);
-    ui->rectanglesViewWidget->addArea(area);
     ui->rectanglesListWidget->addItem(rect);
 
     const int n = ui->rectanglesListWidget->count();
