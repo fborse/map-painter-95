@@ -19,6 +19,7 @@ public:
 
     void resize() final override;
 
+//  TODO: make SimpleTile-specific
     void addTiles(const QVector<SimpleTile> &tiles, const bool undoable);
     void removeTiles(const QVector<TileReference> &tiles);
 
@@ -41,10 +42,10 @@ private:
 //  right click is really just a desktop thing => names accordingly
     std::optional<QPoint> click_origin, right_click_origin;
 
-    std::optional<QPoint> toIJ(const int idx) const;
-    std::optional<int> toIndex(const QPoint &ij) const;
+    std::optional<TileReference> toRef(const QPoint &ij) const;
 
-    void paintTileset(QPainter &painter);
+    void paintAutoTiles(QPainter &painter);
+    void paintSimpleTiles(QPainter &painter);
     void paintSelectionCursors(QPainter &painter);
     void paintCursor(QPainter &painter);
     void paintSelectionRect(QPainter &painter);

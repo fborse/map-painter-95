@@ -18,7 +18,7 @@ struct TileReference
     bool autotile = false;
 
     bool isEmpty() const { return name.isEmpty(); }
-    operator bool() const { return isEmpty(); }
+    operator bool() const { return !isEmpty(); }
 
     bool operator==(const TileReference &o) const { return name == o.name && autotile == o.autotile; }
     bool operator!=(const TileReference &o) const { return !(*this == o); }
