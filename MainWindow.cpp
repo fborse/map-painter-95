@@ -794,9 +794,16 @@ void MainWindow::onScale()
         ui->mapPainter->scaleSelection(dialog.getHorizontalFactor(), dialog.getVerticalFactor());
 }
 
+static inline QDataStream &operator>>(QDataStream &stream, Orientation &o)
+{
+    stream >> o.top_left >> o.top_right >> o.bottom_left >> o.bottom_right;
+
+    return stream;
+}
+
 static inline QDataStream &operator>>(QDataStream &stream, TileReference &ref)
 {
-    stream >> ref.name >> ref.autotile;
+    stream >> ref.name >> ref.autotile >> ref.orientation;
 
     return stream;
 }
@@ -862,9 +869,16 @@ catch (const QString &errstr)
     return false;
 }
 
+static inline QDataStream &operator<<(QDataStream &stream, const Orientation &o)
+{
+    stream << o.top_left << o.top_right << o.bottom_left << o.bottom_right;
+
+    return stream;
+}
+
 static inline QDataStream &operator<<(QDataStream &stream, const TileReference &ref)
 {
-    stream << ref.name << ref.autotile;
+    stream << ref.name << ref.autotile << ref.orientation;
 
     return stream;
 }
