@@ -19,11 +19,10 @@ public:
 
     void resize() final override;
 
-//  TODO: make SimpleTile-specific
-    void addTiles(const QVector<SimpleTile> &tiles, const bool undoable);
+    void addSimpleTiles(const QVector<SimpleTile> &tiles, const bool undoable);
     void removeTiles(const QVector<TileReference> &tiles);
 
-    void addFrames(const QHash<int, QImage> &frames);
+    void addFrames(const QHash<int, QImage> &added);
     void removeFrames(const QVector<int> &indexes);
 
 public slots:

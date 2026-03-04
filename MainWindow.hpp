@@ -35,7 +35,8 @@ public slots:
     void onPaste();
     void onSelectAll();
 
-    void onAddTile();
+    void onAddSimpleTile();
+    void onAddAutoTile();
     void onCloneSelectedTiles();
     void onRemoveSelectedTiles();
     void onAddFrame();

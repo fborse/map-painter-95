@@ -329,7 +329,7 @@ void MainWindow::onImportSingleTile()
     ImportSingleTileDialog dialog(tilesize, this);
     if (dialog.exec() == QDialog::Accepted)
     {
-        ui->tilesetView->addTiles({dialog.getTile()}, true);
+        ui->tilesetView->addSimpleTiles({dialog.getTile()}, true);
         refreshViews();
         updateFramesBoxes();
     }
@@ -342,7 +342,7 @@ void MainWindow::onImportTilesInBulk()
     ImportTilesInBulkDialog dialog(tilesize, this);
     if (dialog.exec() == QDialog::Accepted)
     {
-        ui->tilesetView->addTiles(dialog.getTiles(), true);
+        ui->tilesetView->addSimpleTiles(dialog.getTiles(), true);
         refreshViews();
     }
 }
@@ -577,20 +577,38 @@ void MainWindow::onSelectAll()
     ui->mapPainter->selectAll();
 }
 
-void MainWindow::onAddTile()
+static inline QImage query_tile(const int tilesize, const QString &title, QWidget *parent)
 {
-    const int tilesize = ui->tilesetView->getTilesize();
     Q_ASSERT(tilesize > 0);
+    QImage tile;
 
-    AddRectDialog dialog(tilesize, this);
-    dialog.setWindowTitle("Add Tile");
+    AddRectDialog dialog(tilesize, parent);
+    dialog.setWindowTitle(title);
     if (dialog.exec() == QDialog::Accepted)
     {
-        QImage tile(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
+        tile = QImage(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
         tile.fill(dialog.getColor());
-
-        ui->tilesetView->addTiles({SimpleTile{{tile}}}, true);
     }
+
+    return tile;
+}
+
+void MainWindow::onAddSimpleTile()
+{
+    const int tilesize = ui->tilesetView->getTilesize();
+    QImage tile = query_tile(tilesize, "Add Simple Tile", this);
+
+    if (!tile.isNull())
+        ui->tilesetView->addSimpleTiles({SimpleTile{{tile}}}, true);
+}
+
+void MainWindow::onAddAutoTile()
+{
+    const int tilesize = ui->tilesetView->getTilesize();
+    QImage tile = query_tile(tilesize, "Add Autotile", this);
+
+/*    if (!tile.isNull())
+        ui->tilesetView->addAutoTile();*/
 }
 
 static inline QSet<TileReference> get_unique_valid_ids(const SimpleTiles &simple_tiles, const SelectedTiles &selected)
@@ -621,7 +639,7 @@ void MainWindow::onCloneSelectedTiles()
         tiles.push_back(simple_tiles->value(ref.name));
     }
 
-    ui->tilesetView->addTiles(tiles, true);
+    ui->tilesetView->addSimpleTiles(tiles, true);
 }
 
 void MainWindow::onRemoveSelectedTiles()

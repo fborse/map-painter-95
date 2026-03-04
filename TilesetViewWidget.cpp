@@ -309,7 +309,7 @@ void TilesetViewWidget::resize()
     EditorWidget::resize();
 }
 
-void TilesetViewWidget::addTiles(const QVector<SimpleTile> &images, const bool undoable)
+void TilesetViewWidget::addSimpleTiles(const QVector<SimpleTile> &images, const bool undoable)
 {
     Q_ASSERT(!undo_stack.isNull());
     Q_ASSERT(!simple_tiles_order.isNull());
@@ -345,8 +345,11 @@ void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
         Q_ASSERT(simple_tiles->contains(ref.name));
 
     undo_stack->beginMacro("Remove Tiles");
-    for (auto &id: tiles)
-        undo_stack->push(new RemoveSimpleTileCommand(simple_tiles_order, simple_tiles, map_layers, id));
+    for (auto &ref: tiles)
+        if (ref.autotile)
+        {}
+        else
+            undo_stack->push(new RemoveSimpleTileCommand(simple_tiles_order, simple_tiles, map_layers, ref));
     undo_stack->endMacro();
 
     emit tilesRemoved();
@@ -357,7 +360,7 @@ static inline bool is_1x1(const SelectedTiles &selected)
     return (selected.length() == 1) && (selected[0].length() == 1);
 }
 
-void TilesetViewWidget::addFrames(const QHash<int, QImage> &frames)
+void TilesetViewWidget::addFrames(const QHash<int, QImage> &added)
 {
     Q_ASSERT(!undo_stack.isNull());
     Q_ASSERT(!simple_tiles.isNull());
@@ -365,16 +368,21 @@ void TilesetViewWidget::addFrames(const QHash<int, QImage> &frames)
     Q_ASSERT(is_1x1(*selected_tiles));
     const auto ref = selected_tiles->at(0).at(0);
 
-    Q_ASSERT(simple_tiles->contains(ref.name));
-    const auto tile = simple_tiles->value(ref.name);
-    for (auto &index: frames.keys())
-    //  +1 because we may want to add at the end
-        Q_ASSERT(0 <= index && index < tile.frames.length() + 1);
+    if (ref.autotile)
+    {}
+    else
+    {
+        Q_ASSERT(simple_tiles->contains(ref.name));
+        const auto &frames = simple_tiles->value(ref.name).frames;
+        for (auto &index: added.keys())
+        //  +1 because we may want to add at the end
+            Q_ASSERT(0 <= index && index < frames.length() + 1);
 
-    undo_stack->beginMacro("Add Frames");
-    for (auto &index: frames.keys())
-        undo_stack->push(new AddSimpleTileFrameCommand(simple_tiles, ref, index, frames[index]));
-    undo_stack->endMacro();
+        undo_stack->beginMacro("Add Frames");
+        for (auto &index: added.keys())
+            undo_stack->push(new AddSimpleTileFrameCommand(simple_tiles, ref, index, added[index]));
+        undo_stack->endMacro();
+    }
 }
 
 void TilesetViewWidget::removeFrames(const QVector<int> &indexes)
@@ -385,15 +393,20 @@ void TilesetViewWidget::removeFrames(const QVector<int> &indexes)
     Q_ASSERT(is_1x1(*selected_tiles));
     const auto ref = selected_tiles->at(0).at(0);
 
-    Q_ASSERT(simple_tiles->contains(ref.name));
-    const auto tile = simple_tiles->value(ref.name);
-    for (auto &index: indexes)
-        Q_ASSERT(0 <= index && index < tile.frames.length() + 1);
+    if (ref.autotile)
+    {}
+    else
+    {
+        Q_ASSERT(simple_tiles->contains(ref.name));
+        const auto &frames = simple_tiles->value(ref.name).frames;
+        for (auto &index: indexes)
+            Q_ASSERT(0 <= index && index < frames.length() + 1);
 
-    undo_stack->beginMacro("Remove Frames");
-    for (auto &index: indexes)
-        undo_stack->push(new RemoveSimpleTileFrameCommand(simple_tiles, ref, index));
-    undo_stack->endMacro();
+        undo_stack->beginMacro("Remove Frames");
+        for (auto &index: indexes)
+            undo_stack->push(new RemoveSimpleTileFrameCommand(simple_tiles, ref, index));
+        undo_stack->endMacro();
+    }
 }
 
 std::optional<TileReference> TilesetViewWidget::toRef(const QPoint &ij) const
@@ -435,6 +448,19 @@ static inline QPoint divide(const QPoint &p, const double a)
     return {int(p.x() / a), int(p.y() / a)};
 }
 
+static inline void apply_changes(const Names &original, Names &copy, const QString &origin, const QString &target, const DragMode mode, const bool left, const bool right)
+{
+    const int i = original.indexOf(origin);
+    const int j = original.indexOf(target);
+
+    if (mode == MOVE_MODE && left)
+        copy.insert(j, copy.takeAt(i));
+    else if (mode == SWAP_MODE && left)
+        copy.swapItemsAt(i, j);
+    else if (mode == SELECTION_MODE && right)
+        copy.insert(j, copy.takeAt(i));
+}
+
 void TilesetViewWidget::paintAutoTiles(QPainter &/*painter*/)
 {
     Q_ASSERT(!autotiles_order.isNull());
@@ -460,23 +486,13 @@ void TilesetViewWidget::paintSimpleTiles(QPainter &painter)
         const auto p = right_click_origin? *right_click_origin : *click_origin;
 
         if (const auto origin = toRef(divide(p, tilesize)); origin && *origin)
-        {
             if (const auto target = toRef(divide(mouse_cursor, tilesize)); target && *target)
-            {
                 if (!origin->autotile && !target->autotile)
-                {
-                    const int i = simple_tiles_order->indexOf(origin->name);
-                    const int j = simple_tiles_order->indexOf(target->name);
-
-                    if (drag_mode == MOVE_MODE && click_origin)
-                        displayed.insert(j, displayed.takeAt(i));
-                    else if (drag_mode == SWAP_MODE && click_origin)
-                        displayed.swapItemsAt(i, j);
-                    else if (drag_mode == SELECTION_MODE && right_click_origin)
-                        displayed.insert(j, displayed.takeAt(i));
-                }
-            }
-        }
+                    apply_changes(
+                        *simple_tiles_order, displayed,
+                        origin->name, target->name,
+                        drag_mode, bool(click_origin), bool(right_click_origin)
+                    );
     }
 
     const int n_auto = autotiles_order->length();

@@ -916,7 +916,8 @@
      <property name="icon">
       <iconset theme="QIcon::ThemeIcon::ListAdd"/>
      </property>
-     <addaction name="actionAddTile"/>
+     <addaction name="actionAddSimpleTile"/>
+     <addaction name="actionAddAutoTile"/>
      <addaction name="actionCloneSelectedTiles"/>
      <addaction name="separator"/>
      <addaction name="actionAddFrame"/>
@@ -1090,15 +1091,15 @@
     <string>Ctrl+A</string>
    </property>
   </action>
-  <action name="actionAddTile">
+  <action name="actionAddSimpleTile">
    <property name="text">
-    <string>&amp;Tile...</string>
+    <string>&amp;Simple Tile...</string>
    </property>
    <property name="toolTip">
-    <string>Add Tile</string>
+    <string>Add Simple Tile</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+A, Ctrl+T</string>
+    <string>Ctrl+A, Ctrl+S</string>
    </property>
   </action>
   <action name="actionRemoveSelectedTiles">
@@ -1271,6 +1272,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+I, Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actionAddAutoTile">
+   <property name="text">
+    <string>&amp;Autotile...</string>
+   </property>
+   <property name="toolTip">
+    <string>Add Autotile</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A, Ctrl+A</string>
    </property>
   </action>
  </widget>
@@ -2273,10 +2285,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionAddTile</sender>
+   <sender>actionAddSimpleTile</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>onAddTile()</slot>
+   <slot>onAddSimpleTile()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -2928,6 +2940,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionAddAutoTile</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onAddAutoTile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -2944,7 +2972,7 @@
   <slot>onCopy()</slot>
   <slot>onPaste()</slot>
   <slot>onSelectAll()</slot>
-  <slot>onAddTile()</slot>
+  <slot>onAddSimpleTile()</slot>
   <slot>onCloneSelectedTiles()</slot>
   <slot>onRemoveSelectedTiles()</slot>
   <slot>onResizeMap()</slot>
@@ -2964,5 +2992,6 @@
   <slot>onSelectedChanged()</slot>
   <slot>onImportSingleTile()</slot>
   <slot>onMapWidgetScrolled(QPoint)</slot>
+  <slot>onAddAutoTile()</slot>
  </slots>
 </ui>
