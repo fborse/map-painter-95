@@ -29,6 +29,7 @@ SOURCES += \
     ResizeMapDialog.cpp \
     ScaleSelectionDialog.cpp \
     TilesetViewWidget.cpp \
+    Types.cpp \
     main.cpp \
     MainWindow.cpp
 

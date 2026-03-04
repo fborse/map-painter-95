@@ -146,7 +146,7 @@ public:
     {
         index = lockSimpleTilesOrder()->length();
         const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-        added_ref = {id, false};
+        added_ref = {id, false, {}};
     }
 
     void undo() final override
@@ -424,7 +424,8 @@ std::optional<TileReference> TilesetViewWidget::toRef(const QPoint &ij) const
         if (k == 0)
             return TileReference{};
         else if (k-1 < n_auto)
-            return TileReference{autotiles_order->at(k-1), true};
+        //  RPG Maker scheme coordinates for isolated tile
+            return TileReference{autotiles_order->at(k-1), true, {8, 11, 20, 23}};
         else
             return {};
     }
@@ -436,7 +437,7 @@ std::optional<TileReference> TilesetViewWidget::toRef(const QPoint &ij) const
         const int k = i + (j - h_auto) * n_columns;
 
         if (k < n_simple)
-            return TileReference{simple_tiles_order->at(k), false};
+            return TileReference{simple_tiles_order->at(k), false, {}};
         else
             return {};
     }
