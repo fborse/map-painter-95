@@ -812,7 +812,7 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
     {
         undo_stack->beginMacro("non-retroactive change");
         undo_stack->push(new ReplaceSimpleTilesCommand(simple_tiles, prev_tiles, next_tiles));
-        undo_stack->push(new AddSimpleTilesCommand(tiles_order, simple_tiles, added));
+        undo_stack->push(new AddSimpleTilesCommand(simple_tiles_order, simple_tiles, added));
         undo_stack->push(new ReplaceReferencesCommand(map_layers, prev_refs, next_refs));
         undo_stack->endMacro();
 

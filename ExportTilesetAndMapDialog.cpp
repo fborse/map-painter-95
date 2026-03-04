@@ -8,7 +8,7 @@
 ExportTilesetAndMapDialog::ExportTilesetAndMapDialog(const int tilesize, QWidget *parent):
     QDialog(parent), ui(new Ui::ExportTilesetAndMapDialog),
     tilesize{tilesize}, tile_coordinates{}, drawn_tileset{},
-    tiles_order{nullptr}, simple_tiles{nullptr}, map_layers{nullptr}
+    simple_tiles_order{nullptr}, simple_tiles{nullptr}, map_layers{nullptr}
 {
     ui->setupUi(this);
 
@@ -198,7 +198,7 @@ static inline QImage gen_background(const QSize &size, const int tilesize)
 
 void ExportTilesetAndMapDialog::redrawTileset()
 {
-    const auto tiles = linearise_tiles(tiles_order, simple_tiles);
+    const auto tiles = linearise_tiles(simple_tiles_order, simple_tiles);
 
     if (!tiles.isEmpty())
     {

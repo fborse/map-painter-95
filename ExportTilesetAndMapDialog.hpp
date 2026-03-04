@@ -15,7 +15,7 @@ public:
     explicit ExportTilesetAndMapDialog(const int tilesize, QWidget *parent = nullptr);
     ~ExportTilesetAndMapDialog();
 
-    void setTilesOrderPointer(QWeakPointer<Names> ptr) { tiles_order = ptr; redrawTileset(); }
+    void setSimpleTilesOrderPointer(QWeakPointer<Names> ptr) { simple_tiles_order = ptr; redrawTileset(); }
     void setSimpleTilesPointer(QWeakPointer<SimpleTiles> ptr) { simple_tiles = ptr; redrawTileset(); }
     void setMapLayersPointer(QWeakPointer<MapLayers> ptr) { map_layers = ptr; }
 
@@ -36,7 +36,7 @@ private:
     QHash<QString, QVector<QPoint>> tile_coordinates;
     QImage drawn_tileset;
 
-    QWeakPointer<Names> tiles_order;
+    QWeakPointer<Names> simple_tiles_order;
     QWeakPointer<SimpleTiles> simple_tiles;
     QWeakPointer<MapLayers> map_layers;
 };

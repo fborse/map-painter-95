@@ -7,7 +7,7 @@ EditorWidget::EditorWidget(QWidget *parent):
     QWidget(parent),
     grid_aspect{20, 16}, tilesize{32}, zoom{1},
     current_layer{0}, current_frame{0},
-    undo_stack{nullptr}, tiles_order{nullptr}, simple_tiles{nullptr},
+    undo_stack{nullptr}, simple_tiles_order{nullptr}, simple_tiles{nullptr},
     selected_tiles{nullptr}, map_layers{nullptr}
 {
 }

@@ -244,7 +244,7 @@ void TilesetViewWidget::setDragMode(const int index)
 
 void TilesetViewWidget::resize()
 {
-    const double n_tiles = tiles_order? tiles_order->length() : 0;
+    const double n_tiles = simple_tiles_order? simple_tiles_order->length() : 0;
 
 //  empty tile => +1
     grid_aspect = {
@@ -258,14 +258,14 @@ void TilesetViewWidget::resize()
 void TilesetViewWidget::addTiles(const QVector<SimpleTile> &images, const bool undoable)
 {
     Q_ASSERT(!undo_stack.isNull());
-    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!simple_tiles_order.isNull());
     Q_ASSERT(!simple_tiles.isNull());
 
     if (undoable)
     {
         undo_stack->beginMacro("Add tiles");
         for (auto &pixels: images)
-            undo_stack->push(new AddSimpleTileCommand(tiles_order, simple_tiles, pixels));
+            undo_stack->push(new AddSimpleTileCommand(simple_tiles_order, simple_tiles, pixels));
         undo_stack->endMacro();
     }
     else
@@ -273,7 +273,7 @@ void TilesetViewWidget::addTiles(const QVector<SimpleTile> &images, const bool u
         for (auto &pixels: images)
         {
             const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-            tiles_order->push_back(id);
+            simple_tiles_order->push_back(id);
             simple_tiles->insert(id, pixels);
         }
     }
@@ -284,7 +284,7 @@ void TilesetViewWidget::addTiles(const QVector<SimpleTile> &images, const bool u
 void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
 {
     Q_ASSERT(!undo_stack.isNull());
-    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!simple_tiles_order.isNull());
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
     for (auto &id: tiles)
@@ -292,7 +292,7 @@ void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
 
     undo_stack->beginMacro("Remove tiles");
     for (auto &id: tiles)
-        undo_stack->push(new RemoveSimpleTileCommand(tiles_order, simple_tiles, map_layers, id));
+        undo_stack->push(new RemoveSimpleTileCommand(simple_tiles_order, simple_tiles, map_layers, id));
     undo_stack->endMacro();
 
     emit tilesRemoved();
@@ -342,8 +342,8 @@ void TilesetViewWidget::removeFrames(const QVector<int> &indexes)
 
 std::optional<QPoint> TilesetViewWidget::toIJ(const int idx) const
 {
-    Q_ASSERT(!tiles_order.isNull());
-    const int n = tiles_order->length();
+    Q_ASSERT(!simple_tiles_order.isNull());
+    const int n = simple_tiles_order->length();
 
     if (idx < 0)
         return QPoint(0, 0);
@@ -355,8 +355,8 @@ std::optional<QPoint> TilesetViewWidget::toIJ(const int idx) const
 
 std::optional<int> TilesetViewWidget::toIndex(const QPoint &ij) const
 {
-    Q_ASSERT(!tiles_order.isNull());
-    const int n = tiles_order->length();
+    Q_ASSERT(!simple_tiles_order.isNull());
+    const int n = simple_tiles_order->length();
     const int idx = ij.x() + ij.y() * n_columns;
 
 //  idx still takes into account the empty tile
@@ -374,12 +374,12 @@ static inline QPoint divide(const QPoint &p, const double a)
 
 void TilesetViewWidget::paintTileset(QPainter &painter)
 {
-    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!simple_tiles_order.isNull());
     Q_ASSERT(!simple_tiles.isNull());
 
-    const int n = tiles_order->length();
+    const int n = simple_tiles_order->length();
 
-    Names displayed = *tiles_order;
+    Names displayed = *simple_tiles_order;
     if (click_origin || right_click_origin)
     {
         const auto p = right_click_origin? *right_click_origin : *click_origin;
@@ -414,7 +414,7 @@ void TilesetViewWidget::paintTileset(QPainter &painter)
 void TilesetViewWidget::paintSelectionCursors(QPainter &painter)
 {
     Q_ASSERT(!selected_tiles.isNull());
-    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!simple_tiles_order.isNull());
 
 //  more readable and concise, with hardly any performances drop
     QSet<QString> unique_ids;
@@ -424,7 +424,7 @@ void TilesetViewWidget::paintSelectionCursors(QPainter &painter)
 
     for (auto &id: unique_ids)
     {
-        if (const auto p = toIJ(tiles_order->indexOf(id)))
+        if (const auto p = toIJ(simple_tiles_order->indexOf(id)))
         {
             const QRect outer = {*p * tilesize, QSize(tilesize-1, tilesize-1)};
             const QColor white64 = {255, 255, 255, 64};
@@ -440,11 +440,11 @@ void TilesetViewWidget::paintSelectionCursors(QPainter &painter)
 
 void TilesetViewWidget::paintCursor(QPainter &painter)
 {
-    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!simple_tiles_order.isNull());
     const QPoint p = divide(mouse_cursor, tilesize);
 
 //  TODO: find nice way to factorise using toIndex()
-    const int n = tiles_order->length();
+    const int n = simple_tiles_order->length();
     const int idx = p.x() + p.y() * n_columns;
 
     const QColor white32 = {255, 255, 255, 32};
@@ -486,7 +486,7 @@ void TilesetViewWidget::paintEvent(QPaintEvent *)
 
 void TilesetViewWidget::handleTilesSelected()
 {
-    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!simple_tiles_order.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(click_origin.has_value());
 
@@ -501,7 +501,7 @@ void TilesetViewWidget::handleTilesSelected()
 
         for (int i = x1; i <= x2; ++i)
             if (const auto idx = toIndex({i, j}))
-                selected_tiles->back().push_back((idx < 0)? "" : tiles_order->at(*idx));
+                selected_tiles->back().push_back((idx < 0)? "" : simple_tiles_order->at(*idx));
     }
 
     emit selectedChanged();
@@ -510,7 +510,7 @@ void TilesetViewWidget::handleTilesSelected()
 void TilesetViewWidget::handleTileModifications()
 {
     Q_ASSERT(!undo_stack.isNull());
-    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!simple_tiles_order.isNull());
 
     const QPoint p = right_click_origin? *right_click_origin : *click_origin;
 
@@ -520,11 +520,11 @@ void TilesetViewWidget::handleTileModifications()
     if (origin && *origin != -1 && target && *target != -1)
     {
         if (drag_mode == MOVE_MODE && click_origin)
-            undo_stack->push(new MoveTileCommand(tiles_order, *origin, *target));
+            undo_stack->push(new MoveTileCommand(simple_tiles_order, *origin, *target));
         else if (drag_mode == SWAP_MODE && click_origin)
-            undo_stack->push(new SwapTilesCommand(tiles_order, *origin, *target));
+            undo_stack->push(new SwapTilesCommand(simple_tiles_order, *origin, *target));
         else if (drag_mode == SELECTION_MODE && right_click_origin)
-            undo_stack->push(new MoveTileCommand(tiles_order, *origin, *target));
+            undo_stack->push(new MoveTileCommand(simple_tiles_order, *origin, *target));
     }
 }
 

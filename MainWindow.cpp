@@ -20,7 +20,9 @@
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow),
     save_path{},
-    undo_stack{nullptr}, tiles_order{nullptr}, simple_tiles{nullptr}
+    undo_stack{nullptr},
+    simple_tiles_order{nullptr}, simple_tiles{nullptr},
+    selected_tiles{nullptr}, map_layers{nullptr}
 {
     ui->setupUi(this);
 
@@ -29,9 +31,9 @@ MainWindow::MainWindow(QWidget *parent):
     undo_stack = QSharedPointer<QUndoStack>::create();
     for (auto *editor: editors)
         editor->setUndoStackPointer(undo_stack);
-    tiles_order = QSharedPointer<Names>::create();
+    simple_tiles_order = QSharedPointer<Names>::create();
     for (auto *editor: editors)
-        editor->setTilesOrderPointer(tiles_order);
+        editor->setSimpleTilesOrderPointer(simple_tiles_order);
     simple_tiles = QSharedPointer<SimpleTiles>::create();
     for (auto *editor: editors)
         editor->setSimpleTilesPointer(simple_tiles);
@@ -140,8 +142,8 @@ void MainWindow::resetPointers()
 {
     Q_ASSERT(!undo_stack.isNull());
     undo_stack->clear();
-    Q_ASSERT(!tiles_order.isNull());
-    tiles_order->clear();
+    Q_ASSERT(!simple_tiles_order.isNull());
+    simple_tiles_order->clear();
     Q_ASSERT(!simple_tiles.isNull());
     simple_tiles->clear();
     Q_ASSERT(!selected_tiles.isNull());
@@ -172,7 +174,7 @@ void MainWindow::setTilesize(const int tilesize)
 
 void MainWindow::populateTileset(const int tilesize)
 {
-    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!simple_tiles_order.isNull());
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(tilesize > 0);
 
@@ -182,7 +184,7 @@ void MainWindow::populateTileset(const int tilesize)
     for (auto &color: colors)
     {
         const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-        tiles_order->push_back(id);
+        simple_tiles_order->push_back(id);
 
         img.fill(color);
         simple_tiles->insert(id, SimpleTile{{img}});
@@ -343,14 +345,14 @@ void MainWindow::onImportTilesInBulk()
 
 void MainWindow::onExportTilesetAndMap()
 {
-    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!simple_tiles_order.isNull());
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
 
     const int tilesize = ui->tilesetView->getTilesize();
 
     ExportTilesetAndMapDialog dialog(tilesize, this);
-    dialog.setTilesOrderPointer(tiles_order);
+    dialog.setSimpleTilesOrderPointer(simple_tiles_order);
     dialog.setSimpleTilesPointer(simple_tiles);
     dialog.setMapLayersPointer(map_layers);
     dialog.exec();
@@ -806,8 +808,8 @@ bool MainWindow::load(const QString &path) try
     stream >> layers;
 
     resetPointers();
-    Q_ASSERT(!tiles_order.isNull());
-    *tiles_order = std::move(order);
+    Q_ASSERT(!simple_tiles_order.isNull());
+    *simple_tiles_order = std::move(order);
     Q_ASSERT(!simple_tiles.isNull());
     *simple_tiles = std::move(tiles);
     Q_ASSERT(!map_layers.isNull());
@@ -833,7 +835,7 @@ catch (const QString &errstr)
 
 bool MainWindow::save(const QString &path)
 {
-    Q_ASSERT(!tiles_order.isNull());
+    Q_ASSERT(!simple_tiles_order.isNull());
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
 
@@ -857,11 +859,11 @@ bool MainWindow::save(const QString &path)
     {
         const int tilesize = ui->tilesetView->getTilesize();
         const int n_columns = ui->tilesetView->getNumberOfColumns();
-        const int n_tiles = tiles_order->length();
+        const int n_tiles = simple_tiles_order->length();
 
         stream << tilesize << n_columns << n_tiles;
 
-        for (auto &id: *tiles_order)
+        for (auto &id: *simple_tiles_order)
             stream << id << simple_tiles->value(id).frames;
     }
 
