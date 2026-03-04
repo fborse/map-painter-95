@@ -6,7 +6,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class ExportAsTexturesDialog; }
 QT_END_NAMESPACE
 
-#include "Tileset.hpp"
+#include "Types.hpp"
 
 class ExportAsTexturesDialog: public QDialog
 {

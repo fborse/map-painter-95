@@ -7,7 +7,8 @@ EditorWidget::EditorWidget(QWidget *parent):
     QWidget(parent),
     grid_aspect{20, 16}, tilesize{32}, zoom{1},
     current_layer{0}, current_frame{0},
-    undo_stack{nullptr}, simple_tiles_order{nullptr}, simple_tiles{nullptr},
+    undo_stack{nullptr}, simple_tiles_order{nullptr}, autotiles_order{nullptr},
+    simple_tiles{nullptr},
     selected_tiles{nullptr}, map_layers{nullptr}
 {
 }
@@ -92,13 +93,20 @@ QImage EditorWidget::getPaintedLayer(const int layer) const
     {
         for (int i = 0; i < _layer.at(j).length(); ++i)
         {
-            const auto id = _layer.at(j).at(i);
-
-            if (simple_tiles->contains(id))
+            if (const auto ref = _layer.at(j).at(i))
             {
-                const auto &frames = (*simple_tiles)[id].frames;
-                const int n = frames.length();
-                painter.drawImage(i * tilesize, j * tilesize, frames[qMin(current_frame, n-1)]);
+                if (ref.autotile)
+                {}
+                else
+                {
+                //  TODO: Shouldn't we punish the other case with a program termination ?
+                    if (simple_tiles->contains(ref.name))
+                    {
+                        const auto &frames = (*simple_tiles)[ref.name].frames;
+                        const int n = frames.length();
+                        painter.drawImage(i * tilesize, j * tilesize, frames[qMin(current_frame, n-1)]);
+                    }
+                }
             }
         }
     }

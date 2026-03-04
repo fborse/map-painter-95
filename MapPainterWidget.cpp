@@ -74,14 +74,14 @@ public:
 
     void undo() final override
     {
-        for (auto &id: prev.keys())
-            (*lockSimpleTiles())[id] = prev[id];
+        for (auto &ref: prev.keys())
+            (*lockSimpleTiles())[ref.name] = prev[ref];
     }
 
     void redo() final override
     {
-        for (auto &id: next.keys())
-            (*lockSimpleTiles())[id] = next[id];
+        for (auto &ref: next.keys())
+            (*lockSimpleTiles())[ref.name] = next[ref];
     }
 
 private:
@@ -100,20 +100,20 @@ public:
     void undo() final override
     {
     //  they got added at the end, contiguously, and removal order does not matter
-        for (auto &id: added.keys())
+        for (auto &ref: added.keys())
         {
             lockTilesOrder()->pop_back();
-            lockSimpleTiles()->remove(id);
+            lockSimpleTiles()->remove(ref.name);
         }
     }
 
     void redo() final override
     {
     //  added is likely small, so retrieval should be short
-        for (auto &id: added.keys())
+        for (auto &ref: added.keys())
         {
-            lockTilesOrder()->push_back(id);
-            lockSimpleTiles()->insert(id, added.value(id));
+            lockTilesOrder()->push_back(ref.name);
+            lockSimpleTiles()->insert(ref.name, added.value(ref));
         }
     }
 
@@ -711,17 +711,17 @@ static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor
     {
         for (auto &p: changes[q].keys())
         {
-            const auto id = map_layer.at(q.y()).at(q.x());
+            const auto ref = map_layer.at(q.y()).at(q.x());
 
-            if (fn(id))
+            if (fn(ref))
             {
-                if (!prev.contains(id))
+                if (!prev.contains(ref))
                 {
-                    prev.insert(id, simple_tiles.value(id));
-                    next.insert(id, simple_tiles.value(id));
+                    prev.insert(ref, simple_tiles.value(ref.name));
+                    next.insert(ref, simple_tiles.value(ref.name));
                 }
 
-                auto &frames = next[id].frames;
+                auto &frames = next[ref].frames;
                 const int n = frames.length();
                 frames[qMin(current_frame, n-1)].setPixelColor(p, changes[q][p]);
             }
@@ -790,11 +790,11 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
         const TileReference prev_id = map_layers->at(current_layer).at(q.y()).at(q.x());
 
     //  faster than !is_tile_unique(*map_layers, prev_id)
-        if (prev_id.isEmpty() || !prev_tiles.contains(prev_id))
+        if (!prev_id || (!prev_id.autotile && !prev_tiles.contains(prev_id)))
         {
             SimpleTile new_image = prev_id.isEmpty()?
                 SimpleTile{{gen_empty(tilesize, tilesize)}}
-              : simple_tiles->value(prev_id);
+              : simple_tiles->value(prev_id.name);
 
             const int n = new_image.frames.length();
             for (auto &p: changed_pixels[q].keys())
@@ -802,9 +802,9 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
                     .setPixelColor(p, changed_pixels[q][p]);
 
             const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
-            added[uuid] = new_image;
+            added[{uuid, false}] = new_image;
             prev_refs[{q.x(), q.y(), current_layer}] = prev_id;
-            next_refs[{q.x(), q.y(), current_layer}] = uuid;
+            next_refs[{q.x(), q.y(), current_layer}] = {uuid, false};
         }
     }
 

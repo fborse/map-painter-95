@@ -206,18 +206,24 @@ void MapEditorWidget::paintTileRects(QPainter &painter)
         {
             for (int i = 0; i < w; ++i)
             {
-                const auto id = selected_tiles->at(j % sh).at(i % sw);
-
-                if (simple_tiles->contains(id))
+                if (const auto ref = selected_tiles->at(j % sh).at(i % sw))
                 {
-                    const auto &frames = (*simple_tiles)[id].frames;
-                    const int n = frames.length();
+                    if (ref.autotile)
+                    {}
+                    else
+                    {
+                        if (simple_tiles->contains(ref.name))
+                        {
+                            const auto &frames = (*simple_tiles)[ref.name].frames;
+                            const int n = frames.length();
 
-                    painter.drawImage(
-                        x + i * tilesize,
-                        y + j * tilesize,
-                        frames[qMin(current_frame, n-1)]
-                    );
+                            painter.drawImage(
+                                x + i * tilesize,
+                                y + j * tilesize,
+                                frames[qMin(current_frame, n-1)]
+                            );
+                        }
+                    }
                 }
             }
         }

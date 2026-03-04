@@ -3,7 +3,7 @@
 #include <QWidget>
 #include <QUndoStack>
 
-#include "Tileset.hpp"
+#include "Types.hpp"
 
 class EditorWidget: public QWidget
 {
@@ -14,6 +14,7 @@ public:
 
     void setUndoStackPointer(QSharedPointer<QUndoStack> ptr) { undo_stack = ptr; }
     void setSimpleTilesOrderPointer(QSharedPointer<Names> ptr) { simple_tiles_order = ptr; }
+    void setAutoTilesOrderPointer(QSharedPointer<Names> ptr) { autotiles_order = ptr; }
     void setSimpleTilesPointer(QSharedPointer<SimpleTiles> ptr) { simple_tiles = ptr; }
     void setSelectedTilesPointer(QSharedPointer<SelectedTiles> ptr) { selected_tiles = ptr; }
     void setMapLayersPointer(QSharedPointer<MapLayers> ptr) { map_layers = ptr; }
@@ -42,7 +43,7 @@ protected:
     int current_frame;
 
     QSharedPointer<QUndoStack> undo_stack;
-    QSharedPointer<Names> simple_tiles_order;
+    QSharedPointer<Names> simple_tiles_order, autotiles_order;
     QSharedPointer<SimpleTiles> simple_tiles;
     QSharedPointer<SelectedTiles> selected_tiles;
     QSharedPointer<MapLayers> map_layers;

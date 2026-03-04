@@ -7,7 +7,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
-#include "Tileset.hpp"
+#include "Types.hpp"
 
 class MainWindow: public QMainWindow
 {
@@ -72,7 +72,7 @@ private:
 
 //  shared access to relevant child widgets -> make pointers
     QSharedPointer<QUndoStack> undo_stack;
-    QSharedPointer<Names> simple_tiles_order;
+    QSharedPointer<Names> simple_tiles_order, autotiles_order;
     QSharedPointer<SimpleTiles> simple_tiles;
     QSharedPointer<SelectedTiles> selected_tiles;
     QSharedPointer<MapLayers> map_layers;

@@ -53,8 +53,8 @@ HEADERS += \
     NewMapDialog.hpp \
     ResizeMapDialog.hpp \
     ScaleSelectionDialog.hpp \
-    Tileset.hpp \
-    TilesetViewWidget.hpp
+    TilesetViewWidget.hpp \
+    Types.hpp
 
 FORMS += \
     AddRectDialog.ui \

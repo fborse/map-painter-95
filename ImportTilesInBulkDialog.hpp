@@ -6,7 +6,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class ImportTilesInBulkDialog; }
 QT_END_NAMESPACE
 
-#include "Tileset.hpp"
+#include "Types.hpp"
 
 struct ImportTilesArea { int x, y, w, h, dx, dy; };
 

@@ -6,7 +6,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class ImportSingleTileDialog; }
 QT_END_NAMESPACE
 
-#include "Tileset.hpp"
+#include "Types.hpp"
 
 class ImportSingleTileWidget final: public QWidget
 {

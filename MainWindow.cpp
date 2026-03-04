@@ -21,7 +21,8 @@ MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow),
     save_path{},
     undo_stack{nullptr},
-    simple_tiles_order{nullptr}, simple_tiles{nullptr},
+    simple_tiles_order{nullptr}, autotiles_order{nullptr},
+    simple_tiles{nullptr},
     selected_tiles{nullptr}, map_layers{nullptr}
 {
     ui->setupUi(this);
@@ -34,6 +35,9 @@ MainWindow::MainWindow(QWidget *parent):
     simple_tiles_order = QSharedPointer<Names>::create();
     for (auto *editor: editors)
         editor->setSimpleTilesOrderPointer(simple_tiles_order);
+    autotiles_order = QSharedPointer<Names>::create();
+    for (auto *editor: editors)
+        editor->setAutoTilesOrderPointer(autotiles_order);
     simple_tiles = QSharedPointer<SimpleTiles>::create();
     for (auto *editor: editors)
         editor->setSimpleTilesPointer(simple_tiles);
@@ -410,17 +414,17 @@ static inline bool can_add_frames(const SimpleTiles &simple_tiles, const Selecte
     if (!is_1x1(tiles))
         return false;
     else
-        return simple_tiles.contains(tiles[0][0]);
+        return simple_tiles.contains(tiles[0][0].name);
 }
 
 static inline bool can_remove_frames(const SimpleTiles &simple_tiles, const SelectedTiles &tiles)
 {
     if (!is_1x1(tiles))
         return false;
-    else if (!simple_tiles.contains(tiles[0][0]))
+    else if (!simple_tiles.contains(tiles[0][0].name))
         return false;
     else
-        return (simple_tiles.value(tiles[0][0]).frames.length() > 1);
+        return (simple_tiles.value(tiles[0][0].name).frames.length() > 1);
 }
 
 void MainWindow::onSelectedChanged()
@@ -448,8 +452,8 @@ void MainWindow::refreshViews()
 //  selected_tiles is assumed to be small
     bool reset = false;
     for (auto &row: *selected_tiles)
-        for (auto &id: row)
-            if (!simple_tiles->contains(id))
+        for (auto &ref: row)
+            if (!simple_tiles->contains(ref.name))
                 reset = true;
     if (reset)
         *selected_tiles = {{{}}};   //  {{empty tile}}
@@ -594,9 +598,9 @@ static inline QSet<TileReference> get_unique_valid_ids(const SimpleTiles &simple
     QSet<TileReference> uniques;
 
     for (auto &row: selected)
-        for (auto &id: row)
-            if (simple_tiles.contains(id))
-                uniques.insert(id);
+        for (auto &ref: row)
+            if (simple_tiles.contains(ref.name))
+                uniques.insert(ref);
 
     return uniques;
 }
@@ -611,10 +615,10 @@ void MainWindow::onCloneSelectedTiles()
         return;
 
     QVector<SimpleTile> tiles;
-    for (auto &id: uniques)
+    for (auto &ref: uniques)
     {
-        Q_ASSERT(simple_tiles->contains(id));
-        tiles.push_back(simple_tiles->value(id));
+        Q_ASSERT(simple_tiles->contains(ref.name));
+        tiles.push_back(simple_tiles->value(ref.name));
     }
 
     ui->tilesetView->addTiles(tiles, true);
@@ -630,10 +634,10 @@ void MainWindow::onRemoveSelectedTiles()
         return;
 
     QVector<TileReference> tiles;
-    for (auto &id: uniques)
+    for (auto &ref: uniques)
     {
-        Q_ASSERT(simple_tiles->contains(id));
-        tiles.push_back(id);
+        Q_ASSERT(simple_tiles->contains(ref.name));
+        tiles.push_back(ref);
     }
 
     ui->tilesetView->removeTiles(tiles);
@@ -644,8 +648,8 @@ void MainWindow::onAddFrame()
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
-    const auto id = selected_tiles->at(0).at(0);
-    Q_ASSERT(simple_tiles->contains(id));
+    const auto ref = selected_tiles->at(0).at(0);
+    Q_ASSERT(simple_tiles->contains(ref.name));
 
     const int tilesize = ui->tilesetView->getTilesize();
     Q_ASSERT(tilesize > 0);
@@ -671,11 +675,11 @@ void MainWindow::onCloneCurrentFrame()
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
-    const auto id = selected_tiles->at(0).at(0);
-    Q_ASSERT(simple_tiles->contains(id));
+    const auto ref = selected_tiles->at(0).at(0);
+    Q_ASSERT(simple_tiles->contains(ref.name));
 
     const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
-    auto &frames = (*simple_tiles)[id].frames;
+    auto &frames = (*simple_tiles)[ref.name].frames;
     const int n = frames.length();
 
     QImage frame = frames[qMin(current_frame, n)];
@@ -691,8 +695,8 @@ void MainWindow::onRemoveCurrentFrame()
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
-    const auto id = selected_tiles->at(0).at(0);
-    Q_ASSERT(simple_tiles->contains(id));
+    const auto ref = selected_tiles->at(0).at(0);
+    Q_ASSERT(simple_tiles->contains(ref.name));
 
     const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
 
@@ -772,6 +776,13 @@ void MainWindow::onScale()
         ui->mapPainter->scaleSelection(dialog.getHorizontalFactor(), dialog.getVerticalFactor());
 }
 
+static inline QDataStream &operator>>(QDataStream &stream, TileReference &ref)
+{
+    stream >> ref.name >> ref.autotile;
+
+    return stream;
+}
+
 bool MainWindow::load(const QString &path) try
 {
     QFile file(path);
@@ -796,12 +807,12 @@ bool MainWindow::load(const QString &path) try
     SimpleTiles tiles;
     for (int i = 0; i < n_tiles; ++i)
     {
-        TileReference id;
+        TileReference ref;
         SimpleTile tile;
 
-        stream >> id >> tile.frames;
-        order.push_back(id);
-        tiles[id] = tile;
+        stream >> ref.name >> tile.frames;
+        order.push_back(ref.name);
+        tiles[ref.name] = tile;
     }
 
     MapLayers layers;
@@ -833,6 +844,13 @@ catch (const QString &errstr)
     return false;
 }
 
+static inline QDataStream &operator<<(QDataStream &stream, const TileReference &ref)
+{
+    stream << ref.name << ref.autotile;
+
+    return stream;
+}
+
 bool MainWindow::save(const QString &path)
 {
     Q_ASSERT(!simple_tiles_order.isNull());
@@ -852,7 +870,7 @@ bool MainWindow::save(const QString &path)
     QDataStream stream(&file);
 
     {
-        const int major = 0, minor = 1;
+        const int major = 1, minor = 0;
         stream << major << minor;
     }
 

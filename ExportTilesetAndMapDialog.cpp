@@ -71,11 +71,11 @@ static inline void save_map(const QString &filename, const QHash<QString, QVecto
 
     for (auto &layer: map_layers)
         for (auto &row: layer)
-            for (auto &id: row)
-                if (id.isEmpty())
+            for (auto &ref: row)
+                if (ref.isEmpty())
                     stream << uint(0) << uint(0);
                 else
-                    for (auto &p: coords[id])
+                    for (auto &p: coords[ref.name])
                         stream << uint(p.x()) << uint(p.y());
 }
 

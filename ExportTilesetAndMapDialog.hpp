@@ -6,7 +6,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class ExportTilesetAndMapDialog; }
 QT_END_NAMESPACE
 
-#include "Tileset.hpp"
+#include "Types.hpp"
 
 class ExportTilesetAndMapDialog: public QDialog
 {

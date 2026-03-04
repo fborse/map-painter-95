@@ -88,9 +88,14 @@ static inline QSet<int> get_unique_lengths(const SimpleTiles &simple_tiles, cons
     QSet<int> lengths;
 
     for (auto &row: layer)
-        for (auto &id: row)
-            if (simple_tiles.contains(id))
-                lengths.insert(simple_tiles[id].frames.length());
+        for (auto &ref: row)
+            if (ref.autotile)
+            {}
+            else
+            {
+                if (simple_tiles.contains(ref.name))
+                    lengths.insert(simple_tiles[ref.name].frames.length());
+            }
 
     return lengths;
 }
@@ -193,13 +198,16 @@ static inline QImage gen_layer(const int tilesize, const SimpleTiles &simple_til
     {
         for (int i = 0; i < w; ++i)
         {
-            const auto id = layer[j][i];
-
-            if (!id.isEmpty())
+            if (const auto ref = layer[j][i])
             {
-                const auto &frames = simple_tiles[id].frames;
-                const int n = frames.length();
-                painter.drawImage(i * tilesize, j * tilesize, frames[qMin(frame, n-1)]);
+                if (ref.autotile)
+                {}
+                else
+                {
+                    const auto &frames = simple_tiles[ref.name].frames;
+                    const int n = frames.length();
+                    painter.drawImage(i * tilesize, j * tilesize, frames[qMin(frame, n-1)]);
+                }
             }
         }
     }
