@@ -20,7 +20,7 @@
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow),
     save_path{},
-    undo_stack{nullptr}, tiles_order{nullptr}, tileset{nullptr}
+    undo_stack{nullptr}, tiles_order{nullptr}, simple_tiles{nullptr}
 {
     ui->setupUi(this);
 
@@ -32,9 +32,9 @@ MainWindow::MainWindow(QWidget *parent):
     tiles_order = QSharedPointer<Names>::create();
     for (auto *editor: editors)
         editor->setTilesOrderPointer(tiles_order);
-    tileset = QSharedPointer<Tileset>::create();
+    simple_tiles = QSharedPointer<SimpleTiles>::create();
     for (auto *editor: editors)
-        editor->setTilesetPointer(tileset);
+        editor->setSimpleTilesPointer(simple_tiles);
     selected_tiles = QSharedPointer<SelectedTiles>::create();
     for (auto *editor: editors)
         editor->setSelectedTilesPointer(selected_tiles);
@@ -142,8 +142,8 @@ void MainWindow::resetPointers()
     undo_stack->clear();
     Q_ASSERT(!tiles_order.isNull());
     tiles_order->clear();
-    Q_ASSERT(!tileset.isNull());
-    tileset->clear();
+    Q_ASSERT(!simple_tiles.isNull());
+    simple_tiles->clear();
     Q_ASSERT(!selected_tiles.isNull());
     selected_tiles->clear();
     Q_ASSERT(!map_layers.isNull());
@@ -173,7 +173,7 @@ void MainWindow::setTilesize(const int tilesize)
 void MainWindow::populateTileset(const int tilesize)
 {
     Q_ASSERT(!tiles_order.isNull());
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(tilesize > 0);
 
     QImage img(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
@@ -185,7 +185,7 @@ void MainWindow::populateTileset(const int tilesize)
         tiles_order->push_back(id);
 
         img.fill(color);
-        tileset->insert(id, SimpleTile{{img}});
+        simple_tiles->insert(id, SimpleTile{{img}});
     }
 }
 
@@ -344,27 +344,27 @@ void MainWindow::onImportTilesInBulk()
 void MainWindow::onExportTilesetAndMap()
 {
     Q_ASSERT(!tiles_order.isNull());
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
 
     const int tilesize = ui->tilesetView->getTilesize();
 
     ExportTilesetAndMapDialog dialog(tilesize, this);
     dialog.setTilesOrderPointer(tiles_order);
-    dialog.setTilesetPointer(tileset);
+    dialog.setSimpleTilesPointer(simple_tiles);
     dialog.setMapLayersPointer(map_layers);
     dialog.exec();
 }
 
 void MainWindow::onExportAsTextures()
 {
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
 
     const int tilesize = ui->tilesetView->getTilesize();
 
     ExportAsTexturesDialog dialog(tilesize, this);
-    dialog.setTilesetPointer(tileset);
+    dialog.setSimpleTilesPointer(simple_tiles);
     dialog.setMapLayersPointer(map_layers);
     dialog.exec();
 }
@@ -403,27 +403,27 @@ static inline bool is_1x1(const SelectedTiles &tiles)
     return (tiles.length() == 1) && (tiles.at(0).length() == 1);
 }
 
-static inline bool can_add_frames(const Tileset &tileset, const SelectedTiles &tiles)
+static inline bool can_add_frames(const SimpleTiles &simple_tiles, const SelectedTiles &tiles)
 {
     if (!is_1x1(tiles))
         return false;
     else
-        return tileset.contains(tiles[0][0]);
+        return simple_tiles.contains(tiles[0][0]);
 }
 
-static inline bool can_remove_frames(const Tileset &tileset, const SelectedTiles &tiles)
+static inline bool can_remove_frames(const SimpleTiles &simple_tiles, const SelectedTiles &tiles)
 {
     if (!is_1x1(tiles))
         return false;
-    else if (!tileset.contains(tiles[0][0]))
+    else if (!simple_tiles.contains(tiles[0][0]))
         return false;
     else
-        return (tileset.value(tiles[0][0]).frames.length() > 1);
+        return (simple_tiles.value(tiles[0][0]).frames.length() > 1);
 }
 
 void MainWindow::onSelectedChanged()
 {
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
 
     ui->tilesetView->update();
@@ -431,9 +431,9 @@ void MainWindow::onSelectedChanged()
     ui->actionCloneSelectedTiles->setEnabled(not_empty(*selected_tiles));
     ui->actionRemoveSelectedTiles->setEnabled(not_empty(*selected_tiles));
 
-    ui->actionAddFrame->setEnabled(can_add_frames(*tileset, *selected_tiles));
-    ui->actionCloneCurrentFrame->setEnabled(can_add_frames(*tileset, *selected_tiles));
-    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*tileset, *selected_tiles));
+    ui->actionAddFrame->setEnabled(can_add_frames(*simple_tiles, *selected_tiles));
+    ui->actionCloneCurrentFrame->setEnabled(can_add_frames(*simple_tiles, *selected_tiles));
+    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *selected_tiles));
 }
 
 void MainWindow::refreshViews()
@@ -447,7 +447,7 @@ void MainWindow::refreshViews()
     bool reset = false;
     for (auto &row: *selected_tiles)
         for (auto &id: row)
-            if (!tileset->contains(id))
+            if (!simple_tiles->contains(id))
                 reset = true;
     if (reset)
         *selected_tiles = {{{}}};   //  {{empty tile}}
@@ -478,11 +478,11 @@ void MainWindow::updateLayersBoxes()
     ui->actionRemoveLayer->setEnabled(n > 1);
 }
 
-static inline int get_max_frames(const Tileset &tileset)
+static inline int get_max_frames(const SimpleTiles &simple_tiles)
 {
     int max = 0;
 
-    for (auto &tile: tileset.values())
+    for (auto &tile: simple_tiles.values())
         if (max < tile.frames.length())
             max = tile.frames.length();
 
@@ -491,8 +491,8 @@ static inline int get_max_frames(const Tileset &tileset)
 
 void MainWindow::updateFramesBoxes()
 {
-    Q_ASSERT(!tileset.isNull());
-    const int n = get_max_frames(*tileset);
+    Q_ASSERT(!simple_tiles.isNull());
+    const int n = get_max_frames(*simple_tiles);
 
     resize_cb(ui->currentFrameMapViewComboBox, n);
     resize_cb(ui->currentFrameMapPainterComboBox, n);
@@ -587,13 +587,13 @@ void MainWindow::onAddTile()
     }
 }
 
-static inline QSet<TileReference> get_unique_valid_ids(const Tileset &tileset, const SelectedTiles &selected)
+static inline QSet<TileReference> get_unique_valid_ids(const SimpleTiles &simple_tiles, const SelectedTiles &selected)
 {
     QSet<TileReference> uniques;
 
     for (auto &row: selected)
         for (auto &id: row)
-            if (tileset.contains(id))
+            if (simple_tiles.contains(id))
                 uniques.insert(id);
 
     return uniques;
@@ -601,18 +601,18 @@ static inline QSet<TileReference> get_unique_valid_ids(const Tileset &tileset, c
 
 void MainWindow::onCloneSelectedTiles()
 {
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
 
-    QSet<TileReference> uniques = get_unique_valid_ids(*tileset, *selected_tiles);
+    QSet<TileReference> uniques = get_unique_valid_ids(*simple_tiles, *selected_tiles);
     if (uniques.isEmpty())
         return;
 
     QVector<SimpleTile> tiles;
     for (auto &id: uniques)
     {
-        Q_ASSERT(tileset->contains(id));
-        tiles.push_back(tileset->value(id));
+        Q_ASSERT(simple_tiles->contains(id));
+        tiles.push_back(simple_tiles->value(id));
     }
 
     ui->tilesetView->addTiles(tiles, true);
@@ -620,17 +620,17 @@ void MainWindow::onCloneSelectedTiles()
 
 void MainWindow::onRemoveSelectedTiles()
 {
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
 
-    QSet<TileReference> uniques = get_unique_valid_ids(*tileset, *selected_tiles);
+    QSet<TileReference> uniques = get_unique_valid_ids(*simple_tiles, *selected_tiles);
     if (uniques.isEmpty())
         return;
 
     QVector<TileReference> tiles;
     for (auto &id: uniques)
     {
-        Q_ASSERT(tileset->contains(id));
+        Q_ASSERT(simple_tiles->contains(id));
         tiles.push_back(id);
     }
 
@@ -639,11 +639,11 @@ void MainWindow::onRemoveSelectedTiles()
 
 void MainWindow::onAddFrame()
 {
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
     const auto id = selected_tiles->at(0).at(0);
-    Q_ASSERT(tileset->contains(id));
+    Q_ASSERT(simple_tiles->contains(id));
 
     const int tilesize = ui->tilesetView->getTilesize();
     Q_ASSERT(tilesize > 0);
@@ -660,20 +660,20 @@ void MainWindow::onAddFrame()
         ui->tilesetView->addFrames({{current_frame + 1, frame}});
 
         updateFramesBoxes();
-        ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*tileset, *selected_tiles));
+        ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *selected_tiles));
     }
 }
 
 void MainWindow::onCloneCurrentFrame()
 {
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
     const auto id = selected_tiles->at(0).at(0);
-    Q_ASSERT(tileset->contains(id));
+    Q_ASSERT(simple_tiles->contains(id));
 
     const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
-    auto &frames = (*tileset)[id].frames;
+    auto &frames = (*simple_tiles)[id].frames;
     const int n = frames.length();
 
     QImage frame = frames[qMin(current_frame, n)];
@@ -681,23 +681,23 @@ void MainWindow::onCloneCurrentFrame()
     ui->tilesetView->addFrames({{current_frame + 1, frame}});
 
     updateFramesBoxes();
-    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*tileset, *selected_tiles));
+    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *selected_tiles));
 }
 
 void MainWindow::onRemoveCurrentFrame()
 {
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
     const auto id = selected_tiles->at(0).at(0);
-    Q_ASSERT(tileset->contains(id));
+    Q_ASSERT(simple_tiles->contains(id));
 
     const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
 
     ui->tilesetView->removeFrames({current_frame});
 
     updateFramesBoxes();
-    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*tileset, *selected_tiles));
+    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *selected_tiles));
 }
 
 void MainWindow::onResizeMap()
@@ -791,7 +791,7 @@ bool MainWindow::load(const QString &path) try
         throw QString("Invalid number of tiles %1 !").arg(n_tiles);
 
     Names order;
-    Tileset tiles;
+    SimpleTiles tiles;
     for (int i = 0; i < n_tiles; ++i)
     {
         TileReference id;
@@ -808,8 +808,8 @@ bool MainWindow::load(const QString &path) try
     resetPointers();
     Q_ASSERT(!tiles_order.isNull());
     *tiles_order = std::move(order);
-    Q_ASSERT(!tileset.isNull());
-    *tileset = std::move(tiles);
+    Q_ASSERT(!simple_tiles.isNull());
+    *simple_tiles = std::move(tiles);
     Q_ASSERT(!map_layers.isNull());
     *map_layers = std::move(layers);
 
@@ -834,7 +834,7 @@ catch (const QString &errstr)
 bool MainWindow::save(const QString &path)
 {
     Q_ASSERT(!tiles_order.isNull());
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
 
     QFile file(path);
@@ -862,7 +862,7 @@ bool MainWindow::save(const QString &path)
         stream << tilesize << n_columns << n_tiles;
 
         for (auto &id: *tiles_order)
-            stream << id << tileset->value(id).frames;
+            stream << id << simple_tiles->value(id).frames;
     }
 
     {

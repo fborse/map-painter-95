@@ -8,7 +8,7 @@
 ExportTilesetAndMapDialog::ExportTilesetAndMapDialog(const int tilesize, QWidget *parent):
     QDialog(parent), ui(new Ui::ExportTilesetAndMapDialog),
     tilesize{tilesize}, tile_coordinates{}, drawn_tileset{},
-    tiles_order{nullptr}, tileset{nullptr}, map_layers{nullptr}
+    tiles_order{nullptr}, simple_tiles{nullptr}, map_layers{nullptr}
 {
     ui->setupUi(this);
 
@@ -108,27 +108,27 @@ catch (const QString &errstr)
     QMessageBox::warning(this, tr(title), tr(errstr.toStdString().c_str()));
 }
 
-using OrderedTileset = QVector<QPair<QString, SimpleTile>>;
+using OrderedSimpleTiles = QVector<QPair<QString, SimpleTile>>;
 
-static inline OrderedTileset linearise_tiles(QWeakPointer<Names> tiles_order_ptr, QWeakPointer<Tileset> tileset_ptr)
+static inline OrderedSimpleTiles linearise_tiles(QWeakPointer<Names> tiles_order_ptr, QWeakPointer<SimpleTiles> simple_tiles_ptr)
 {
-    OrderedTileset linearised;
+    OrderedSimpleTiles linearised;
 
 //  here tiles_order/tileset null is a legit case
     QSharedPointer<Names> tiles_order = tiles_order_ptr.toStrongRef();
     if (tiles_order.isNull())
         return linearised;
-    QSharedPointer<Tileset> tileset = tileset_ptr.toStrongRef();
-    if (tileset.isNull())
+    QSharedPointer<SimpleTiles> simple_tiles = simple_tiles_ptr.toStrongRef();
+    if (simple_tiles.isNull())
         return linearised;
 
     for (auto &id: *tiles_order)
-        linearised.push_back({id, tileset->value(id)});
+        linearised.push_back({id, simple_tiles->value(id)});
 
     return linearised;
 }
 
-static inline int get_n_images(const OrderedTileset &tiles)
+static inline int get_n_images(const OrderedSimpleTiles &tiles)
 {
     int n = 0;
 
@@ -144,7 +144,7 @@ static inline QPoint toIJ(const int index, const int n_columns)
 }
 
 //  both draws the tileset and creates and index of coordinates which the map refers to
-static inline QImage gen_tileset(const OrderedTileset &tiles, const int ncol, const int tilesize, QHash<QString, QVector<QPoint>> &coords)
+static inline QImage gen_tileset(const OrderedSimpleTiles &tiles, const int ncol, const int tilesize, QHash<QString, QVector<QPoint>> &coords)
 {
     const int n = get_n_images(tiles);
     const int h = qCeil((n + 1) / float(ncol));
@@ -198,7 +198,7 @@ static inline QImage gen_background(const QSize &size, const int tilesize)
 
 void ExportTilesetAndMapDialog::redrawTileset()
 {
-    const auto tiles = linearise_tiles(tiles_order, tileset);
+    const auto tiles = linearise_tiles(tiles_order, simple_tiles);
 
     if (!tiles.isEmpty())
     {

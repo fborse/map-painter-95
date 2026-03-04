@@ -24,14 +24,14 @@ private:
     QWeakPointer<Names> tiles_order_ptr;
 };
 
-class TilesetCommand
+class SimpleTilesCommand
 {
 public:
-    TilesetCommand(QWeakPointer<Tileset> tileset): tileset_ptr{tileset} {}
-    QSharedPointer<Tileset> lockTileset() { return lock_ptr(tileset_ptr); }
+    SimpleTilesCommand(QWeakPointer<SimpleTiles> simple_tiles): simple_tiles_ptr{simple_tiles} {}
+    QSharedPointer<SimpleTiles> lockSimpleTiles() { return lock_ptr(simple_tiles_ptr); }
 
 private:
-    QWeakPointer<Tileset> tileset_ptr;
+    QWeakPointer<SimpleTiles> simple_tiles_ptr;
 };
 
 class MapLayersCommand
@@ -63,38 +63,38 @@ static inline uint qHash(const MapLayersCommand::Coordinates &coords, const uint
     );
 }
 
-class ReplaceTilesCommand final: public QUndoCommand, public TilesetCommand
+class ReplaceSimpleTilesCommand final: public QUndoCommand, public SimpleTilesCommand
 {
 public:
     using Changes = QHash<TileReference, SimpleTile>;
 
-    ReplaceTilesCommand(QWeakPointer<Tileset> tileset, const Changes &prev, const Changes &next):
-        QUndoCommand(), TilesetCommand(tileset), prev{prev}, next{next}
+    ReplaceSimpleTilesCommand(QWeakPointer<SimpleTiles> simple_tiles, const Changes &prev, const Changes &next):
+        QUndoCommand(), SimpleTilesCommand(simple_tiles), prev{prev}, next{next}
     {}
 
     void undo() final override
     {
         for (auto &id: prev.keys())
-            (*lockTileset())[id] = prev[id];
+            (*lockSimpleTiles())[id] = prev[id];
     }
 
     void redo() final override
     {
         for (auto &id: next.keys())
-            (*lockTileset())[id] = next[id];
+            (*lockSimpleTiles())[id] = next[id];
     }
 
 private:
     Changes prev, next;
 };
 
-class AddTilesCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand
+class AddSimpleTilesCommand final: public QUndoCommand, public TilesOrderCommand, public SimpleTilesCommand
 {
 public:
     using Added = QMap<TileReference, SimpleTile>;
 
-    AddTilesCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, const Added &added):
-        QUndoCommand(), TilesOrderCommand(tiles_order), TilesetCommand(tileset), added{added}
+    AddSimpleTilesCommand(QWeakPointer<Names> tiles_order, QWeakPointer<SimpleTiles> simple_tiles, const Added &added):
+        QUndoCommand(), TilesOrderCommand(tiles_order), SimpleTilesCommand(simple_tiles), added{added}
     {}
 
     void undo() final override
@@ -103,7 +103,7 @@ public:
         for (auto &id: added.keys())
         {
             lockTilesOrder()->pop_back();
-            lockTileset()->remove(id);
+            lockSimpleTiles()->remove(id);
         }
     }
 
@@ -113,7 +113,7 @@ public:
         for (auto &id: added.keys())
         {
             lockTilesOrder()->push_back(id);
-            lockTileset()->insert(id, added.value(id));
+            lockSimpleTiles()->insert(id, added.value(id));
         }
     }
 
@@ -691,7 +691,7 @@ void MapPainterWidget::paintEvent(QPaintEvent *)
 
 QColor MapPainterWidget::getColorAt(const QPoint &p) const
 {
-    if (!(map_layers && tileset))
+    if (!(map_layers && simple_tiles))
         return Qt::transparent;
     else if (p.x() < 0 || p.y() < 0)
         return Qt::transparent;
@@ -703,9 +703,9 @@ QColor MapPainterWidget::getColorAt(const QPoint &p) const
         return Qt::transparent;
 }
 
-static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor>> &changes, const Tileset &tileset, const MapLayer &map_layer, const int current_frame, std::function<bool(TileReference)> fn)
+static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor>> &changes, const SimpleTiles &simple_tiles, const MapLayer &map_layer, const int current_frame, std::function<bool(TileReference)> fn)
 {
-    ReplaceTilesCommand::Changes prev, next;
+    ReplaceSimpleTilesCommand::Changes prev, next;
 
     for (auto &q: changes.keys())
     {
@@ -717,8 +717,8 @@ static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor
             {
                 if (!prev.contains(id))
                 {
-                    prev.insert(id, tileset.value(id));
-                    next.insert(id, tileset.value(id));
+                    prev.insert(id, simple_tiles.value(id));
+                    next.insert(id, simple_tiles.value(id));
                 }
 
                 auto &frames = next[id].frames;
@@ -733,18 +733,18 @@ static inline auto get_prev_next_images(const QHash<QPoint, QHash<QPoint, QColor
 
 void MapPainterWidget::handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels)
 {
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
 
     const auto &[prev, next] = get_prev_next_images(
         changed_pixels,
-        *tileset,
+        *simple_tiles,
         map_layers->at(current_layer),
         current_frame,
         [&] (TileReference id) { return !id.isEmpty(); }
     );
 
-    undo_stack->push(new ReplaceTilesCommand(tileset, prev, next));
+    undo_stack->push(new ReplaceSimpleTilesCommand(simple_tiles, prev, next));
 }
 
 static inline bool is_tile_unique(const MapLayer &map_layers, const TileReference &id)
@@ -770,12 +770,12 @@ static inline QImage gen_empty(const int w, const int h)
 
 void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels)
 {
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
 
     const auto &[prev_tiles, next_tiles] = get_prev_next_images(
         changed_pixels,
-        *tileset,
+        *simple_tiles,
         map_layers->at(current_layer),
         current_frame,
         [&] (TileReference id) {
@@ -783,7 +783,7 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
         }
     );
 
-    AddTilesCommand::Added added;
+    AddSimpleTilesCommand::Added added;
     ReplaceReferencesCommand::Changes prev_refs, next_refs;
     for (auto &q: changed_pixels.keys())
     {
@@ -794,7 +794,7 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
         {
             SimpleTile new_image = prev_id.isEmpty()?
                 SimpleTile{{gen_empty(tilesize, tilesize)}}
-              : tileset->value(prev_id);
+              : simple_tiles->value(prev_id);
 
             const int n = new_image.frames.length();
             for (auto &p: changed_pixels[q].keys())
@@ -811,8 +811,8 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
     if (!next_tiles.isEmpty() || !added.isEmpty() || !next_refs.isEmpty())
     {
         undo_stack->beginMacro("non-retroactive change");
-        undo_stack->push(new ReplaceTilesCommand(tileset, prev_tiles, next_tiles));
-        undo_stack->push(new AddTilesCommand(tiles_order, tileset, added));
+        undo_stack->push(new ReplaceSimpleTilesCommand(simple_tiles, prev_tiles, next_tiles));
+        undo_stack->push(new AddSimpleTilesCommand(tiles_order, simple_tiles, added));
         undo_stack->push(new ReplaceReferencesCommand(map_layers, prev_refs, next_refs));
         undo_stack->endMacro();
 
@@ -1000,7 +1000,7 @@ void MapPainterWidget::selectAll()
 
 void MapPainterWidget::handleDrawChanges()
 {
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
 
     const auto changed_pixels =
@@ -1067,7 +1067,7 @@ static inline QImage get_selection_contents(const QImage &source, const Selectio
 
 void MapPainterWidget::handleSelectionMade()
 {
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
 
     if (!original_rect)

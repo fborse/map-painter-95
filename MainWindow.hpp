@@ -73,7 +73,7 @@ private:
 //  shared access to relevant child widgets -> make pointers
     QSharedPointer<QUndoStack> undo_stack;
     QSharedPointer<Names> tiles_order;
-    QSharedPointer<Tileset> tileset;
+    QSharedPointer<SimpleTiles> simple_tiles;
     QSharedPointer<SelectedTiles> selected_tiles;
     QSharedPointer<MapLayers> map_layers;
 

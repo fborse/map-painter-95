@@ -23,14 +23,14 @@ private:
     QWeakPointer<Names> tiles_order_ptr;
 };
 
-class TilesetCommand
+class SimpleTilesCommand
 {
 public:
-    TilesetCommand(QWeakPointer<Tileset> tileset): tileset_ptr{tileset} {}
-    QSharedPointer<Tileset> lockTileset() { return lock_ptr(tileset_ptr); }
+    SimpleTilesCommand(QWeakPointer<SimpleTiles> simple_tiles): simple_tiles_ptr{simple_tiles} {}
+    QSharedPointer<SimpleTiles> lockSimpleTiles() { return lock_ptr(simple_tiles_ptr); }
 
 private:
-    QWeakPointer<Tileset> tileset_ptr;
+    QWeakPointer<SimpleTiles> simple_tiles_ptr;
 };
 
 class MapLayersCommand
@@ -85,11 +85,11 @@ private:
     int index1, index2;
 };
 
-class AddTileCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand
+class AddSimpleTileCommand final: public QUndoCommand, public TilesOrderCommand, public SimpleTilesCommand
 {
 public:
-    AddTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, const SimpleTile &tile):
-        QUndoCommand(), TilesOrderCommand(tiles_order), TilesetCommand(tileset),
+    AddSimpleTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<SimpleTiles> simple_tiles, const SimpleTile &tile):
+        QUndoCommand(), TilesOrderCommand(tiles_order), SimpleTilesCommand(simple_tiles),
         index{0}, id{}, tile{tile}
     {
         index = lockTilesOrder()->length();
@@ -99,13 +99,13 @@ public:
     void undo() final override
     {
         lockTilesOrder()->remove(index);
-        lockTileset()->remove(id);
+        lockSimpleTiles()->remove(id);
     }
 
     void redo() final override
     {
         lockTilesOrder()->push_back(id);
-        lockTileset()->insert(id, tile);
+        lockSimpleTiles()->insert(id, tile);
     }
 
 private:
@@ -114,7 +114,7 @@ private:
     SimpleTile tile;
 };
 
-class RemoveTileCommand final: public QUndoCommand, public TilesOrderCommand, public TilesetCommand, public MapLayersCommand
+class RemoveSimpleTileCommand final: public QUndoCommand, public TilesOrderCommand, public SimpleTilesCommand, public MapLayersCommand
 {
 public:
     struct Coordinates
@@ -127,12 +127,12 @@ public:
         }
     };
 
-    RemoveTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset> tileset, QWeakPointer<MapLayers> map_layers, const TileReference &id):
-        QUndoCommand(), TilesOrderCommand(tiles_order), TilesetCommand(tileset), MapLayersCommand(map_layers),
+    RemoveSimpleTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<SimpleTiles> simple_tiles, QWeakPointer<MapLayers> map_layers, const TileReference &id):
+        QUndoCommand(), TilesOrderCommand(tiles_order), SimpleTilesCommand(simple_tiles), MapLayersCommand(map_layers),
         index{0}, tile_reference{id}, tile{}
     {
         index = lockTilesOrder()->indexOf(tile_reference);
-        tile = lockTileset()->value(tile_reference);
+        tile = lockSimpleTiles()->value(tile_reference);
 
         auto layers = *lockMapLayers();
         for (int k = 0; k < layers.length(); ++k)
@@ -145,7 +145,7 @@ public:
     void undo() final override
     {
         lockTilesOrder()->insert(index, tile_reference);
-        lockTileset()->insert(tile_reference, tile);
+        lockSimpleTiles()->insert(tile_reference, tile);
 
         for (auto &[i, j, k]: affected_tiles.keys())
             (*lockMapLayers())[k][j][i] = affected_tiles[{i, j, k}];
@@ -154,7 +154,7 @@ public:
     void redo() final override
     {
         lockTilesOrder()->remove(index);
-        lockTileset()->remove(tile_reference);
+        lockSimpleTiles()->remove(tile_reference);
 
         for (auto &[i, j, k]: affected_tiles.keys())
             (*lockMapLayers())[k][j][i] = {};
@@ -167,7 +167,7 @@ private:
     QHash<Coordinates, TileReference> affected_tiles;
 };
 
-static inline uint qHash(const RemoveTileCommand::Coordinates &coords, const uint seed = 0)
+static inline uint qHash(const RemoveSimpleTileCommand::Coordinates &coords, const uint seed = 0)
 {
     return seed ^ (
         qHash(coords.i, seed) * 31
@@ -176,21 +176,21 @@ static inline uint qHash(const RemoveTileCommand::Coordinates &coords, const uin
     );
 }
 
-class AddFrameCommand final: public QUndoCommand, public TilesetCommand
+class AddSimpleTileFrameCommand final: public QUndoCommand, public SimpleTilesCommand
 {
 public:
-    AddFrameCommand(QWeakPointer<Tileset> tileset, const TileReference &id, const int index, const QImage &frame):
-        QUndoCommand(), TilesetCommand(tileset), tile_reference{id}, frame_index{index}, frame_image{frame}
+    AddSimpleTileFrameCommand(QWeakPointer<SimpleTiles> simple_tiles, const TileReference &id, const int index, const QImage &frame):
+        QUndoCommand(), SimpleTilesCommand(simple_tiles), tile_reference{id}, frame_index{index}, frame_image{frame}
     {}
 
     void undo() final override
     {
-        (*lockTileset())[tile_reference].frames.remove(frame_index);
+        (*lockSimpleTiles())[tile_reference].frames.remove(frame_index);
     }
 
     void redo() final override
     {
-        (*lockTileset())[tile_reference].frames.insert(frame_index, frame_image);
+        (*lockSimpleTiles())[tile_reference].frames.insert(frame_index, frame_image);
     }
 
 private:
@@ -199,14 +199,14 @@ private:
     QImage frame_image;
 };
 
-class RemoveFrameCommand final: public QUndoCommand, public TilesetCommand
+class RemoveSimpleTileFrameCommand final: public QUndoCommand, public SimpleTilesCommand
 {
 public:
-    RemoveFrameCommand(QWeakPointer<Tileset> tileset, const TileReference &id, const int index):
-        QUndoCommand(), TilesetCommand(tileset), tile_reference{id}, frame_index{index}, removed_image{}
+    RemoveSimpleTileFrameCommand(QWeakPointer<SimpleTiles> simple_tiles, const TileReference &id, const int index):
+        QUndoCommand(), SimpleTilesCommand(simple_tiles), tile_reference{id}, frame_index{index}, removed_image{}
     {
-        Q_ASSERT(lockTileset()->contains(id));
-        const auto &frames = lockTileset()->value(id).frames;
+        Q_ASSERT(lockSimpleTiles()->contains(id));
+        const auto &frames = lockSimpleTiles()->value(id).frames;
         Q_ASSERT(frames.length() > 1);
         Q_ASSERT(0 <= index && index < frames.length());
         removed_image = frames.at(index);
@@ -214,12 +214,12 @@ public:
 
     void undo() final override
     {
-        (*lockTileset())[tile_reference].frames.insert(frame_index, removed_image);
+        (*lockSimpleTiles())[tile_reference].frames.insert(frame_index, removed_image);
     }
 
     void redo() final override
     {
-        (*lockTileset())[tile_reference].frames.remove(frame_index);
+        (*lockSimpleTiles())[tile_reference].frames.remove(frame_index);
     }
 
 private:
@@ -259,13 +259,13 @@ void TilesetViewWidget::addTiles(const QVector<SimpleTile> &images, const bool u
 {
     Q_ASSERT(!undo_stack.isNull());
     Q_ASSERT(!tiles_order.isNull());
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
 
     if (undoable)
     {
         undo_stack->beginMacro("Add tiles");
         for (auto &pixels: images)
-            undo_stack->push(new AddTileCommand(tiles_order, tileset, pixels));
+            undo_stack->push(new AddSimpleTileCommand(tiles_order, simple_tiles, pixels));
         undo_stack->endMacro();
     }
     else
@@ -274,7 +274,7 @@ void TilesetViewWidget::addTiles(const QVector<SimpleTile> &images, const bool u
         {
             const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
             tiles_order->push_back(id);
-            tileset->insert(id, pixels);
+            simple_tiles->insert(id, pixels);
         }
     }
 
@@ -285,14 +285,14 @@ void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
 {
     Q_ASSERT(!undo_stack.isNull());
     Q_ASSERT(!tiles_order.isNull());
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
     for (auto &id: tiles)
-        Q_ASSERT(tileset->contains(id));
+        Q_ASSERT(simple_tiles->contains(id));
 
     undo_stack->beginMacro("Remove tiles");
     for (auto &id: tiles)
-        undo_stack->push(new RemoveTileCommand(tiles_order, tileset, map_layers, id));
+        undo_stack->push(new RemoveSimpleTileCommand(tiles_order, simple_tiles, map_layers, id));
     undo_stack->endMacro();
 
     emit tilesRemoved();
@@ -306,37 +306,37 @@ static inline bool is_1x1(const SelectedTiles &selected)
 void TilesetViewWidget::addFrames(const QHash<int, QImage> &frames)
 {
     Q_ASSERT(!undo_stack.isNull());
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
     const auto id = selected_tiles->at(0).at(0);
-    Q_ASSERT(tileset->contains(id));
-    const auto tile = tileset->value(id);
+    Q_ASSERT(simple_tiles->contains(id));
+    const auto tile = simple_tiles->value(id);
     for (auto &index: frames.keys())
     //  +1 because we may want to add at the end
         Q_ASSERT(0 <= index && index < tile.frames.length() + 1);
 
     undo_stack->beginMacro("Add Frames");
     for (auto &index: frames.keys())
-        undo_stack->push(new AddFrameCommand(tileset, id, index, frames[index]));
+        undo_stack->push(new AddSimpleTileFrameCommand(simple_tiles, id, index, frames[index]));
     undo_stack->endMacro();
 }
 
 void TilesetViewWidget::removeFrames(const QVector<int> &indexes)
 {
     Q_ASSERT(!undo_stack.isNull());
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
     const auto id = selected_tiles->at(0).at(0);
-    Q_ASSERT(tileset->contains(id));
-    const auto tile = tileset->value(id);
+    Q_ASSERT(simple_tiles->contains(id));
+    const auto tile = simple_tiles->value(id);
     for (auto &index: indexes)
         Q_ASSERT(0 <= index && index < tile.frames.length() + 1);
 
     undo_stack->beginMacro("Remove Frames");
     for (auto &index: indexes)
-        undo_stack->push(new RemoveFrameCommand(tileset, id, index));
+        undo_stack->push(new RemoveSimpleTileFrameCommand(simple_tiles, id, index));
     undo_stack->endMacro();
 }
 
@@ -375,7 +375,7 @@ static inline QPoint divide(const QPoint &p, const double a)
 void TilesetViewWidget::paintTileset(QPainter &painter)
 {
     Q_ASSERT(!tiles_order.isNull());
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
 
     const int n = tiles_order->length();
 
@@ -404,8 +404,8 @@ void TilesetViewWidget::paintTileset(QPainter &painter)
         const QString id = displayed[i];
         const auto p = toIJ(i);
 
-        Q_ASSERT(tileset->contains(id));
-        const auto &frames = (*tileset)[id].frames;
+        Q_ASSERT(simple_tiles->contains(id));
+        const auto &frames = (*simple_tiles)[id].frames;
         const int n = frames.length();
         painter.drawImage(*p * tilesize, frames[qMin(current_frame, n-1)]);
     }

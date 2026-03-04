@@ -189,7 +189,7 @@ void MapEditorWidget::removeLayer(const int index)
 void MapEditorWidget::paintTileRects(QPainter &painter)
 {
     Q_ASSERT(!selected_tiles.isNull());
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
 
     const auto click = click_origin? *click_origin : *right_click_origin;
     const QRect selection = asLocalRect(click, mouse_cursor);
@@ -208,9 +208,9 @@ void MapEditorWidget::paintTileRects(QPainter &painter)
             {
                 const auto id = selected_tiles->at(j % sh).at(i % sw);
 
-                if (tileset->contains(id))
+                if (simple_tiles->contains(id))
                 {
-                    const auto &frames = (*tileset)[id].frames;
+                    const auto &frames = (*simple_tiles)[id].frames;
                     const int n = frames.length();
 
                     painter.drawImage(

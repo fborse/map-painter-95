@@ -8,7 +8,7 @@
 ExportAsTexturesDialog::ExportAsTexturesDialog(const int tilesize, QWidget *parent):
     QDialog(parent), ui(new Ui::ExportAsTexturesDialog),
     tilesize{tilesize}, current_layer{0}, current_frame{0}, drawn_textures{},
-    tileset{nullptr}, map_layers{nullptr}
+    simple_tiles{nullptr}, map_layers{nullptr}
 {
     ui->setupUi(this);
 
@@ -83,21 +83,21 @@ static inline int naive_ppmc(const QSet<int> &xs)
     return max;
 }
 
-static inline QSet<int> get_unique_lengths(const Tileset &tileset, const MapLayer &layer)
+static inline QSet<int> get_unique_lengths(const SimpleTiles &simple_tiles, const MapLayer &layer)
 {
     QSet<int> lengths;
 
     for (auto &row: layer)
         for (auto &id: row)
-            if (tileset.contains(id))
-                lengths.insert(tileset[id].frames.length());
+            if (simple_tiles.contains(id))
+                lengths.insert(simple_tiles[id].frames.length());
 
     return lengths;
 }
 
 int ExportAsTexturesDialog::getNumberOfFrames() const
 {
-    auto tileset_ptr = tileset.toStrongRef();
+    auto tileset_ptr = simple_tiles.toStrongRef();
     Q_ASSERT(!tileset_ptr.isNull());
     auto map_layers_ptr = map_layers.toStrongRef();
     Q_ASSERT(!map_layers_ptr.isNull());
@@ -124,7 +124,7 @@ void ExportAsTexturesDialog::onAccept() try
     if (getPattern().count('%') > 1)
         throw std::runtime_error("The file name pattern contains more than one frame number placeholder ! ('%')");
 
-    auto tileset_ptr = tileset.toStrongRef();
+    auto tileset_ptr = simple_tiles.toStrongRef();
     Q_ASSERT(!tileset_ptr.isNull());
     auto map_layers_ptr = map_layers.toStrongRef();
     Q_ASSERT(!map_layers_ptr.isNull());
@@ -178,7 +178,7 @@ void ExportAsTexturesDialog::setCurrentFrame(const int frame)
     updateDisplayedTexture();
 }
 
-static inline QImage gen_layer(const int tilesize, const Tileset &tileset, const MapLayer &layer, const int frame)
+static inline QImage gen_layer(const int tilesize, const SimpleTiles &simple_tiles, const MapLayer &layer, const int frame)
 {
     const int h = layer.length();
     if (layer.isEmpty())
@@ -197,7 +197,7 @@ static inline QImage gen_layer(const int tilesize, const Tileset &tileset, const
 
             if (!id.isEmpty())
             {
-                const auto &frames = tileset[id].frames;
+                const auto &frames = simple_tiles[id].frames;
                 const int n = frames.length();
                 painter.drawImage(i * tilesize, j * tilesize, frames[qMin(frame, n-1)]);
             }
@@ -209,8 +209,8 @@ static inline QImage gen_layer(const int tilesize, const Tileset &tileset, const
 
 void ExportAsTexturesDialog::redrawTextures()
 {
-    QSharedPointer<Tileset> tileset_ptr = tileset.toStrongRef();
-    Q_ASSERT(!tileset_ptr.isNull());
+    QSharedPointer<SimpleTiles> simple_tiles_ptr = simple_tiles.toStrongRef();
+    Q_ASSERT(!simple_tiles_ptr.isNull());
     QSharedPointer<MapLayers> map_layers_ptr = map_layers.toStrongRef();
     Q_ASSERT(!map_layers_ptr.isNull());
 
@@ -219,11 +219,11 @@ void ExportAsTexturesDialog::redrawTextures()
     {
         const auto &layer = map_layers_ptr->at(l);
         Q_ASSERT(!layer.isEmpty());
-        const int n_frames = naive_ppmc(get_unique_lengths(*tileset_ptr, layer));
+        const int n_frames = naive_ppmc(get_unique_lengths(*simple_tiles_ptr, layer));
 
         QVector<QImage> drawn_frames;
         for (int f = 0; f < n_frames; ++f)
-            drawn_frames.push_back(gen_layer(tilesize, *tileset_ptr, layer, f));
+            drawn_frames.push_back(gen_layer(tilesize, *simple_tiles_ptr, layer, f));
         drawn_textures.push_back(std::move(drawn_frames));
     }
 }
@@ -253,12 +253,12 @@ static inline int max_of(const QSet<int> &xs)
 
 void ExportAsTexturesDialog::updateFramesComboBox()
 {
-    auto tileset_ptr = tileset.toStrongRef();
-    Q_ASSERT(!tileset_ptr.isNull());
+    auto simple_tiles_ptr = simple_tiles.toStrongRef();
+    Q_ASSERT(!simple_tiles_ptr.isNull());
     auto map_layers_ptr = map_layers.toStrongRef();
     Q_ASSERT(!map_layers_ptr.isNull());
 
-    const int n = max_of(get_unique_lengths(*tileset_ptr, map_layers_ptr->value(current_layer)));
+    const int n = max_of(get_unique_lengths(*simple_tiles_ptr, map_layers_ptr->value(current_layer)));
 
     ui->currentFrameComboBox->blockSignals(true);
     ui->currentFrameComboBox->clear();

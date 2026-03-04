@@ -14,7 +14,7 @@ public:
 
     void setUndoStackPointer(QSharedPointer<QUndoStack> ptr) { undo_stack = ptr; }
     void setTilesOrderPointer(QSharedPointer<Names> ptr) { tiles_order = ptr; }
-    void setTilesetPointer(QSharedPointer<Tileset> ptr) { tileset = ptr; }
+    void setSimpleTilesPointer(QSharedPointer<SimpleTiles> ptr) { simple_tiles = ptr; }
     void setSelectedTilesPointer(QSharedPointer<SelectedTiles> ptr) { selected_tiles = ptr; }
     void setMapLayersPointer(QSharedPointer<MapLayers> ptr) { map_layers = ptr; }
 
@@ -43,7 +43,7 @@ protected:
 
     QSharedPointer<QUndoStack> undo_stack;
     QSharedPointer<Names> tiles_order;
-    QSharedPointer<Tileset> tileset;
+    QSharedPointer<SimpleTiles> simple_tiles;
     QSharedPointer<SelectedTiles> selected_tiles;
     QSharedPointer<MapLayers> map_layers;
 

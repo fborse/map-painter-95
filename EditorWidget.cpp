@@ -7,7 +7,7 @@ EditorWidget::EditorWidget(QWidget *parent):
     QWidget(parent),
     grid_aspect{20, 16}, tilesize{32}, zoom{1},
     current_layer{0}, current_frame{0},
-    undo_stack{nullptr}, tiles_order{nullptr}, tileset{nullptr},
+    undo_stack{nullptr}, tiles_order{nullptr}, simple_tiles{nullptr},
     selected_tiles{nullptr}, map_layers{nullptr}
 {
 }
@@ -80,7 +80,7 @@ void EditorWidget::paintBackground(QPainter &painter) const
 QImage EditorWidget::getPaintedLayer(const int layer) const
 {
     Q_ASSERT(!map_layers.isNull());
-    Q_ASSERT(!tileset.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
 
     QImage img(grid_aspect * tilesize, QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
@@ -94,9 +94,9 @@ QImage EditorWidget::getPaintedLayer(const int layer) const
         {
             const auto id = _layer.at(j).at(i);
 
-            if (tileset->contains(id))
+            if (simple_tiles->contains(id))
             {
-                const auto &frames = (*tileset)[id].frames;
+                const auto &frames = (*simple_tiles)[id].frames;
                 const int n = frames.length();
                 painter.drawImage(i * tilesize, j * tilesize, frames[qMin(current_frame, n-1)]);
             }

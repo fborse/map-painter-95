@@ -10,7 +10,7 @@ struct SimpleTile
 };
 
 using Names = QVector<QString>;
-using Tileset = QHash<QString, SimpleTile>;
+using SimpleTiles = QHash<QString, SimpleTile>;
 
 using SelectedTiles = QVector<QVector<QString>>;
 

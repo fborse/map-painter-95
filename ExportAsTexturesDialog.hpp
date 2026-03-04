@@ -15,7 +15,7 @@ public:
     explicit ExportAsTexturesDialog(const int tilesize, QWidget *parent = nullptr);
     ~ExportAsTexturesDialog();
 
-    void setTilesetPointer(QWeakPointer<Tileset> ptr) { tileset = ptr; }
+    void setSimpleTilesPointer(QWeakPointer<SimpleTiles> ptr) { simple_tiles = ptr; }
     void setMapLayersPointer(QWeakPointer<MapLayers> ptr);
 
     QString getDirectory() const;
@@ -37,7 +37,7 @@ private:
     int current_frame;
     QVector<QVector<QImage>> drawn_textures;
 
-    QWeakPointer<Tileset> tileset;
+    QWeakPointer<SimpleTiles> simple_tiles;
     QWeakPointer<MapLayers> map_layers;
 
     void redrawTextures();
