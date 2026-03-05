@@ -456,7 +456,7 @@ void MainWindow::refreshViews()
     bool reset = false;
     for (auto &row: *selected_tiles)
         for (auto &ref: row)
-            if (!simple_tiles->contains(ref.name))
+            if (!(simple_tiles->contains(ref.name) || autotiles->contains(ref.name)))
                 reset = true;
     if (reset)
         *selected_tiles = {{{}}};   //  {{empty tile}}

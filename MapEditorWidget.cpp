@@ -186,6 +186,30 @@ void MapEditorWidget::removeLayer(const int index)
     undo_stack->push(new RemoveLayerCommand(map_layers, index));
 }
 
+void MapEditorWidget::paintSimpleTile(QPainter &painter, const QString &id, const QPoint &p)
+{
+    Q_ASSERT(!simple_tiles.isNull());
+    Q_ASSERT(simple_tiles->contains(id));
+
+    const auto &frames = (*simple_tiles)[id].frames;
+    const int n = frames.length();
+    const int index = qMin(current_frame, n - 1);
+
+    painter.drawImage(p * tilesize, frames[index]);
+}
+
+void MapEditorWidget::paintAutoTile(QPainter &painter, const TileReference &ref, const QPoint &xy, const QPoint &ij)
+{
+    Q_ASSERT(!autotiles.isNull());
+    Q_ASSERT(autotiles->contains(ref.name));
+
+    const auto &frames = (*autotiles)[ref.name].frames;
+    const int n = frames.length();
+    const int index = qMin(current_frame, n - 1);
+
+    painter.drawImage(xy + ij * tilesize, frames[index].genTile(ref.orientation));
+}
+
 void MapEditorWidget::paintTileRects(QPainter &painter)
 {
     Q_ASSERT(!selected_tiles.isNull());
@@ -209,21 +233,9 @@ void MapEditorWidget::paintTileRects(QPainter &painter)
                 if (const auto ref = selected_tiles->at(j % sh).at(i % sw))
                 {
                     if (ref.autotile)
-                    {}
+                        paintAutoTile(painter, ref, {x, y}, {i, j});
                     else
-                    {
-                        if (simple_tiles->contains(ref.name))
-                        {
-                            const auto &frames = (*simple_tiles)[ref.name].frames;
-                            const int n = frames.length();
-
-                            painter.drawImage(
-                                x + i * tilesize,
-                                y + j * tilesize,
-                                frames[qMin(current_frame, n-1)]
-                            );
-                        }
-                    }
+                        paintSimpleTile(painter, ref.name, {x + i, y + j});
                 }
             }
         }

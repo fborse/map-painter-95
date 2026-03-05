@@ -78,10 +78,17 @@ void EditorWidget::paintBackground(QPainter &painter) const
     }
 }
 
+template <typename T>
+static inline const T &get_frame(const QVector<T> &frames, const int at)
+{
+    return frames[qMin(at, frames.length() - 1)];
+}
+
 QImage EditorWidget::getPaintedLayer(const int layer) const
 {
     Q_ASSERT(!map_layers.isNull());
     Q_ASSERT(!simple_tiles.isNull());
+    Q_ASSERT(!autotiles.isNull());
 
     QImage img(grid_aspect * tilesize, QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
@@ -96,16 +103,20 @@ QImage EditorWidget::getPaintedLayer(const int layer) const
             if (const auto ref = _layer.at(j).at(i))
             {
                 if (ref.autotile)
-                {}
+                {
+                    Q_ASSERT(autotiles->contains(ref.name));
+                    const auto &frames = (*autotiles)[ref.name].frames;
+
+                    const auto &frame = get_frame(frames, current_frame);
+                    painter.drawImage(i * tilesize, j * tilesize, frame.genTile(ref.orientation));
+                }
                 else
                 {
-                //  TODO: Shouldn't we punish the other case with a program termination ?
-                    if (simple_tiles->contains(ref.name))
-                    {
-                        const auto &frames = (*simple_tiles)[ref.name].frames;
-                        const int n = frames.length();
-                        painter.drawImage(i * tilesize, j * tilesize, frames[qMin(current_frame, n-1)]);
-                    }
+                    Q_ASSERT(simple_tiles->contains(ref.name));
+                    const auto &frames = (*simple_tiles)[ref.name].frames;
+
+                    const auto &frame = get_frame(frames, current_frame);
+                    painter.drawImage(i * tilesize, j * tilesize, frame);
                 }
             }
         }
