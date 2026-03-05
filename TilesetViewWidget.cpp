@@ -43,6 +43,16 @@ private:
     QWeakPointer<SimpleTiles> simple_tiles_ptr;
 };
 
+class AutoTilesCommand
+{
+public:
+    AutoTilesCommand(QWeakPointer<AutoTiles> autotiles): autotiles_ptr{autotiles} {}
+    QSharedPointer<AutoTiles> lockAutoTiles() { return lock_ptr(autotiles_ptr); }
+
+private:
+    QWeakPointer<AutoTiles> autotiles_ptr;
+};
+
 class MapLayersCommand
 {
 public:
@@ -165,6 +175,37 @@ private:
     int index;
     TileReference added_ref;
     SimpleTile added_tile;
+};
+
+class AddAutoTileCommand final: public QUndoCommand, public AutoTilesOrderCommand, public AutoTilesCommand
+{
+public:
+    AddAutoTileCommand(QWeakPointer<Names> autotiles_order, QWeakPointer<AutoTiles> autotiles, const AutoTile &tile):
+        QUndoCommand(), AutoTilesOrderCommand(autotiles_order), AutoTilesCommand(autotiles),
+        index{0}, added_ref{}, added_tile{tile}
+    {
+        index = lockAutoTilesOrder()->length();
+        const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    //  see RPG Maker scheme
+        added_ref = {id, true, {8, 11, 20, 23}};
+    }
+
+    void undo() final override
+    {
+        lockAutoTilesOrder()->remove(index);
+        lockAutoTiles()->remove(added_ref.name);
+    }
+
+    void redo() final override
+    {
+        lockAutoTilesOrder()->push_back(added_ref.name);
+        lockAutoTiles()->insert(added_ref.name, added_tile);
+    }
+
+private:
+    int index;
+    TileReference added_ref;
+    AutoTile added_tile;
 };
 
 class RemoveSimpleTileCommand final: public QUndoCommand, public SimpleTilesOrderCommand, public SimpleTilesCommand, public MapLayersCommand
@@ -335,6 +376,24 @@ void TilesetViewWidget::addSimpleTiles(const QVector<SimpleTile> &images, const 
     update();
 }
 
+void TilesetViewWidget::addAutoTile(const AutoTile &autotile, const bool undoable)
+{
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(!autotiles_order.isNull());
+    Q_ASSERT(!autotiles.isNull());
+
+    if (undoable)
+    {
+        undo_stack->push(new AddAutoTileCommand(autotiles_order, autotiles, autotile));
+    }
+    else
+    {
+        const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        autotiles_order->push_back(id);
+        autotiles->insert(id, autotile);
+    }
+}
+
 void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
 {
     Q_ASSERT(!undo_stack.isNull());
@@ -424,8 +483,8 @@ std::optional<TileReference> TilesetViewWidget::toRef(const QPoint &ij) const
         if (k == 0)
             return TileReference{};
         else if (k-1 < n_auto)
-        //  RPG Maker scheme coordinates for isolated tile
-            return TileReference{autotiles_order->at(k-1), true, {8, 11, 20, 23}};
+        //  see Types.hpp for why this is an isolated autotile
+            return TileReference{autotiles_order->at(k-1), true, {0, 3, 12, 15}};
         else
             return {};
     }
@@ -462,16 +521,38 @@ static inline void apply_changes(const Names &original, Names &copy, const QStri
         copy.insert(j, copy.takeAt(i));
 }
 
-void TilesetViewWidget::paintAutoTiles(QPainter &/*painter*/)
+void TilesetViewWidget::paintAutoTiles(QPainter &painter)
 {
     Q_ASSERT(!autotiles_order.isNull());
 
-    const int n_auto = autotiles_order->length();
+//  see Types.hpp for why this represents an isolated autotile
+    const Orientation isolated = {0, 3, 12, 15};
 
-    for (int i = 0; i < n_auto; ++i)
+//  copying
+    Names displayed = *autotiles_order;
+    if (click_origin || right_click_origin)
     {
-        const QString id = autotiles_order->at(i);
+        const auto p = right_click_origin? *right_click_origin : *click_origin;
+
+        if (const auto origin = toRef(divide(p, tilesize)); origin && *origin)
+            if (const auto target = toRef(divide(mouse_cursor, tilesize)); target && *target)
+                if (origin->autotile && target->autotile)
+                    apply_changes(
+                        *autotiles_order, displayed,
+                        origin->name, target->name,
+                        drag_mode, bool(click_origin), bool(right_click_origin)
+                    );
+    }
+
+    for (int i = 0; i < displayed.length(); ++i)
+    {
+        const QString id = displayed[i];
         const QPoint p((i+1) % n_columns, (i+1) / n_columns);
+
+        Q_ASSERT(autotiles->contains(id));
+        const auto &frames = (*autotiles)[id].frames;
+        const int n = frames.length();
+        painter.drawImage(p * tilesize, frames[qMin(current_frame, n-1)].genTile(isolated));
     }
 }
 
@@ -499,9 +580,7 @@ void TilesetViewWidget::paintSimpleTiles(QPainter &painter)
     const int n_auto = autotiles_order->length();
     const int h_auto = qCeil(double(n_auto + 1) / n_columns);
 
-    const int n_simple = displayed.length();
-
-    for (int i = 0; i < n_simple; ++i)
+    for (int i = 0; i < displayed.length(); ++i)
     {
         const QString id = displayed[i];
         const QPoint p(i % n_columns, h_auto + i / n_columns);

@@ -802,9 +802,9 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
                     .setPixelColor(p, changed_pixels[q][p]);
 
             const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
-            added[{uuid, false}] = new_image;
+            added[{uuid, false, {}}] = new_image;
             prev_refs[{q.x(), q.y(), current_layer}] = prev_id;
-            next_refs[{q.x(), q.y(), current_layer}] = {uuid, false};
+            next_refs[{q.x(), q.y(), current_layer}] = {uuid, false, {}};
         }
     }
 

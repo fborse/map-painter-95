@@ -75,6 +75,7 @@ private:
     QSharedPointer<QUndoStack> undo_stack;
     QSharedPointer<Names> simple_tiles_order, autotiles_order;
     QSharedPointer<SimpleTiles> simple_tiles;
+    QSharedPointer<AutoTiles> autotiles;
     QSharedPointer<SelectedTiles> selected_tiles;
     QSharedPointer<MapLayers> map_layers;
 

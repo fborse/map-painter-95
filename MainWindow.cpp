@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent):
     save_path{},
     undo_stack{nullptr},
     simple_tiles_order{nullptr}, autotiles_order{nullptr},
-    simple_tiles{nullptr},
+    simple_tiles{nullptr}, autotiles{nullptr},
     selected_tiles{nullptr}, map_layers{nullptr}
 {
     ui->setupUi(this);
@@ -41,6 +41,9 @@ MainWindow::MainWindow(QWidget *parent):
     simple_tiles = QSharedPointer<SimpleTiles>::create();
     for (auto *editor: editors)
         editor->setSimpleTilesPointer(simple_tiles);
+    autotiles = QSharedPointer<AutoTiles>::create();
+    for (auto *editor: editors)
+        editor->setAutoTilesPointer(autotiles);
     selected_tiles = QSharedPointer<SelectedTiles>::create();
     for (auto *editor: editors)
         editor->setSelectedTilesPointer(selected_tiles);
@@ -182,17 +185,17 @@ void MainWindow::populateTileset(const int tilesize)
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(tilesize > 0);
 
-    QImage img(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
-    QColor colors[] = {{0, 128, 255}, {0, 128, 0}, {128, 64, 0}};
+    QImage pixels(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
+    const QColor colors[] = {{0, 128, 255}, {0, 128, 0}, {128, 64, 0}};
 
+    QVector<SimpleTile> tiles;
     for (auto &color: colors)
     {
-        const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-        simple_tiles_order->push_back(id);
-
-        img.fill(color);
-        simple_tiles->insert(id, SimpleTile{{img}});
+        pixels.fill(color);
+        tiles.push_back({{pixels}});
     }
+
+    ui->tilesetView->addSimpleTiles({tiles}, false);
 }
 
 void MainWindow::setMapSize(const QSize size)
@@ -605,10 +608,18 @@ void MainWindow::onAddSimpleTile()
 void MainWindow::onAddAutoTile()
 {
     const int tilesize = ui->tilesetView->getTilesize();
-    QImage tile = query_tile(tilesize, "Add Autotile", this);
+    QImage metatile = query_tile(tilesize/2, "Add Autotile", this);
 
-/*    if (!tile.isNull())
-        ui->tilesetView->addAutoTile();*/
+//  see Types.hpp for why
+    const size_t n = 20;
+
+    if (!metatile.isNull())
+    {
+        AutoTile tile;
+        tile.frames.push_back({QVector<QImage>(n, metatile)});
+
+        ui->tilesetView->addAutoTile(tile, true);
+    }
 }
 
 static inline QSet<TileReference> get_unique_valid_ids(const SimpleTiles &simple_tiles, const SelectedTiles &selected)

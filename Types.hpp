@@ -14,8 +14,9 @@ using SimpleTiles = QHash<QString, SimpleTile>;
 
 struct Orientation
 {
-    int top_left = 0, top_right = 0;
-    int bottom_left = 0, bottom_right = 0;
+//  see below for why this makes an isolated autotile
+    int top_left = 0, top_right = 3;
+    int bottom_left = 12, bottom_right = 15;
 
     bool operator==(const Orientation &other) const
     {
@@ -40,7 +41,13 @@ struct AutoTile
 {
     struct Frame
     {
-    //  RPG Maker scheme
+    //  RPG Maker scheme but joints are at the bottom in a row
+    //  and displayed tile in the editor is made of corners
+    //  top-left        top2            top1                top-right
+    //  left2           middle4         middle3             right2
+    //  left1           middle2         middle1             right1
+    //  bottom-left     bottom2         bottom1             bottom-right
+    //  top-left-joint  top-right-joint bottom-left-joint   bottom-right-joint
         QVector<QImage> metatiles;
 
         QImage genTile(const Orientation &orientation) const;

@@ -16,6 +16,7 @@ public:
     void setSimpleTilesOrderPointer(QSharedPointer<Names> ptr) { simple_tiles_order = ptr; }
     void setAutoTilesOrderPointer(QSharedPointer<Names> ptr) { autotiles_order = ptr; }
     void setSimpleTilesPointer(QSharedPointer<SimpleTiles> ptr) { simple_tiles = ptr; }
+    void setAutoTilesPointer(QSharedPointer<AutoTiles> ptr) { autotiles = ptr; }
     void setSelectedTilesPointer(QSharedPointer<SelectedTiles> ptr) { selected_tiles = ptr; }
     void setMapLayersPointer(QSharedPointer<MapLayers> ptr) { map_layers = ptr; }
 
@@ -45,6 +46,7 @@ protected:
     QSharedPointer<QUndoStack> undo_stack;
     QSharedPointer<Names> simple_tiles_order, autotiles_order;
     QSharedPointer<SimpleTiles> simple_tiles;
+    QSharedPointer<AutoTiles> autotiles;
     QSharedPointer<SelectedTiles> selected_tiles;
     QSharedPointer<MapLayers> map_layers;
 
