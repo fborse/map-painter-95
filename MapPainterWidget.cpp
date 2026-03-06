@@ -14,6 +14,7 @@ static inline QSharedPointer<T> lock_ptr(QWeakPointer<T> &weak)
     return shared;
 }
 
+//  doesn't matter if the tiles_order is simple or auto tiles
 class TilesOrderCommand
 {
 public:
@@ -24,14 +25,15 @@ private:
     QWeakPointer<Names> tiles_order_ptr;
 };
 
-class SimpleTilesCommand
+template <typename T>
+class TilesCommand
 {
 public:
-    SimpleTilesCommand(QWeakPointer<SimpleTiles> simple_tiles): simple_tiles_ptr{simple_tiles} {}
-    QSharedPointer<SimpleTiles> lockSimpleTiles() { return lock_ptr(simple_tiles_ptr); }
+    TilesCommand(QWeakPointer<T> tiles): tiles_ptr{tiles} {}
+    QSharedPointer<T> lockTiles() { return lock_ptr(tiles_ptr); }
 
 private:
-    QWeakPointer<SimpleTiles> simple_tiles_ptr;
+    QWeakPointer<T> tiles_ptr;
 };
 
 class MapLayersCommand
@@ -63,38 +65,40 @@ static inline uint qHash(const MapLayersCommand::Coordinates &coords, const uint
     );
 }
 
-class ReplaceSimpleTilesCommand final: public QUndoCommand, public SimpleTilesCommand
+template <typename T>
+class ReplaceTilesCommand final: public QUndoCommand, public TilesCommand<Tileset<T>>
 {
 public:
-    using Changes = QHash<TileReference, SimpleTile>;
+    using Changes = QHash<QString, T>;
 
-    ReplaceSimpleTilesCommand(QWeakPointer<SimpleTiles> simple_tiles, const Changes &prev, const Changes &next):
-        QUndoCommand(), SimpleTilesCommand(simple_tiles), prev{prev}, next{next}
+    ReplaceTilesCommand(QWeakPointer<Tileset<T>> tiles, const Changes &prev, const Changes &next):
+        QUndoCommand(), TilesCommand<Tileset<T>>(tiles), prev{prev}, next{next}
     {}
 
     void undo() final override
     {
-        for (auto &ref: prev.keys())
-            (*lockSimpleTiles())[ref.name] = prev[ref];
+        for (auto &id: prev.keys())
+            (*TilesCommand<Tileset<T>>::lockTiles())[id] = prev[id];
     }
 
     void redo() final override
     {
-        for (auto &ref: next.keys())
-            (*lockSimpleTiles())[ref.name] = next[ref];
+        for (auto &id: next.keys())
+            (*TilesCommand<Tileset<T>>::lockTiles())[id] = next[id];
     }
 
 private:
     Changes prev, next;
 };
 
-class AddSimpleTilesCommand final: public QUndoCommand, public TilesOrderCommand, public SimpleTilesCommand
+template <typename T>
+class AddTilesCommand final: public QUndoCommand, public TilesOrderCommand, public TilesCommand<Tileset<SimpleTile>>
 {
 public:
-    using Added = QMap<QString, SimpleTile>;
+    using Added = QMap<QString, T>;
 
-    AddSimpleTilesCommand(QWeakPointer<Names> tiles_order, QWeakPointer<SimpleTiles> simple_tiles, const Added &added):
-        QUndoCommand(), TilesOrderCommand(tiles_order), SimpleTilesCommand(simple_tiles), added{added}
+    AddTilesCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset<T>> tiles, const Added &added):
+        QUndoCommand(), TilesOrderCommand(tiles_order), TilesCommand<Tileset<T>>(tiles), added{added}
     {}
 
     void undo() final override
@@ -103,7 +107,7 @@ public:
         for (auto &id: added.keys())
         {
             lockTilesOrder()->pop_back();
-            lockSimpleTiles()->remove(id);
+            lockTiles()->remove(id);
         }
     }
 
@@ -113,7 +117,7 @@ public:
         for (auto &id: added.keys())
         {
             lockTilesOrder()->push_back(id);
-            lockSimpleTiles()->insert(id, added.value(id));
+            lockTiles()->insert(id, added.value(id));
         }
     }
 
@@ -705,7 +709,7 @@ QColor MapPainterWidget::getColorAt(const QPoint &p) const
 
 static inline auto get_prev_next_simple(const QHash<QPoint, QHash<QPoint, QColor>> &changes, const SimpleTiles &simple_tiles, const MapLayer &map_layer, const int current_frame, std::function<bool(TileReference)> fn)
 {
-    ReplaceSimpleTilesCommand::Changes prev, next;
+    ReplaceTilesCommand<SimpleTile>::Changes prev, next;
 
     for (auto &q: changes.keys())
     {
@@ -715,13 +719,13 @@ static inline auto get_prev_next_simple(const QHash<QPoint, QHash<QPoint, QColor
 
             if (fn(ref))
             {
-                if (!prev.contains(ref))
+                if (!prev.contains(ref.name))
                 {
-                    prev.insert(ref, simple_tiles.value(ref.name));
-                    next.insert(ref, simple_tiles.value(ref.name));
+                    prev.insert(ref.name, simple_tiles.value(ref.name));
+                    next.insert(ref.name, simple_tiles.value(ref.name));
                 }
 
-                auto &frames = next[ref].frames;
+                auto &frames = next[ref.name].frames;
                 const int n = frames.length();
                 frames[qMin(current_frame, n-1)].setPixelColor(p, changes[q][p]);
             }
@@ -744,7 +748,7 @@ void MapPainterWidget::handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint
         [&] (TileReference id) { return !id.isEmpty(); }
     );
 
-    undo_stack->push(new ReplaceSimpleTilesCommand(simple_tiles, prev_simple, next_simple));
+    undo_stack->push(new ReplaceTilesCommand<SimpleTile>(simple_tiles, prev_simple, next_simple));
 }
 
 static inline bool is_tile_unique(const MapLayer &map_layers, const TileReference &id)
@@ -783,7 +787,7 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
         }
     );
 
-    AddSimpleTilesCommand::Added added;
+    AddTilesCommand<SimpleTile>::Added added;
     ReplaceReferencesCommand::Changes prev_refs, next_refs;
     for (auto &q: changed_pixels.keys())
     {
@@ -792,7 +796,7 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
         Q_ASSERT(!prev_ref.autotile);
 
     //  faster than !is_tile_unique(*map_layers, prev_id)
-        if (!prev_ref || !prev_simple_tiles.contains(prev_ref))
+        if (!prev_ref || !prev_simple_tiles.contains(prev_ref.name))
         {
             SimpleTile new_image = prev_ref.isEmpty()?
                 SimpleTile{{gen_empty(tilesize, tilesize)}}
@@ -813,8 +817,8 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
     if (!next_simple_tiles.isEmpty() || !added.isEmpty() || !next_refs.isEmpty())
     {
         undo_stack->beginMacro("non-retroactive change");
-        undo_stack->push(new ReplaceSimpleTilesCommand(simple_tiles, prev_simple_tiles, next_simple_tiles));
-        undo_stack->push(new AddSimpleTilesCommand(simple_tiles_order, simple_tiles, added));
+        undo_stack->push(new ReplaceTilesCommand<SimpleTile>(simple_tiles, prev_simple_tiles, next_simple_tiles));
+        undo_stack->push(new AddTilesCommand<SimpleTile>(simple_tiles_order, simple_tiles, added));
         undo_stack->push(new ReplaceReferencesCommand(map_layers, prev_refs, next_refs));
         undo_stack->endMacro();
 

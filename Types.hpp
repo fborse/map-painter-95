@@ -4,13 +4,16 @@
 #include <QHash>
 #include <QImage>
 
+template <typename T>
+using Tileset = QHash<QString, T>;
+
 struct SimpleTile
 {
     QVector<QImage> frames;
 };
 
 using Names = QVector<QString>;
-using SimpleTiles = QHash<QString, SimpleTile>;
+using SimpleTiles = Tileset<SimpleTile>;
 
 struct Orientation
 {
@@ -56,7 +59,7 @@ struct AutoTile
     QVector<Frame> frames;
 };
 
-using AutoTiles = QHash<QString, AutoTile>;
+using AutoTiles = Tileset<AutoTile>;
 
 struct TileReference
 {
