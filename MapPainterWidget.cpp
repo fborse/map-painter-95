@@ -707,6 +707,7 @@ QColor MapPainterWidget::getColorAt(const QPoint &p) const
         return Qt::transparent;
 }
 
+//  TODO: find a way to factorise the two next functions
 static inline auto get_prev_next_simple(const QHash<QPoint, QHash<QPoint, QColor>> &changes, const SimpleTiles &simple_tiles, const MapLayer &map_layer, const int current_frame, std::function<bool(TileReference)> fn)
 {
     ReplaceTilesCommand<SimpleTile>::Changes prev, next;
@@ -727,7 +728,52 @@ static inline auto get_prev_next_simple(const QHash<QPoint, QHash<QPoint, QColor
 
                 auto &frames = next[ref.name].frames;
                 const int n = frames.length();
-                frames[qMin(current_frame, n-1)].setPixelColor(p, changes[q][p]);
+                const int index = qMin(current_frame, n - 1);
+
+                frames[index].setPixelColor(p, changes[q][p]);
+            }
+        }
+    }
+
+    return QPair<decltype(prev), decltype(next)>(prev, next);
+}
+
+static inline auto get_prev_next_auto(const QHash<QPoint, QHash<QPoint, QColor>> &changes, const AutoTiles &autotiles, const MapLayer &map_layer, const int current_frame, std::function<bool(TileReference)> fn)
+{
+    ReplaceTilesCommand<AutoTile>::Changes prev, next;
+
+    for (auto &q: changes.keys())
+    {
+        for (auto &p: changes[q].keys())
+        {
+            const auto ref = map_layer.at(q.y()).at(q.x());
+
+            if (fn(ref))
+            {
+                if (!prev.contains(ref.name))
+                {
+                    prev.insert(ref.name, autotiles.value(ref.name));
+                    next.insert(ref.name, autotiles.value(ref.name));
+                }
+
+                auto &frames = next[ref.name].frames;
+                const int n = frames.length();
+                const int index = qMin(current_frame, n - 1);
+
+                auto &metatiles = frames[index].metatiles;
+                const int s = metatiles[0].width();
+                int i;
+                if (p.x() < s && p.y() < s)
+                    i = ref.orientation.top_left;
+                else if (p.x() >= s && p.y() < s)
+                    i = ref.orientation.top_right;
+                else if (p.x() < s)
+                    i = ref.orientation.bottom_left;
+                else
+                    i = ref.orientation.bottom_right;
+
+            //  move p to current metatile => % s
+                metatiles[i].setPixelColor(p.x() % s, p.y() % s, changes[q][p]);
             }
         }
     }
@@ -739,16 +785,31 @@ void MapPainterWidget::handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint
 {
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
+    Q_ASSERT(current_layer < map_layers->length());
 
     const auto &[prev_simple, next_simple] = get_prev_next_simple(
         changed_pixels,
         *simple_tiles,
         map_layers->at(current_layer),
         current_frame,
-        [&] (TileReference id) { return !id.isEmpty(); }
+        [&] (TileReference ref) { return ref && !ref.autotile; }
     );
 
-    undo_stack->push(new ReplaceTilesCommand<SimpleTile>(simple_tiles, prev_simple, next_simple));
+    const auto &[prev_auto, next_auto] = get_prev_next_auto(
+        changed_pixels,
+        *autotiles,
+        map_layers->at(current_layer),
+        current_frame,
+        [&] (TileReference ref) { return ref && ref.autotile; }
+    );
+
+    if (!(next_simple.isEmpty() && next_auto.isEmpty()))
+    {
+        undo_stack->beginMacro("Tiles Drawn On");
+        undo_stack->push(new ReplaceTilesCommand<SimpleTile>(simple_tiles, prev_simple, next_simple));
+        undo_stack->push(new ReplaceTilesCommand<AutoTile>(autotiles, prev_auto, next_auto));
+        undo_stack->endMacro();
+    }
 }
 
 static inline bool is_tile_unique(const MapLayer &map_layers, const TileReference &id)
