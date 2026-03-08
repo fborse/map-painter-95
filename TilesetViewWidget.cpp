@@ -225,6 +225,31 @@ private:
     QHash<MapLayersCoordinates, TileReference> affected_tiles;
 };
 
+template <typename T, class Frame>
+class AddFrameCommand final: public QUndoCommand, public TilesCommand<Tileset<T>>
+{
+public:
+    AddFrameCommand(QWeakPointer<Tileset<T>> tiles, const TileReference &id, const int index, const Frame &frame):
+        QUndoCommand(), TilesCommand<Tileset<T>>(tiles),
+        tile_reference{id}, index{index}, frame{frame}
+    {}
+
+    void undo() final override
+    {
+        (*TilesCommand<Tileset<T>>::lockTiles())[tile_reference.name].frames.remove(index);
+    }
+
+    void redo() final override
+    {
+        (*TilesCommand<Tileset<T>>::lockTiles())[tile_reference.name].frames.insert(index, frame);
+    }
+
+private:
+    TileReference tile_reference;
+    int index;
+    Frame frame;
+};
+
 class AddSimpleTileFrameCommand final: public QUndoCommand, public SimpleTilesCommand
 {
 public:
@@ -348,16 +373,63 @@ static inline bool is_1x1(const SelectedTiles &selected)
     return (selected.length() == 1) && (selected[0].length() == 1);
 }
 
-void TilesetViewWidget::addFrames(const QHash<int, QImage> &added)
+void TilesetViewWidget::addFrame(const int index, const QImage &frame)
 {
     Q_ASSERT(!undo_stack.isNull());
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
+
+    const auto ref = selected_tiles->at(0).at(0);
+    Q_ASSERT(!ref.autotile);
+    Q_ASSERT(simple_tiles->contains(ref.name));
+
+    const auto &frames = simple_tiles->value(ref.name).frames;
+//  +1 because we may want to add at the end
+    Q_ASSERT(0 <= index && index < frames.length() + 1);
+
+    undo_stack->push(new AddFrameCommand<SimpleTile, QImage>(simple_tiles, ref, index, frame));
+}
+
+void TilesetViewWidget::addFrame(const int index, const AutoTile::Frame &frame)
+{
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(!autotiles.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(is_1x1(*selected_tiles));
+
+    const auto ref = selected_tiles->at(0).at(0);
+    Q_ASSERT(ref.autotile);
+    Q_ASSERT(autotiles->contains(ref.name));
+
+    const auto &frames = autotiles->value(ref.name).frames;
+//  +1 because we may want to add at the end
+    Q_ASSERT(0 <= index && index < frames.length() + 1);
+
+    undo_stack->push(new AddFrameCommand<AutoTile, AutoTile::Frame>(autotiles, ref, index, frame));
+}
+
+void TilesetViewWidget::addFrames(const QHash<int, QImage> &added)
+{
+    Q_ASSERT(!undo_stack.isNull());
+    Q_ASSERT(!simple_tiles.isNull());
+    Q_ASSERT(!autotiles.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(is_1x1(*selected_tiles));
     const auto ref = selected_tiles->at(0).at(0);
 
     if (ref.autotile)
-    {}
+    {
+        Q_ASSERT(autotiles->contains(ref.name));
+        const auto &frames = autotiles->value(ref.name).frames;
+        for (auto &index: added.keys())
+            Q_ASSERT(0 <= index && index < frames.length() + 1);
+
+/*        undo_stack->beginMacro("Add Frames");
+        for (auto &index: added.keys())
+            undo_stack->push(new AddFrameCommand<AutoTile, AutoTile::Frame>(autotiles, ref, index, added[]));
+        undo_stack->endMacro();*/
+    }
     else
     {
         Q_ASSERT(simple_tiles->contains(ref.name));
@@ -368,7 +440,7 @@ void TilesetViewWidget::addFrames(const QHash<int, QImage> &added)
 
         undo_stack->beginMacro("Add Frames");
         for (auto &index: added.keys())
-            undo_stack->push(new AddSimpleTileFrameCommand(simple_tiles, ref, index, added[index]));
+            undo_stack->push(new AddFrameCommand<SimpleTile, QImage>(simple_tiles, ref, index, added[index]));
         undo_stack->endMacro();
     }
 }

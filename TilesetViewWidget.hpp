@@ -19,11 +19,12 @@ public:
 
     void resize() final override;
 
-//  TODO: factorise
     void addSimpleTile(const SimpleTile &simple_tile);
     void addAutoTile(const AutoTile &autotile);
     void removeTiles(const QVector<TileReference> &tiles);
 
+    void addFrame(const int index, const QImage &frame);
+    void addFrame(const int index, const AutoTile::Frame &frame);
     void addFrames(const QHash<int, QImage> &added);
     void removeFrames(const QVector<int> &indexes);
 

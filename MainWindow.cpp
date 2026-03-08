@@ -159,10 +159,17 @@ void MainWindow::resetPointers()
     map_layers->clear();
 }
 
+static inline QImage gen_image(const QSize &size, const QColor color)
+{
+    QImage pixels(size, QImage::Format_ARGB32_Premultiplied);
+    pixels.fill(color);
+
+    return pixels;
+}
+
 void MainWindow::resetBrushPixels()
 {
-    QImage pixels(16, 16, QImage::Format_ARGB32_Premultiplied);
-    pixels.fill(Qt::black);
+    QImage pixels = gen_image({16, 16}, Qt::black);
     pixels.setPixelColor(7, 7, Qt::white);
     pixels.setPixelColor(7, 8, Qt::white);
     pixels.setPixelColor(8, 7, Qt::white);
@@ -416,27 +423,36 @@ static inline bool is_1x1(const SelectedTiles &tiles)
     return (tiles.length() == 1) && (tiles.at(0).length() == 1);
 }
 
-static inline bool can_add_frames(const SimpleTiles &simple_tiles, const SelectedTiles &tiles)
+static inline bool can_add_frames(const SimpleTiles &simple_tiles, const AutoTiles &autotiles, const SelectedTiles &tiles)
 {
     if (!is_1x1(tiles))
         return false;
-    else
-        return simple_tiles.contains(tiles[0][0].name);
+
+//  your compiler can probably optimise this
+    const auto id = tiles[0][0].name;
+    return (simple_tiles.contains(id) || autotiles.contains(id));
 }
 
-static inline bool can_remove_frames(const SimpleTiles &simple_tiles, const SelectedTiles &tiles)
+static inline bool can_remove_frames(const SimpleTiles &simple_tiles, const AutoTiles &autotiles, const SelectedTiles &tiles)
 {
     if (!is_1x1(tiles))
         return false;
-    else if (!simple_tiles.contains(tiles[0][0].name))
-        return false;
+
+//  again, trust your optimiser
+    const auto id = tiles[0][0].name;
+
+    if (simple_tiles.contains(id))
+        return (simple_tiles.value(id).frames.length() > 1);
+    else if (autotiles.contains(id))
+        return (autotiles.value(id).frames.length() > 1);
     else
-        return (simple_tiles.value(tiles[0][0].name).frames.length() > 1);
+        return false;
 }
 
 void MainWindow::onSelectedChanged()
 {
     Q_ASSERT(!simple_tiles.isNull());
+    Q_ASSERT(!autotiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
 
     ui->tilesetView->update();
@@ -444,9 +460,9 @@ void MainWindow::onSelectedChanged()
     ui->actionCloneSelectedTiles->setEnabled(not_empty(*selected_tiles));
     ui->actionRemoveSelectedTiles->setEnabled(not_empty(*selected_tiles));
 
-    ui->actionAddFrame->setEnabled(can_add_frames(*simple_tiles, *selected_tiles));
-    ui->actionCloneCurrentFrame->setEnabled(can_add_frames(*simple_tiles, *selected_tiles));
-    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *selected_tiles));
+    ui->actionAddFrame->setEnabled(can_add_frames(*simple_tiles, *autotiles, *selected_tiles));
+    ui->actionCloneCurrentFrame->setEnabled(can_add_frames(*simple_tiles, *autotiles, *selected_tiles));
+    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *autotiles, *selected_tiles));
 }
 
 void MainWindow::refreshViews()
@@ -491,11 +507,12 @@ void MainWindow::updateLayersBoxes()
     ui->actionRemoveLayer->setEnabled(n > 1);
 }
 
-static inline int get_max_frames(const SimpleTiles &simple_tiles)
+template <typename T>
+static inline int get_max_frames(const Tileset<T> &tiles)
 {
     int max = 0;
 
-    for (auto &tile: simple_tiles.values())
+    for (auto &tile: tiles.values())
         if (max < tile.frames.length())
             max = tile.frames.length();
 
@@ -505,7 +522,10 @@ static inline int get_max_frames(const SimpleTiles &simple_tiles)
 void MainWindow::updateFramesBoxes()
 {
     Q_ASSERT(!simple_tiles.isNull());
-    const int n = get_max_frames(*simple_tiles);
+    Q_ASSERT(!autotiles.isNull());
+    const int max_simple = get_max_frames(*simple_tiles);
+    const int max_auto = get_max_frames(*autotiles);
+    const int n = qMax(max_simple, max_auto);
 
     resize_cb(ui->currentFrameMapViewComboBox, n);
     resize_cb(ui->currentFrameMapPainterComboBox, n);
@@ -592,10 +612,7 @@ static inline QImage query_tile(const int tilesize, const QString &title, QWidge
     AddRectDialog dialog(tilesize, parent);
     dialog.setWindowTitle(title);
     if (dialog.exec() == QDialog::Accepted)
-    {
-        tile = QImage(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
-        tile.fill(dialog.getColor());
-    }
+        tile = gen_image({tilesize, tilesize}, dialog.getColor());
 
     return tile;
 }
@@ -666,6 +683,7 @@ void MainWindow::onCloneSelectedTiles()
 void MainWindow::onRemoveSelectedTiles()
 {
     Q_ASSERT(!simple_tiles.isNull());
+    Q_ASSERT(!autotiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
 
     QSet<TileReference> uniques = get_unique_valid_ids(*simple_tiles, *selected_tiles);
@@ -685,49 +703,73 @@ void MainWindow::onRemoveSelectedTiles()
 
 void MainWindow::onAddFrame()
 {
-    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
     const auto ref = selected_tiles->at(0).at(0);
-    Q_ASSERT(simple_tiles->contains(ref.name));
 
     const int tilesize = ui->tilesetView->getTilesize();
     Q_ASSERT(tilesize > 0);
+    const int actual_tilesize = ref.autotile? tilesize/2 : tilesize;
 
     const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
 
-    AddRectDialog dialog(tilesize, this);
+    AddRectDialog dialog(actual_tilesize, this);
     dialog.setWindowTitle("Add Frame");
     if (dialog.exec() == QDialog::Accepted)
     {
-        QImage frame(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
-        frame.fill(dialog.getColor());
+        if (ref.autotile)
+        {
+            Q_ASSERT(!autotiles.isNull());
+            Q_ASSERT(autotiles->contains(ref.name));
 
-        ui->tilesetView->addFrames({{current_frame + 1, frame}});
+            QImage pixels = gen_image({tilesize/2, tilesize/2}, dialog.getColor());
+        //  see Types.hpp for why 20
+            QVector<QImage> metatiles(20, pixels);
+            ui->tilesetView->addFrame(current_frame + 1, {metatiles});
+        }
+        else
+        {
+            Q_ASSERT(!simple_tiles.isNull());
+            Q_ASSERT(simple_tiles->contains(ref.name));
+
+            QImage pixels = gen_image({tilesize, tilesize}, dialog.getColor());
+            ui->tilesetView->addFrame(current_frame + 1, pixels);
+        }
 
         updateFramesBoxes();
-        ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *selected_tiles));
+        ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *autotiles, *selected_tiles));
     }
 }
 
 void MainWindow::onCloneCurrentFrame()
 {
-    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
     const auto ref = selected_tiles->at(0).at(0);
-    Q_ASSERT(simple_tiles->contains(ref.name));
 
     const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
-    auto &frames = (*simple_tiles)[ref.name].frames;
-    const int n = frames.length();
 
-    QImage frame = frames[qMin(current_frame, n)];
+    if (ref.autotile)
+    {
+        Q_ASSERT(!autotiles.isNull());
+        auto &frames = (*autotiles)[ref.name].frames;
 
-    ui->tilesetView->addFrames({{current_frame + 1, frame}});
+        const int n = frames.length();
+        AutoTile::Frame frame = frames[qMin(current_frame, n - 1)];
+        ui->tilesetView->addFrame(current_frame + 1, frame);
+    }
+    else
+    {
+        Q_ASSERT(!simple_tiles.isNull());
+        auto &frames = (*simple_tiles)[ref.name].frames;
+
+        const int n = frames.length();
+        QImage frame = frames[qMin(current_frame, n - 1)];
+        ui->tilesetView->addFrame(current_frame + 1, frame);
+    }
 
     updateFramesBoxes();
-    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *selected_tiles));
+    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *autotiles, *selected_tiles));
 }
 
 void MainWindow::onRemoveCurrentFrame()
@@ -743,7 +785,7 @@ void MainWindow::onRemoveCurrentFrame()
     ui->tilesetView->removeFrames({current_frame});
 
     updateFramesBoxes();
-    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *selected_tiles));
+    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *autotiles, *selected_tiles));
 }
 
 void MainWindow::onResizeMap()
