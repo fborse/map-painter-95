@@ -92,7 +92,7 @@ private:
 };
 
 template <typename T>
-class AddTilesCommand final: public QUndoCommand, public TilesOrderCommand, public TilesCommand<Tileset<SimpleTile>>
+class AddTilesCommand final: public QUndoCommand, public TilesOrderCommand, public TilesCommand<Tileset<T>>
 {
 public:
     using Added = QMap<QString, T>;
@@ -107,7 +107,7 @@ public:
         for (auto &id: added.keys())
         {
             lockTilesOrder()->pop_back();
-            lockTiles()->remove(id);
+            TilesCommand<Tileset<T>>::lockTiles()->remove(id);
         }
     }
 
@@ -117,7 +117,7 @@ public:
         for (auto &id: added.keys())
         {
             lockTilesOrder()->push_back(id);
-            lockTiles()->insert(id, added.value(id));
+            TilesCommand<Tileset<T>>::lockTiles()->insert(id, added.value(id));
         }
     }
 
@@ -812,15 +812,16 @@ void MapPainterWidget::handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint
     }
 }
 
-static inline bool is_tile_unique(const MapLayer &map_layers, const TileReference &id)
+static inline bool is_tile_unique(const MapLayers &map_layers, const TileReference &id)
 {
     int found = 0;
 
-    for (auto &row: map_layers)
-        for (auto &tile: row)
-            if (tile == id)
-                if (++found > 1)
-                    return false;
+    for (auto &layer: map_layers)
+        for (auto &row: layer)
+            for (auto &tile: row)
+                if (tile == id)
+                    if (++found > 1)
+                        return false;
 
     return true;
 }
@@ -838,52 +839,95 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
 
-    const auto &[prev_simple_tiles, next_simple_tiles] = get_prev_next_simple(
+    const auto &[prev_simple, next_simple] = get_prev_next_simple(
         changed_pixels,
         *simple_tiles,
         map_layers->at(current_layer),
         current_frame,
-        [&] (TileReference id) {
-            return is_tile_unique(map_layers->at(current_layer), id) && !id.isEmpty();
+        [&] (TileReference ref) {
+            return ref && is_tile_unique(*map_layers, ref);
+        }
+    );
+    const auto &[prev_auto, next_auto] = get_prev_next_auto(
+        changed_pixels,
+        *autotiles,
+        map_layers->at(current_layer),
+        current_frame,
+        [&] (TileReference ref) {
+            return ref && is_tile_unique(*map_layers, ref);
         }
     );
 
-    AddTilesCommand<SimpleTile>::Added added;
+    AddTilesCommand<SimpleTile>::Added added_simple;
+    AddTilesCommand<AutoTile>::Added added_auto;
     ReplaceReferencesCommand::Changes prev_refs, next_refs;
     for (auto &q: changed_pixels.keys())
     {
         const TileReference prev_ref = map_layers->at(current_layer).at(q.y()).at(q.x());
-    //  let's implement autotile later, somewhere else
-        Q_ASSERT(!prev_ref.autotile);
+        const bool is_unique = is_tile_unique(*map_layers, prev_ref);
 
-    //  faster than !is_tile_unique(*map_layers, prev_id)
-        if (!prev_ref || !prev_simple_tiles.contains(prev_ref.name))
+        if (!prev_ref || (!prev_ref.autotile && !is_unique))
         {
-            SimpleTile new_image = prev_ref.isEmpty()?
+            SimpleTile new_tile = prev_ref.isEmpty()?
                 SimpleTile{{gen_empty(tilesize, tilesize)}}
               : simple_tiles->value(prev_ref.name);
 
-            const int n = new_image.frames.length();
+            const int n = new_tile.frames.length();
+            const int index = qMin(current_frame, n - 1);
             for (auto &p: changed_pixels[q].keys())
-                new_image.frames[qMin(current_frame, n-1)]
-                    .setPixelColor(p, changed_pixels[q][p]);
+                new_tile.frames[index].setPixelColor(p, changed_pixels[q][p]);
 
             const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
-            added[uuid] = new_image;
+            added_simple[uuid] = new_tile;
             prev_refs[{q.x(), q.y(), current_layer}] = prev_ref;
             next_refs[{q.x(), q.y(), current_layer}] = {uuid, false, {}};
         }
+        else if (prev_ref.autotile && !is_unique)
+        {
+            AutoTile new_tile = autotiles->value(prev_ref.name);
+
+            const int n = new_tile.frames.length();
+            const int index = qMin(current_frame, n - 1);
+            auto &metatiles = new_tile.frames[index].metatiles;
+            const int s = metatiles[0].width();
+
+            for (auto &p: changed_pixels[q].keys())
+            {
+                int i;
+                if (p.x() < s && p.y() < s)
+                    i = prev_ref.orientation.top_left;
+                else if (p.x() >= s && p.y() < s)
+                    i = prev_ref.orientation.top_right;
+                else if (p.x() < s)
+                    i = prev_ref.orientation.bottom_left;
+                else
+                    i = prev_ref.orientation.bottom_right;
+
+            //  move p to current metatile => % s
+                metatiles[i].setPixelColor(p.x() % s, p.y() % s, changed_pixels[q][p]);
+            }
+
+            const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
+            added_auto[uuid] = new_tile;
+            prev_refs[{q.x(), q.y(), current_layer}] = prev_ref;
+            next_refs[{q.x(), q.y(), current_layer}] = {uuid, true, prev_ref.orientation};
+        }
     }
 
-    if (!next_simple_tiles.isEmpty() || !added.isEmpty() || !next_refs.isEmpty())
+    const bool tiles_changed = (!next_simple.isEmpty() || !next_auto.isEmpty());
+    const bool tiles_added = (!added_simple.isEmpty() || !added_auto.isEmpty());
+    const bool refs_changed = !next_refs.isEmpty();
+    if (tiles_changed || tiles_added || refs_changed)
     {
         undo_stack->beginMacro("non-retroactive change");
-        undo_stack->push(new ReplaceTilesCommand<SimpleTile>(simple_tiles, prev_simple_tiles, next_simple_tiles));
-        undo_stack->push(new AddTilesCommand<SimpleTile>(simple_tiles_order, simple_tiles, added));
+        undo_stack->push(new ReplaceTilesCommand<SimpleTile>(simple_tiles, prev_simple, next_simple));
+        undo_stack->push(new ReplaceTilesCommand<AutoTile>(autotiles, prev_auto, next_auto));
+        undo_stack->push(new AddTilesCommand<SimpleTile>(simple_tiles_order, simple_tiles, added_simple));
+        undo_stack->push(new AddTilesCommand<AutoTile>(autotiles_order, autotiles, added_auto));
         undo_stack->push(new ReplaceReferencesCommand(map_layers, prev_refs, next_refs));
         undo_stack->endMacro();
 
-        if (!added.isEmpty())
+        if (!added_simple.isEmpty() || !added_auto.isEmpty())
             emit tilesAdded();
     }
 }
