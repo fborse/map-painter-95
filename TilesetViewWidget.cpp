@@ -13,24 +13,26 @@ static inline QSharedPointer<T> lock_ptr(QWeakPointer<T> &weak)
     return shared;
 }
 
-class SimpleTilesOrderCommand
+//  doesn't matter if the tiles_order is simple or auto tiles
+class TilesOrderCommand
 {
 public:
-    SimpleTilesOrderCommand(QWeakPointer<Names> simple_tiles_order): simple_tiles_order_ptr{simple_tiles_order} {}
-    QSharedPointer<Names> lockSimpleTilesOrder() { return lock_ptr(simple_tiles_order_ptr); }
+    TilesOrderCommand(QWeakPointer<Names> tiles_order): tiles_order_ptr{tiles_order} {}
+    QSharedPointer<Names> lockTilesOrder() { return lock_ptr(tiles_order_ptr); }
 
 private:
-    QWeakPointer<Names> simple_tiles_order_ptr;
+    QWeakPointer<Names> tiles_order_ptr;
 };
 
-class AutoTilesOrderCommand
+template <typename T>
+class TilesCommand
 {
 public:
-    AutoTilesOrderCommand(QWeakPointer<Names> autotiles_order): autotiles_order_ptr{autotiles_order} {}
-    QSharedPointer<Names> lockAutoTilesOrder() { return lock_ptr(autotiles_order_ptr); }
+    TilesCommand(QWeakPointer<T> tiles): tiles_ptr{tiles} {}
+    QSharedPointer<T> lockTiles() { return lock_ptr(tiles_ptr); }
 
 private:
-    QWeakPointer<Names> autotiles_order_ptr;
+    QWeakPointer<T> tiles_ptr;
 };
 
 class SimpleTilesCommand
@@ -63,170 +65,132 @@ private:
     QWeakPointer<MapLayers> map_layers_ptr;
 };
 
-class MoveSimpleTileCommand final: public QUndoCommand, public SimpleTilesOrderCommand
+class MoveTileCommand final: public QUndoCommand, public TilesOrderCommand
 {
 public:
-    MoveSimpleTileCommand(QWeakPointer<Names> ptr, const int origin, const int target):
-        QUndoCommand(), SimpleTilesOrderCommand(ptr), origin{origin}, target{target}
+    MoveTileCommand(QWeakPointer<Names> ptr, const int origin, const int target):
+        QUndoCommand(), TilesOrderCommand(ptr), origin{origin}, target{target}
     {}
 
     void undo() final override
     {
-        lockSimpleTilesOrder()->insert(origin, lockSimpleTilesOrder()->takeAt(target));
+        lockTilesOrder()->insert(origin, lockTilesOrder()->takeAt(target));
     }
 
     void redo() final override
     {
-        lockSimpleTilesOrder()->insert(target, lockSimpleTilesOrder()->takeAt(origin));
+        lockTilesOrder()->insert(target, lockTilesOrder()->takeAt(origin));
     }
 
 private:
     int origin, target;
 };
 
-class MoveAutoTileCommand final: public QUndoCommand, public AutoTilesOrderCommand
+class SwapTilesCommand final: public QUndoCommand, public TilesOrderCommand
 {
 public:
-    MoveAutoTileCommand(QWeakPointer<Names> ptr, const int origin, const int target):
-        QUndoCommand(), AutoTilesOrderCommand(ptr), origin{origin}, target{target}
+    SwapTilesCommand(QWeakPointer<Names> ptr, const int index1, const int index2):
+        QUndoCommand(), TilesOrderCommand(ptr), index1{index1}, index2{index2}
     {}
 
     void undo() final override
     {
-        lockAutoTilesOrder()->insert(origin, lockAutoTilesOrder()->takeAt(target));
+        lockTilesOrder()->swapItemsAt(index1, index2);
     }
 
     void redo() final override
     {
-        lockAutoTilesOrder()->insert(target, lockAutoTilesOrder()->takeAt(origin));
-    }
-
-private:
-    int origin, target;
-};
-
-class SwapSimpleTilesCommand final: public QUndoCommand, public SimpleTilesOrderCommand
-{
-public:
-    SwapSimpleTilesCommand(QWeakPointer<Names> ptr, const int index1, const int index2):
-        QUndoCommand(), SimpleTilesOrderCommand(ptr), index1{index1}, index2{index2}
-    {}
-
-    void undo() final override
-    {
-        lockSimpleTilesOrder()->swapItemsAt(index1, index2);
-    }
-
-    void redo() final override
-    {
-        lockSimpleTilesOrder()->swapItemsAt(index1, index2);
+        lockTilesOrder()->swapItemsAt(index1, index2);
     }
 
 private:
     int index1, index2;
 };
 
-class SwapAutoTilesCommand final: public QUndoCommand, public AutoTilesOrderCommand
+template <typename T>
+class AddTileCommand: public QUndoCommand, public TilesOrderCommand, public TilesCommand<Tileset<T>>
 {
 public:
-    SwapAutoTilesCommand(QWeakPointer<Names> ptr, const int index1, const int index2):
-        QUndoCommand(), AutoTilesOrderCommand(ptr), index1{index1}, index2{index2}
-    {}
-
-    void undo() final override
+    AddTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset<T>> tiles, const T &tile):
+        QUndoCommand(), TilesOrderCommand(tiles_order), TilesCommand<Tileset<T>>(tiles),
+        index{0}, added_tile{tile}, added_ref{}
     {
-        lockAutoTilesOrder()->swapItemsAt(index1, index2);
-    }
-
-    void redo() final override
-    {
-        lockAutoTilesOrder()->swapItemsAt(index1, index2);
-    }
-
-private:
-    int index1, index2;
-};
-
-class AddSimpleTileCommand final: public QUndoCommand, public SimpleTilesOrderCommand, public SimpleTilesCommand
-{
-public:
-    AddSimpleTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<SimpleTiles> simple_tiles, const SimpleTile &tile):
-        QUndoCommand(), SimpleTilesOrderCommand(tiles_order), SimpleTilesCommand(simple_tiles),
-        index{0}, added_ref{}, added_tile{tile}
-    {
-        index = lockSimpleTilesOrder()->length();
+        index = lockTilesOrder()->length();
         const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-        added_ref = {id, false, {}};
+        added_ref.name = id;
     }
 
     void undo() final override
     {
-        lockSimpleTilesOrder()->remove(index);
-        lockSimpleTiles()->remove(added_ref.name);
+        lockTilesOrder()->remove(index);
+        TilesCommand<Tileset<T>>::lockTiles()->remove(added_ref.name);
     }
 
     void redo() final override
     {
-        lockSimpleTilesOrder()->push_back(added_ref.name);
-        lockSimpleTiles()->insert(added_ref.name, added_tile);
+        lockTilesOrder()->push_back(added_ref.name);
+        TilesCommand<Tileset<T>>::lockTiles()->insert(added_ref.name, added_tile);
     }
 
 private:
     int index;
+    T added_tile;
+
+protected:
     TileReference added_ref;
-    SimpleTile added_tile;
 };
 
-class AddAutoTileCommand final: public QUndoCommand, public AutoTilesOrderCommand, public AutoTilesCommand
+class AddSimpleTileCommand final: public AddTileCommand<SimpleTile>
 {
 public:
-    AddAutoTileCommand(QWeakPointer<Names> autotiles_order, QWeakPointer<AutoTiles> autotiles, const AutoTile &tile):
-        QUndoCommand(), AutoTilesOrderCommand(autotiles_order), AutoTilesCommand(autotiles),
-        index{0}, added_ref{}, added_tile{tile}
+    AddSimpleTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<SimpleTiles> tiles, const SimpleTile &tile):
+        AddTileCommand(tiles_order, tiles, tile)
     {
-        index = lockAutoTilesOrder()->length();
-        const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        added_ref.autotile = false;
+    }
+};
+
+class AddAutoTileCommand final: public AddTileCommand<AutoTile>
+{
+public:
+    AddAutoTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<AutoTiles> tiles, const AutoTile &tile):
+        AddTileCommand(tiles_order, tiles, tile)
+    {
+        added_ref.autotile = true;
     //  see RPG Maker scheme
-        added_ref = {id, true, {8, 11, 20, 23}};
+        added_ref.orientation = {8, 11, 20, 23};
     }
-
-    void undo() final override
-    {
-        lockAutoTilesOrder()->remove(index);
-        lockAutoTiles()->remove(added_ref.name);
-    }
-
-    void redo() final override
-    {
-        lockAutoTilesOrder()->push_back(added_ref.name);
-        lockAutoTiles()->insert(added_ref.name, added_tile);
-    }
-
-private:
-    int index;
-    TileReference added_ref;
-    AutoTile added_tile;
 };
 
-class RemoveSimpleTileCommand final: public QUndoCommand, public SimpleTilesOrderCommand, public SimpleTilesCommand, public MapLayersCommand
+struct MapLayersCoordinates
+{
+    int i, j, k;
+
+    bool operator==(const MapLayersCoordinates &other) const
+    {
+        return (i == other.i) && (j == other.j) && (k == other.k);
+    }
+};
+
+static inline uint qHash(const MapLayersCoordinates &coords, const uint seed = 0)
+{
+    return seed ^ (
+        qHash(coords.i, seed) * 31
+      + qHash(coords.j, seed) * 37
+      + qHash(coords.k, seed) * 41
+    );
+}
+
+template <typename T>
+class RemoveTileCommand final: public QUndoCommand, public TilesOrderCommand, public TilesCommand<Tileset<T>>, public MapLayersCommand
 {
 public:
-    struct Coordinates
-    {
-        int i, j, k;
-
-        bool operator==(const Coordinates &other) const
-        {
-            return i == other.i && j == other.j && k == other.k;
-        }
-    };
-
-    RemoveSimpleTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<SimpleTiles> simple_tiles, QWeakPointer<MapLayers> map_layers, const TileReference &id):
-        QUndoCommand(), SimpleTilesOrderCommand(tiles_order), SimpleTilesCommand(simple_tiles), MapLayersCommand(map_layers),
+    RemoveTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset<T>> simple_tiles, QWeakPointer<MapLayers> map_layers, const TileReference &id):
+        QUndoCommand(), TilesOrderCommand(tiles_order), TilesCommand<Tileset<T>>(simple_tiles), MapLayersCommand(map_layers),
         index{0}, tile_reference{id}, tile{}
     {
-        index = lockSimpleTilesOrder()->indexOf(tile_reference.name);
-        tile = lockSimpleTiles()->value(tile_reference.name);
+        index = lockTilesOrder()->indexOf(tile_reference.name);
+        tile = TilesCommand<Tileset<T>>::lockTiles()->value(tile_reference.name);
 
         auto layers = *lockMapLayers();
         for (int k = 0; k < layers.length(); ++k)
@@ -238,8 +202,8 @@ public:
 
     void undo() final override
     {
-        lockSimpleTilesOrder()->insert(index, tile_reference.name);
-        lockSimpleTiles()->insert(tile_reference.name, tile);
+        lockTilesOrder()->insert(index, tile_reference.name);
+        TilesCommand<Tileset<T>>::lockTiles()->insert(tile_reference.name, tile);
 
         for (auto &[i, j, k]: affected_tiles.keys())
             (*lockMapLayers())[k][j][i] = affected_tiles[{i, j, k}];
@@ -247,8 +211,8 @@ public:
 
     void redo() final override
     {
-        lockSimpleTilesOrder()->remove(index);
-        lockSimpleTiles()->remove(tile_reference.name);
+        lockTilesOrder()->remove(index);
+        TilesCommand<Tileset<T>>::lockTiles()->remove(tile_reference.name);
 
         for (auto &[i, j, k]: affected_tiles.keys())
             (*lockMapLayers())[k][j][i] = {};
@@ -257,18 +221,9 @@ public:
 private:
     int index;
     TileReference tile_reference;
-    SimpleTile tile;
-    QHash<Coordinates, TileReference> affected_tiles;
+    T tile;
+    QHash<MapLayersCoordinates, TileReference> affected_tiles;
 };
-
-static inline uint qHash(const RemoveSimpleTileCommand::Coordinates &coords, const uint seed = 0)
-{
-    return seed ^ (
-        qHash(coords.i, seed) * 31
-      + qHash(coords.j, seed) * 37
-      + qHash(coords.k, seed) * 41
-    );
-}
 
 class AddSimpleTileFrameCommand final: public QUndoCommand, public SimpleTilesCommand
 {
@@ -350,48 +305,22 @@ void TilesetViewWidget::resize()
     EditorWidget::resize();
 }
 
-void TilesetViewWidget::addSimpleTiles(const QVector<SimpleTile> &images, const bool undoable)
+void TilesetViewWidget::addSimpleTile(const SimpleTile &simple_tile)
 {
     Q_ASSERT(!undo_stack.isNull());
     Q_ASSERT(!simple_tiles_order.isNull());
     Q_ASSERT(!simple_tiles.isNull());
 
-    if (undoable)
-    {
-        undo_stack->beginMacro("Add Tiles");
-        for (auto &pixels: images)
-            undo_stack->push(new AddSimpleTileCommand(simple_tiles_order, simple_tiles, pixels));
-        undo_stack->endMacro();
-    }
-    else
-    {
-        for (auto &pixels: images)
-        {
-            const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-            simple_tiles_order->push_back(id);
-            simple_tiles->insert(id, pixels);
-        }
-    }
-
-    update();
+    undo_stack->push(new AddSimpleTileCommand(simple_tiles_order, simple_tiles, simple_tile));
 }
 
-void TilesetViewWidget::addAutoTile(const AutoTile &autotile, const bool undoable)
+void TilesetViewWidget::addAutoTile(const AutoTile &autotile)
 {
     Q_ASSERT(!undo_stack.isNull());
     Q_ASSERT(!autotiles_order.isNull());
     Q_ASSERT(!autotiles.isNull());
 
-    if (undoable)
-    {
-        undo_stack->push(new AddAutoTileCommand(autotiles_order, autotiles, autotile));
-    }
-    else
-    {
-        const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-        autotiles_order->push_back(id);
-        autotiles->insert(id, autotile);
-    }
+    undo_stack->push(new AddAutoTileCommand(autotiles_order, autotiles, autotile));
 }
 
 void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
@@ -401,14 +330,14 @@ void TilesetViewWidget::removeTiles(const QVector<TileReference> &tiles)
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
     for (auto &ref: tiles)
-        Q_ASSERT(simple_tiles->contains(ref.name));
+        Q_ASSERT(simple_tiles->contains(ref.name) || autotiles->contains(ref.name));
 
     undo_stack->beginMacro("Remove Tiles");
     for (auto &ref: tiles)
         if (ref.autotile)
-        {}
+            undo_stack->push(new RemoveTileCommand<AutoTile>(autotiles_order, autotiles, map_layers, ref));
         else
-            undo_stack->push(new RemoveSimpleTileCommand(simple_tiles_order, simple_tiles, map_layers, ref));
+            undo_stack->push(new RemoveTileCommand<SimpleTile>(simple_tiles_order, simple_tiles, map_layers, ref));
     undo_stack->endMacro();
 
     emit tilesRemoved();
@@ -732,11 +661,11 @@ void TilesetViewWidget::handleTileModifications()
                 const int j = autotiles_order->indexOf(target->name);
 
                 if (drag_mode == MOVE_MODE && click_origin)
-                    undo_stack->push(new MoveAutoTileCommand(autotiles_order, i, j));
+                    undo_stack->push(new MoveTileCommand(autotiles_order, i, j));
                 else if (drag_mode == SWAP_MODE && click_origin)
-                    undo_stack->push(new SwapAutoTilesCommand(autotiles_order, i, j));
+                    undo_stack->push(new SwapTilesCommand(autotiles_order, i, j));
                 else if (drag_mode == SELECTION_MODE && right_click_origin)
-                    undo_stack->push(new MoveAutoTileCommand(autotiles_order, i, j));
+                    undo_stack->push(new MoveTileCommand(autotiles_order, i, j));
             }
             else if (!origin->autotile && !target->autotile)
             {
@@ -744,11 +673,11 @@ void TilesetViewWidget::handleTileModifications()
                 const int j = simple_tiles_order->indexOf(target->name);
 
                 if (drag_mode == MOVE_MODE && click_origin)
-                    undo_stack->push(new MoveSimpleTileCommand(simple_tiles_order, i, j));
+                    undo_stack->push(new MoveTileCommand(simple_tiles_order, i, j));
                 else if (drag_mode == SWAP_MODE && click_origin)
-                    undo_stack->push(new SwapSimpleTilesCommand(simple_tiles_order, i, j));
+                    undo_stack->push(new SwapTilesCommand(simple_tiles_order, i, j));
                 else if (drag_mode == SELECTION_MODE && right_click_origin)
-                    undo_stack->push(new MoveSimpleTileCommand(simple_tiles_order, i, j));
+                    undo_stack->push(new MoveTileCommand(simple_tiles_order, i, j));
             }
         }
     }

@@ -19,9 +19,9 @@ public:
 
     void resize() final override;
 
-//  undoable because at program launch we don't want to go through undo_stack
-    void addSimpleTiles(const QVector<SimpleTile> &tiles, const bool undoable);
-    void addAutoTile(const AutoTile &autotile, const bool undoable);
+//  TODO: factorise
+    void addSimpleTile(const SimpleTile &simple_tile);
+    void addAutoTile(const AutoTile &autotile);
     void removeTiles(const QVector<TileReference> &tiles);
 
     void addFrames(const QHash<int, QImage> &added);

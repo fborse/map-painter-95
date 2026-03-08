@@ -188,14 +188,14 @@ void MainWindow::populateTileset(const int tilesize)
     QImage pixels(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
     const QColor colors[] = {{0, 128, 255}, {0, 128, 0}, {128, 64, 0}};
 
-    QVector<SimpleTile> tiles;
     for (auto &color: colors)
     {
         pixels.fill(color);
-        tiles.push_back({{pixels}});
+        ui->tilesetView->addSimpleTile({{pixels}});
     }
-
-    ui->tilesetView->addSimpleTiles({tiles}, false);
+//  don't want the user to undo these ;
+//  we're starting from an emptied stack anyway
+    undo_stack->clear();
 }
 
 void MainWindow::setMapSize(const QSize size)
@@ -332,7 +332,7 @@ void MainWindow::onImportSingleTile()
     ImportSingleTileDialog dialog(tilesize, this);
     if (dialog.exec() == QDialog::Accepted)
     {
-        ui->tilesetView->addSimpleTiles({dialog.getTile()}, true);
+        ui->tilesetView->addSimpleTile(dialog.getTile());
         refreshViews();
         updateFramesBoxes();
     }
@@ -345,7 +345,11 @@ void MainWindow::onImportTilesInBulk()
     ImportTilesInBulkDialog dialog(tilesize, this);
     if (dialog.exec() == QDialog::Accepted)
     {
-        ui->tilesetView->addSimpleTiles(dialog.getTiles(), true);
+        undo_stack->beginMacro("Import Simple Tiles");
+        for (auto &tile: dialog.getTiles())
+            ui->tilesetView->addSimpleTile(tile);
+        undo_stack->endMacro();
+
         refreshViews();
     }
 }
@@ -602,7 +606,7 @@ void MainWindow::onAddSimpleTile()
     QImage tile = query_tile(tilesize, "Add Simple Tile", this);
 
     if (!tile.isNull())
-        ui->tilesetView->addSimpleTiles({SimpleTile{{tile}}}, true);
+        ui->tilesetView->addSimpleTile({{tile}});
 }
 
 void MainWindow::onAddAutoTile()
@@ -618,17 +622,18 @@ void MainWindow::onAddAutoTile()
         AutoTile tile;
         tile.frames.push_back({QVector<QImage>(n, metatile)});
 
-        ui->tilesetView->addAutoTile(tile, true);
+        ui->tilesetView->addAutoTile(tile);
     }
 }
 
-static inline QSet<TileReference> get_unique_valid_ids(const SimpleTiles &simple_tiles, const SelectedTiles &selected)
+template <typename T>
+static inline QSet<TileReference> get_unique_valid_ids(const Tileset<T> &tiles, const SelectedTiles &selected)
 {
     QSet<TileReference> uniques;
 
     for (auto &row: selected)
         for (auto &ref: row)
-            if (simple_tiles.contains(ref.name))
+            if (tiles.contains(ref.name))
                 uniques.insert(ref);
 
     return uniques;
@@ -639,18 +644,23 @@ void MainWindow::onCloneSelectedTiles()
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
 
-    QSet<TileReference> uniques = get_unique_valid_ids(*simple_tiles, *selected_tiles);
-    if (uniques.isEmpty())
+    QSet<TileReference> unique_simples = get_unique_valid_ids(*simple_tiles, *selected_tiles);
+    QSet<TileReference> unique_autos = get_unique_valid_ids(*autotiles, *selected_tiles);
+    if (unique_simples.isEmpty() && unique_autos.isEmpty())
         return;
 
-    QVector<SimpleTile> tiles;
-    for (auto &ref: uniques)
+    undo_stack->beginMacro("Clone Selected Tiles");
+    for (auto &ref: unique_simples)
     {
         Q_ASSERT(simple_tiles->contains(ref.name));
-        tiles.push_back(simple_tiles->value(ref.name));
+        ui->tilesetView->addSimpleTile(simple_tiles->value(ref.name));
     }
-
-    ui->tilesetView->addSimpleTiles(tiles, true);
+    for (auto &ref: unique_autos)
+    {
+        Q_ASSERT(autotiles->contains(ref.name));
+        ui->tilesetView->addAutoTile(autotiles->value(ref.name));
+    }
+    undo_stack->endMacro();
 }
 
 void MainWindow::onRemoveSelectedTiles()
@@ -659,13 +669,14 @@ void MainWindow::onRemoveSelectedTiles()
     Q_ASSERT(!selected_tiles.isNull());
 
     QSet<TileReference> uniques = get_unique_valid_ids(*simple_tiles, *selected_tiles);
+    uniques += get_unique_valid_ids(*autotiles, *selected_tiles);
     if (uniques.isEmpty())
         return;
 
     QVector<TileReference> tiles;
     for (auto &ref: uniques)
     {
-        Q_ASSERT(simple_tiles->contains(ref.name));
+        Q_ASSERT(simple_tiles->contains(ref.name) || autotiles->contains(ref.name));
         tiles.push_back(ref);
     }
 
