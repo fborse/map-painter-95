@@ -8,7 +8,8 @@
 ExportTilesetAndMapDialog::ExportTilesetAndMapDialog(const int tilesize, QWidget *parent):
     QDialog(parent), ui(new Ui::ExportTilesetAndMapDialog),
     tilesize{tilesize}, tile_coordinates{}, drawn_tileset{},
-    simple_tiles_order{nullptr}, simple_tiles{nullptr}, map_layers{nullptr}
+    simple_tiles_order{nullptr}, autotiles_order{nullptr},
+    simple_tiles{nullptr}, autotiles{nullptr}, map_layers{nullptr}
 {
     ui->setupUi(this);
 
@@ -108,11 +109,12 @@ catch (const QString &errstr)
     QMessageBox::warning(this, tr(title), tr(errstr.toStdString().c_str()));
 }
 
-using OrderedSimpleTiles = QVector<QPair<QString, SimpleTile>>;
+template <typename T>
+using OrderedTiles = QVector<QPair<QString, T>>;
 
-static inline OrderedSimpleTiles linearise_tiles(QWeakPointer<Names> tiles_order_ptr, QWeakPointer<SimpleTiles> simple_tiles_ptr)
+static inline OrderedTiles<SimpleTile> linearise_tiles(QWeakPointer<Names> tiles_order_ptr, QWeakPointer<SimpleTiles> simple_tiles_ptr)
 {
-    OrderedSimpleTiles linearised;
+    OrderedTiles<SimpleTile> linearised;
 
 //  here tiles_order/tileset null is a legit case
     QSharedPointer<Names> tiles_order = tiles_order_ptr.toStrongRef();
@@ -128,7 +130,8 @@ static inline OrderedSimpleTiles linearise_tiles(QWeakPointer<Names> tiles_order
     return linearised;
 }
 
-static inline int get_n_images(const OrderedSimpleTiles &tiles)
+template <typename T>
+static inline int get_n_images(const OrderedTiles<T> &tiles)
 {
     int n = 0;
 
@@ -144,7 +147,7 @@ static inline QPoint toIJ(const int index, const int n_columns)
 }
 
 //  both draws the tileset and creates and index of coordinates which the map refers to
-static inline QImage gen_tileset(const OrderedSimpleTiles &tiles, const int ncol, const int tilesize, QHash<QString, QVector<QPoint>> &coords)
+static inline QImage gen_tileset(const OrderedTiles<SimpleTile> &tiles, const int ncol, const int tilesize, QHash<QString, QVector<QPoint>> &coords)
 {
     const int n = get_n_images(tiles);
     const int h = qCeil((n + 1) / float(ncol));

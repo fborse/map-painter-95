@@ -8,7 +8,7 @@
 ExportAsTexturesDialog::ExportAsTexturesDialog(const int tilesize, QWidget *parent):
     QDialog(parent), ui(new Ui::ExportAsTexturesDialog),
     tilesize{tilesize}, current_layer{0}, current_frame{0}, drawn_textures{},
-    simple_tiles{nullptr}, map_layers{nullptr}
+    simple_tiles{nullptr}, autotiles{nullptr}, map_layers{nullptr}
 {
     ui->setupUi(this);
 
@@ -83,14 +83,17 @@ static inline int naive_ppmc(const QSet<int> &xs)
     return max;
 }
 
-static inline QSet<int> get_unique_lengths(const SimpleTiles &simple_tiles, const MapLayer &layer)
+static inline QSet<int> get_unique_lengths(const SimpleTiles &simple_tiles, const AutoTiles &autotiles, const MapLayer &layer)
 {
     QSet<int> lengths;
 
     for (auto &row: layer)
         for (auto &ref: row)
             if (ref.autotile)
-            {}
+            {
+                if (autotiles.contains(ref.name))
+                    lengths.insert(autotiles[ref.name].frames.length());
+            }
             else
             {
                 if (simple_tiles.contains(ref.name))
@@ -102,14 +105,16 @@ static inline QSet<int> get_unique_lengths(const SimpleTiles &simple_tiles, cons
 
 int ExportAsTexturesDialog::getNumberOfFrames() const
 {
-    auto tileset_ptr = simple_tiles.toStrongRef();
-    Q_ASSERT(!tileset_ptr.isNull());
+    auto simple_tiles_ptr = simple_tiles.toStrongRef();
+    Q_ASSERT(!simple_tiles_ptr.isNull());
+    auto autotiles_ptr = autotiles.toStrongRef();
+    Q_ASSERT(!autotiles_ptr.isNull());
     auto map_layers_ptr = map_layers.toStrongRef();
     Q_ASSERT(!map_layers_ptr.isNull());
 
     QSet<int> lengths;
     for (auto &layer: *map_layers_ptr)
-        lengths += get_unique_lengths(*tileset_ptr, layer);
+        lengths += get_unique_lengths(*simple_tiles_ptr, *autotiles_ptr, layer);
 
     return naive_ppmc(lengths);
 }
@@ -131,6 +136,8 @@ void ExportAsTexturesDialog::onAccept() try
 
     auto tileset_ptr = simple_tiles.toStrongRef();
     Q_ASSERT(!tileset_ptr.isNull());
+    auto autotiles_ptr = autotiles.toStrongRef();
+    Q_ASSERT(!autotiles_ptr.isNull());
     auto map_layers_ptr = map_layers.toStrongRef();
     Q_ASSERT(!map_layers_ptr.isNull());
     Q_ASSERT(!map_layers_ptr->isEmpty());
@@ -138,7 +145,7 @@ void ExportAsTexturesDialog::onAccept() try
     for (int l = 0; l < getNumberOfLayers(); ++l)
     {
         Q_ASSERT(!map_layers_ptr->at(l).isEmpty());
-        const int n_frames = naive_ppmc(get_unique_lengths(*tileset_ptr, map_layers_ptr->at(l)));
+        const int n_frames = naive_ppmc(get_unique_lengths(*tileset_ptr, *autotiles_ptr, map_layers_ptr->at(l)));
 
         for (int f = 0; f < n_frames; ++f)
         {
@@ -183,7 +190,7 @@ void ExportAsTexturesDialog::setCurrentFrame(const int frame)
     updateDisplayedTexture();
 }
 
-static inline QImage gen_layer(const int tilesize, const SimpleTiles &simple_tiles, const MapLayer &layer, const int frame)
+static inline QImage gen_layer(const int tilesize, const SimpleTiles &simple_tiles, const AutoTiles &autotiles, const MapLayer &layer, const int frame)
 {
     const int h = layer.length();
     if (layer.isEmpty())
@@ -198,15 +205,23 @@ static inline QImage gen_layer(const int tilesize, const SimpleTiles &simple_til
     {
         for (int i = 0; i < w; ++i)
         {
+            const QPoint p = QPoint(i, j) * tilesize;
+
             if (const auto ref = layer[j][i])
             {
                 if (ref.autotile)
-                {}
+                {
+                    const auto &frames = autotiles[ref.name].frames;
+                    const int n = frames.length();
+                    const auto &tile = frames[qMin(frame, n - 1)];
+
+                    painter.drawImage(p, tile.genTile(ref.orientation));
+                }
                 else
                 {
                     const auto &frames = simple_tiles[ref.name].frames;
                     const int n = frames.length();
-                    painter.drawImage(i * tilesize, j * tilesize, frames[qMin(frame, n-1)]);
+                    painter.drawImage(p, frames[qMin(frame, n - 1)]);
                 }
             }
         }
@@ -219,6 +234,8 @@ void ExportAsTexturesDialog::redrawTextures()
 {
     QSharedPointer<SimpleTiles> simple_tiles_ptr = simple_tiles.toStrongRef();
     Q_ASSERT(!simple_tiles_ptr.isNull());
+    QSharedPointer<AutoTiles> autotiles_ptr = autotiles.toStrongRef();
+    Q_ASSERT(!autotiles_ptr.isNull());
     QSharedPointer<MapLayers> map_layers_ptr = map_layers.toStrongRef();
     Q_ASSERT(!map_layers_ptr.isNull());
 
@@ -227,11 +244,11 @@ void ExportAsTexturesDialog::redrawTextures()
     {
         const auto &layer = map_layers_ptr->at(l);
         Q_ASSERT(!layer.isEmpty());
-        const int n_frames = naive_ppmc(get_unique_lengths(*simple_tiles_ptr, layer));
+        const int n_frames = naive_ppmc(get_unique_lengths(*simple_tiles_ptr, *autotiles_ptr, layer));
 
         QVector<QImage> drawn_frames;
         for (int f = 0; f < n_frames; ++f)
-            drawn_frames.push_back(gen_layer(tilesize, *simple_tiles_ptr, layer, f));
+            drawn_frames.push_back(gen_layer(tilesize, *simple_tiles_ptr, *autotiles_ptr, layer, f));
         drawn_textures.push_back(std::move(drawn_frames));
     }
 }
@@ -263,10 +280,12 @@ void ExportAsTexturesDialog::updateFramesComboBox()
 {
     auto simple_tiles_ptr = simple_tiles.toStrongRef();
     Q_ASSERT(!simple_tiles_ptr.isNull());
+    auto autotiles_ptr = autotiles.toStrongRef();
+    Q_ASSERT(!autotiles_ptr.isNull());
     auto map_layers_ptr = map_layers.toStrongRef();
     Q_ASSERT(!map_layers_ptr.isNull());
 
-    const int n = max_of(get_unique_lengths(*simple_tiles_ptr, map_layers_ptr->value(current_layer)));
+    const int n = max_of(get_unique_lengths(*simple_tiles_ptr, *autotiles_ptr, map_layers_ptr->value(current_layer)));
 
     ui->currentFrameComboBox->blockSignals(true);
     ui->currentFrameComboBox->clear();

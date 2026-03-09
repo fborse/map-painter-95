@@ -371,7 +371,9 @@ void MainWindow::onExportTilesetAndMap()
 
     ExportTilesetAndMapDialog dialog(tilesize, this);
     dialog.setSimpleTilesOrderPointer(simple_tiles_order);
+    dialog.setAutoTilesOrderPointer(autotiles_order);
     dialog.setSimpleTilesPointer(simple_tiles);
+    dialog.setAutoTilesPointer(autotiles);
     dialog.setMapLayersPointer(map_layers);
     dialog.exec();
 }
@@ -385,6 +387,7 @@ void MainWindow::onExportAsTextures()
 
     ExportAsTexturesDialog dialog(tilesize, this);
     dialog.setSimpleTilesPointer(simple_tiles);
+    dialog.setAutoTilesPointer(autotiles);
     dialog.setMapLayersPointer(map_layers);
     dialog.exec();
 }

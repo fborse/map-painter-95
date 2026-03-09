@@ -16,6 +16,7 @@ public:
     ~ExportAsTexturesDialog();
 
     void setSimpleTilesPointer(QWeakPointer<SimpleTiles> ptr) { simple_tiles = ptr; }
+    void setAutoTilesPointer(QWeakPointer<AutoTiles> ptr) { autotiles = ptr; }
     void setMapLayersPointer(QWeakPointer<MapLayers> ptr);
 
     QString getDirectory() const;
@@ -38,6 +39,7 @@ private:
     QVector<QVector<QImage>> drawn_textures;
 
     QWeakPointer<SimpleTiles> simple_tiles;
+    QWeakPointer<AutoTiles> autotiles;
     QWeakPointer<MapLayers> map_layers;
 
     void redrawTextures();
