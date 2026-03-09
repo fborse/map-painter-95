@@ -794,10 +794,10 @@ void MainWindow::onRemoveCurrentFrame()
 void MainWindow::onResizeMap()
 {
     Q_ASSERT(!map_layers.isNull());
-    const int h = map_layers->length();
-    Q_ASSERT(!map_layers->isEmpty());
-    const int w = map_layers->at(0).length();
+    Q_ASSERT(map_layers->length() > 0);
+    const int h = map_layers->at(0).length();
     Q_ASSERT(!map_layers->at(0).isEmpty());
+    const int w = map_layers->at(0).at(0).length();
 
     ResizeMapDialog dialog(this);
     dialog.setSize({w, h});
