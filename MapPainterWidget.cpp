@@ -845,7 +845,7 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
         map_layers->at(current_layer),
         current_frame,
         [&] (TileReference ref) {
-            return ref && is_tile_unique(*map_layers, ref);
+            return ref && !ref.autotile && is_tile_unique(*map_layers, ref);
         }
     );
     const auto &[prev_auto, next_auto] = get_prev_next_auto(
@@ -854,7 +854,7 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
         map_layers->at(current_layer),
         current_frame,
         [&] (TileReference ref) {
-            return ref && is_tile_unique(*map_layers, ref);
+            return ref && ref.autotile && is_tile_unique(*map_layers, ref);
         }
     );
 
