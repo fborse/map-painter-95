@@ -19,10 +19,14 @@ public:
 
     void resize() final override;
 
+//  these two operations are meant to be included into a macro
+//  => 1 command push on undo_stack
     void addSimpleTile(const SimpleTile &simple_tile);
     void addAutoTile(const AutoTile &autotile);
     void removeTiles(const QVector<TileReference> &tiles);
 
+//  these operations are atomic (1 command push on undo_stack)
+//  in order to be combined when the user uses the frame order editor
     void addFrame(const int index, const QImage &frame);
     void addFrame(const int index, const AutoTile::Frame &frame);
     void removeFrame(const int index);
