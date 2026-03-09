@@ -19,7 +19,7 @@ public:
     void setAutoTilesOrderPointer(QWeakPointer<Names> ptr) { autotiles_order = ptr; redrawTileset(); }
     void setSimpleTilesPointer(QWeakPointer<SimpleTiles> ptr) { simple_tiles = ptr; redrawTileset(); }
     void setAutoTilesPointer(QWeakPointer<AutoTiles> ptr) { autotiles = ptr; redrawTileset(); }
-    void setMapLayersPointer(QWeakPointer<MapLayers> ptr) { map_layers = ptr; }
+    void setMapLayersPointer(QWeakPointer<MapLayers> ptr) { map_layers = ptr; redrawTileset(); }
 
     QString getTilesetPath() const;
     QString getMapPath() const;
@@ -35,7 +35,7 @@ private:
 
     int tilesize;
 
-    QHash<QString, QVector<QPoint>> tile_coordinates;
+    QHash<TileReference, QVector<QPoint>> tile_coordinates;
     QImage drawn_tileset;
 
     QWeakPointer<Names> simple_tiles_order, autotiles_order;

@@ -52,7 +52,7 @@ int ExportTilesetAndMapDialog::getNumberOfColumns() const
     return ui->numberOfColumnsSpinBox->value();
 }
 
-static inline void save_map(const QString &filename, const QHash<QString, QVector<QPoint>> &coords, const MapLayers &map_layers)
+static inline void save_map(const QString &filename, const QHash<TileReference, QVector<QPoint>> &coords, const MapLayers &map_layers)
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly))
@@ -71,13 +71,22 @@ static inline void save_map(const QString &filename, const QHash<QString, QVecto
     }
 
     for (auto &layer: map_layers)
+    {
         for (auto &row: layer)
+        {
             for (auto &ref: row)
+            {
+                const uint n = ref.isEmpty()? 1 : coords[ref].length();
+                stream << n;
+
                 if (ref.isEmpty())
                     stream << uint(0) << uint(0);
                 else
-                    for (auto &p: coords[ref.name])
+                    for (auto &p: coords[ref])
                         stream << uint(p.x()) << uint(p.y());
+            }
+        }
+    }
 }
 
 void ExportTilesetAndMapDialog::onAccept() try
@@ -109,23 +118,37 @@ catch (const QString &errstr)
     QMessageBox::warning(this, tr(title), tr(errstr.toStdString().c_str()));
 }
 
+using InvolvedOrientations = QHash<QString, QSet<Orientation>>;
+
+static inline InvolvedOrientations involved_autotile_orientations(const MapLayers &map_layers)
+{
+    InvolvedOrientations orientations;
+
+    for (auto &layer: map_layers)
+        for (auto &row: layer)
+            for (auto &ref: row)
+                if (ref.autotile)
+                //  operator[] creates an empty set automatically
+                    orientations[ref.name].insert(ref.orientation);
+
+    return orientations;
+}
+
 template <typename T>
 using OrderedTiles = QVector<QPair<QString, T>>;
 
-static inline OrderedTiles<SimpleTile> linearise_tiles(QWeakPointer<Names> tiles_order_ptr, QWeakPointer<SimpleTiles> simple_tiles_ptr)
+template <typename T>
+static inline OrderedTiles<T> linearize_tiles(QWeakPointer<Names> tiles_order_ptr, QWeakPointer<Tileset<T>> tiles_ptr)
 {
-    OrderedTiles<SimpleTile> linearised;
-
-//  here tiles_order/tileset null is a legit case
+    OrderedTiles<T> linearised;
     QSharedPointer<Names> tiles_order = tiles_order_ptr.toStrongRef();
-    if (tiles_order.isNull())
-        return linearised;
-    QSharedPointer<SimpleTiles> simple_tiles = simple_tiles_ptr.toStrongRef();
-    if (simple_tiles.isNull())
+    QSharedPointer<Tileset<T>> tiles = tiles_ptr.toStrongRef();
+//  here tiles_order/tileset null is a legit case
+    if (tiles_order.isNull() || tiles.isNull())
         return linearised;
 
     for (auto &id: *tiles_order)
-        linearised.push_back({id, simple_tiles->value(id)});
+        linearised.push_back({id, tiles->value(id)});
 
     return linearised;
 }
@@ -147,11 +170,14 @@ static inline QPoint toIJ(const int index, const int n_columns)
 }
 
 //  both draws the tileset and creates and index of coordinates which the map refers to
-static inline QImage gen_tileset(const OrderedTiles<SimpleTile> &tiles, const int ncol, const int tilesize, QHash<QString, QVector<QPoint>> &coords)
+static inline QImage gen_tileset(const OrderedTiles<SimpleTile> &simple_tiles, const OrderedTiles<AutoTile> &autotiles, const InvolvedOrientations &orientations, const int ncol, const int tilesize, QHash<TileReference, QVector<QPoint>> &coords)
 {
-    const int n = get_n_images(tiles);
-    const int h = qCeil((n + 1) / float(ncol));
-    const int w = (n + 1 < ncol)? n + 1 : ncol;
+    const int n_auto = get_n_images(autotiles);
+    const int n_simple = get_n_images(simple_tiles);
+    const int n_tot = n_auto + n_simple;
+
+    const int h = qCeil((n_tot + 1) / double(ncol));
+    const int w = (n_tot + 1 < ncol)? n_tot + 1 : ncol;
     coords.clear();
 
     QImage tileset(w * tilesize, h * tilesize, QImage::Format_ARGB32_Premultiplied);
@@ -160,13 +186,28 @@ static inline QImage gen_tileset(const OrderedTiles<SimpleTile> &tiles, const in
     QPainter painter(&tileset);
 
     int i = 0;
-    for (auto &[id, tile]: tiles)
+    for (auto &[id, tile]: autotiles)
+    {
+        for (auto &frame: tile.frames)
+        {
+            for (auto &orientation: orientations.value(id))
+            {
+                const QPoint p = toIJ(i, ncol) * tilesize;
+
+                coords[{id, true, orientation}].push_back(p);
+                painter.drawImage(p, frame.genTile(orientation));
+
+                ++i;
+            }
+        }
+    }
+    for (auto &[id, tile]: simple_tiles)
     {
         for (auto &frame: tile.frames)
         {
             const QPoint p = toIJ(i, ncol) * tilesize;
 
-            coords[id].push_back(p);
+            coords[{id, false, {}}].push_back(p);
             painter.drawImage(p, frame);
 
             ++i;
@@ -201,11 +242,18 @@ static inline QImage gen_background(const QSize &size, const int tilesize)
 
 void ExportTilesetAndMapDialog::redrawTileset()
 {
-    const auto tiles = linearise_tiles(simple_tiles_order, simple_tiles);
+    const auto linearized_simple = linearize_tiles(simple_tiles_order, simple_tiles);
+    const auto linearized_auto = linearize_tiles(autotiles_order, autotiles);
 
-    if (!tiles.isEmpty())
+    if (!linearized_simple.isEmpty() || !linearized_auto.isEmpty())
     {
-        drawn_tileset = gen_tileset(tiles, getNumberOfColumns(), tilesize, tile_coordinates);
+        auto map_layers_ptr = map_layers.toStrongRef();
+    //  legit case here
+        if (map_layers_ptr.isNull())
+            return;
+        const auto orientations = involved_autotile_orientations(*map_layers_ptr);
+
+        drawn_tileset = gen_tileset(linearized_simple, linearized_auto, orientations, getNumberOfColumns(), tilesize, tile_coordinates);
 
         QImage generated = gen_background(drawn_tileset.size(), tilesize);
         QPainter painter(&generated);
