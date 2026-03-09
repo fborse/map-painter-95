@@ -755,8 +755,8 @@ void MainWindow::onCloneCurrentFrame()
         auto &frames = (*autotiles)[ref.name].frames;
 
         const int n = frames.length();
-        AutoTile::Frame frame = frames[qMin(current_frame, n - 1)];
-        ui->tilesetView->addFrame(current_frame + 1, frame);
+        const int index = qMin(current_frame, n - 1);
+        ui->tilesetView->addFrame(index + 1, frames[index]);
     }
     else
     {
@@ -764,8 +764,8 @@ void MainWindow::onCloneCurrentFrame()
         auto &frames = (*simple_tiles)[ref.name].frames;
 
         const int n = frames.length();
-        QImage frame = frames[qMin(current_frame, n - 1)];
-        ui->tilesetView->addFrame(current_frame + 1, frame);
+        const int index = qMin(current_frame, n - 1);
+        ui->tilesetView->addFrame(index + 1, frames[index]);
     }
 
     updateFramesBoxes();
@@ -779,7 +779,13 @@ void MainWindow::onRemoveCurrentFrame()
     const auto ref = selected_tiles->at(0).at(0);
 
     const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
-    ui->tilesetView->removeFrame(current_frame);
+
+    Q_ASSERT(!simple_tiles.isNull());
+    Q_ASSERT(!autotiles.isNull());
+    const int n = ref.autotile? autotiles->value(ref.name).frames.length()
+      : simple_tiles->value(ref.name).frames.length();
+
+    ui->tilesetView->removeFrame(qMin(current_frame, n - 1));
 
     updateFramesBoxes();
     ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *autotiles, *selected_tiles));
