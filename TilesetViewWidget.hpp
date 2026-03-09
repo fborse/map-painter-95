@@ -25,7 +25,6 @@ public:
 
     void addFrame(const int index, const QImage &frame);
     void addFrame(const int index, const AutoTile::Frame &frame);
-    void addFrames(const QHash<int, QImage> &added);
     void removeFrames(const QVector<int> &indexes);
 
 public slots:
