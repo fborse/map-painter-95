@@ -250,56 +250,35 @@ private:
     Frame frame;
 };
 
-class AddSimpleTileFrameCommand final: public QUndoCommand, public SimpleTilesCommand
+template <typename T, class Frame>
+class RemoveFrameCommand final: public QUndoCommand, public TilesCommand<Tileset<T>>
 {
 public:
-    AddSimpleTileFrameCommand(QWeakPointer<SimpleTiles> simple_tiles, const TileReference &id, const int index, const QImage &frame):
-        QUndoCommand(), SimpleTilesCommand(simple_tiles), tile_reference{id}, frame_index{index}, frame_image{frame}
-    {}
-
-    void undo() final override
+    RemoveFrameCommand(QWeakPointer<Tileset<T>> tiles, const TileReference &ref, const int index):
+        QUndoCommand(), TilesCommand<Tileset<T>>(tiles),
+        tile_reference{ref}, index{index}, removed{}
     {
-        (*lockSimpleTiles())[tile_reference.name].frames.remove(frame_index);
-    }
-
-    void redo() final override
-    {
-        (*lockSimpleTiles())[tile_reference.name].frames.insert(frame_index, frame_image);
-    }
-
-private:
-    TileReference tile_reference;
-    int frame_index;
-    QImage frame_image;
-};
-
-class RemoveSimpleTileFrameCommand final: public QUndoCommand, public SimpleTilesCommand
-{
-public:
-    RemoveSimpleTileFrameCommand(QWeakPointer<SimpleTiles> simple_tiles, const TileReference &ref, const int index):
-        QUndoCommand(), SimpleTilesCommand(simple_tiles), tile_reference{ref}, frame_index{index}, removed_image{}
-    {
-        Q_ASSERT(lockSimpleTiles()->contains(ref.name));
-        const auto &frames = lockSimpleTiles()->value(ref.name).frames;
+        Q_ASSERT(TilesCommand<Tileset<T>>::lockTiles()->contains(ref.name));
+        const auto &frames = TilesCommand<Tileset<T>>::lockTiles()->value(ref.name).frames;
         Q_ASSERT(frames.length() > 1);
         Q_ASSERT(0 <= index && index < frames.length());
-        removed_image = frames.at(index);
+        removed = frames.at(index);
     }
 
     void undo() final override
     {
-        (*lockSimpleTiles())[tile_reference.name].frames.insert(frame_index, removed_image);
+        (*TilesCommand<Tileset<T>>::lockTiles())[tile_reference.name].frames.insert(index, removed);
     }
 
     void redo() final override
     {
-        (*lockSimpleTiles())[tile_reference.name].frames.remove(frame_index);
+        (*TilesCommand<Tileset<T>>::lockTiles())[tile_reference.name].frames.remove(index);
     }
 
 private:
     TileReference tile_reference;
-    int frame_index;
-    QImage removed_image;
+    int index;
+    Frame removed;
 };
 
 TilesetViewWidget::TilesetViewWidget(QWidget *parent):
@@ -409,27 +388,28 @@ void TilesetViewWidget::addFrame(const int index, const AutoTile::Frame &frame)
     undo_stack->push(new AddFrameCommand<AutoTile, AutoTile::Frame>(autotiles, ref, index, frame));
 }
 
-void TilesetViewWidget::removeFrames(const QVector<int> &indexes)
+void TilesetViewWidget::removeFrame(const int index)
 {
     Q_ASSERT(!undo_stack.isNull());
-    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
     const auto ref = selected_tiles->at(0).at(0);
 
     if (ref.autotile)
-    {}
+    {
+        Q_ASSERT(!autotiles.isNull());
+        const auto &frames = autotiles->value(ref.name).frames;
+        Q_ASSERT(0 <= index && index < frames.length());
+
+        undo_stack->push(new RemoveFrameCommand<AutoTile, AutoTile::Frame>(autotiles, ref, index));
+    }
     else
     {
-        Q_ASSERT(simple_tiles->contains(ref.name));
+        Q_ASSERT(!simple_tiles.isNull());
         const auto &frames = simple_tiles->value(ref.name).frames;
-        for (auto &index: indexes)
-            Q_ASSERT(0 <= index && index < frames.length() + 1);
+        Q_ASSERT(0 <= index && index < frames.length());
 
-        undo_stack->beginMacro("Remove Frames");
-        for (auto &index: indexes)
-            undo_stack->push(new RemoveSimpleTileFrameCommand(simple_tiles, ref, index));
-        undo_stack->endMacro();
+        undo_stack->push(new RemoveFrameCommand<SimpleTile, QImage>(simple_tiles, ref, index));
     }
 }
 

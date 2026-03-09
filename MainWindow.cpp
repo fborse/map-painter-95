@@ -774,15 +774,12 @@ void MainWindow::onCloneCurrentFrame()
 
 void MainWindow::onRemoveCurrentFrame()
 {
-    Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(is_1x1(*selected_tiles));
     const auto ref = selected_tiles->at(0).at(0);
-    Q_ASSERT(simple_tiles->contains(ref.name));
 
     const int current_frame = ui->currentFrameMapViewComboBox->currentIndex();
-
-    ui->tilesetView->removeFrames({current_frame});
+    ui->tilesetView->removeFrame(current_frame);
 
     updateFramesBoxes();
     ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *autotiles, *selected_tiles));

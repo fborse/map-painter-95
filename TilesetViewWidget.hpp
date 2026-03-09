@@ -25,7 +25,7 @@ public:
 
     void addFrame(const int index, const QImage &frame);
     void addFrame(const int index, const AutoTile::Frame &frame);
-    void removeFrames(const QVector<int> &indexes);
+    void removeFrame(const int index);
 
 public slots:
     void setNumberOfColumns(const int n) { n_columns = n; resize(); }
