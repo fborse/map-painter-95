@@ -1099,7 +1099,7 @@
     <string>Add Simple Tile</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+A, Ctrl+S</string>
+    <string>Ctrl+Shift+A, Ctrl+Shift+S</string>
    </property>
   </action>
   <action name="actionRemoveSelectedTiles">
@@ -1175,7 +1175,7 @@
     <string>&amp;Clone Selected &amp;Tiles</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+A, Ctrl+C, Ctrl+T</string>
+    <string>Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+Shift+T</string>
    </property>
   </action>
   <action name="actionImportTilesInBulk">
@@ -1219,7 +1219,7 @@
     <string>&amp;Add &amp;Layer</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+A, Ctrl+L</string>
+    <string>Ctrl+Shift+A, Ctrl+Shift+L</string>
    </property>
   </action>
   <action name="actionRemoveLayer">
@@ -1241,7 +1241,7 @@
     <string>Add Frame</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+A, Ctrl+F</string>
+    <string>Ctrl+Shift+A, Ctrl+Shift+F</string>
    </property>
   </action>
   <action name="actionRemoveCurrentFrame">
@@ -1260,7 +1260,7 @@
     <string>&amp;Clone Current &amp;Frame</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+A, Ctrl+C, Ctrl+F</string>
+    <string>Ctrl+Shift+A, Ctrl+Shift+C, Ctrl+Shift+F</string>
    </property>
   </action>
   <action name="actionImportSingleTile">
@@ -1282,7 +1282,7 @@
     <string>Add Autotile</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+A, Ctrl+A</string>
+    <string>Ctrl+Shift+A, Ctrl+Shift+A, Ctrl+Shift+T</string>
    </property>
   </action>
  </widget>
