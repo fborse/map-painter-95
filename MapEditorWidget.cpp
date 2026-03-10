@@ -427,98 +427,6 @@ struct AutoTileDirections
 
         return directions;
     }
-
-//  this union operation is to be used in conjunction with the next few functions
-    void unionWith(const AutoTileDirections &other)
-    {
-        left |= other.left;
-        top |= other.top;
-        right |= other.right;
-        bottom |= other.bottom;
-
-        top_left |= other.top_left;
-        top_right |= other.top_right;
-        bottom_left |= other.bottom_left;
-        bottom_right |= other.bottom_right;
-    }
-
-//  remember everything starts as false
-    static AutoTileDirections fromTopLeft(const int index)
-    {
-        AutoTileDirections directions;
-
-        if (index == TOP1)
-            directions.left = true;
-        else if (index == LEFT1)
-            directions.top = true;
-        else if (index == MIDDLE1)
-            directions.top_left = directions.left = directions.top = true;
-        else if (index == TOP_LEFT_JOINT)
-            directions.left = directions.top = true;
-
-        return directions;
-    }
-
-    static AutoTileDirections fromTopRight(const int index)
-    {
-        AutoTileDirections directions;
-
-        if (index == TOP2)
-            directions.right = true;
-        else if (index == MIDDLE2)
-            directions.top_right = directions.right = directions.top = true;
-        else if (index == RIGHT1)
-            directions.top = true;
-        else if (index == TOP_RIGHT_JOINT)
-            directions.right = directions.top = true;
-
-        return directions;
-    }
-
-    static AutoTileDirections fromBottomLeft(const int index)
-    {
-        AutoTileDirections directions;
-
-        if (index == LEFT2)
-            directions.bottom = true;
-        else if (index == MIDDLE3)
-            directions.bottom_left = directions.left = directions.bottom = true;
-        else if (index == BOTTOM1)
-            directions.left = true;
-        else if (index == BOTTOM_LEFT_JOINT)
-            directions.left = directions.bottom = true;
-
-        return directions;
-    }
-
-    static AutoTileDirections fromBottomRight(const int index)
-    {
-        AutoTileDirections directions;
-
-        if (index == MIDDLE4)
-            directions.bottom_right = directions.right = directions.bottom = true;
-        else if (index == RIGHT2)
-            directions.bottom = true;
-        else if (index == BOTTOM2)
-            directions.right = true;
-        else if (index == BOTTOM_RIGHT_JOINT)
-            directions.right = directions.bottom = true;
-
-        return directions;
-    }
-
-//  let's hope the four quadrants are consistent
-    static AutoTileDirections fromOrientation(const Orientation &orientation)
-    {
-        AutoTileDirections directions;
-
-        directions.unionWith(fromTopLeft(orientation.top_left));
-        directions.unionWith(fromTopRight(orientation.top_right));
-        directions.unionWith(fromBottomLeft(orientation.bottom_left));
-        directions.unionWith(fromBottomRight(orientation.bottom_right));
-
-        return directions;
-    }
 };
 
 static inline void reorient_prev(SetTilesCommand::Changes &prev, SetTilesCommand::Changes &next, const QVector<SetTilesCommand::Coordinates> &original_coords, const MapLayers &map_layers)
@@ -565,8 +473,8 @@ static inline void reorient_next(SetTilesCommand::Changes &prev, SetTilesCommand
         auto ref = map_layers[k][j][i];
         prev[{i, j, k}] = ref;
 
-        auto directions = AutoTileDirections::fromOrientation(ref.orientation);
-        directions.unionWith(affected_neighbours[{i, j, k}]);
+        const auto directions =
+            AutoTileDirections::fromContextAt(map_layers, next, ref.name, {i, j, k});
         ref.orientation = directions.toOrientation();
         next[{i, j, k}] = ref;
     }
