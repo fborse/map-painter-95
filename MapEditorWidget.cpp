@@ -294,10 +294,10 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
         paintRectOutlines(painter);
 }
 
-static inline std::optional<QString> name_at(const MapLayers &map_layers, const SetTilesCommand::Changes &next, const SetTilesCommand::Coordinates &p)
+static inline std::optional<TileReference> ref_at(const MapLayers &map_layers, const SetTilesCommand::Changes &next, const SetTilesCommand::Coordinates &p)
 {
     if (next.contains(p))
-        return next[p].name;
+        return next[p];
     else if (p.i < 0 || p.j < 0 || p.k < 0)
         return {};
     else if (p.k >= map_layers.length())
@@ -307,7 +307,15 @@ static inline std::optional<QString> name_at(const MapLayers &map_layers, const 
     else if (p.i >= map_layers[p.k][p.j].length())
         return {};
     else
-        return map_layers[p.k][p.j][p.i].name;
+        return map_layers[p.k][p.j][p.i];
+}
+
+static inline std::optional<QString> name_at(const MapLayers &map_layers, const SetTilesCommand::Changes &next, const SetTilesCommand::Coordinates &p)
+{
+    if (const auto ref = ref_at(map_layers, next, p))
+        return ref->name;
+    else
+        return {};
 }
 
 //  Remember modified RPG Maker scheme (see Types.hpp)
@@ -429,8 +437,11 @@ struct AutoTileDirections
     }
 };
 
-static inline void reorient_prev(SetTilesCommand::Changes &prev, SetTilesCommand::Changes &next, const QVector<SetTilesCommand::Coordinates> &original_coords, const MapLayers &map_layers)
-{}
+static inline void reorient(TileReference &ref, const MapLayers &map_layers, SetTilesCommand::Changes &next, const SetTilesCommand::Coordinates &p)
+{
+    const auto directions = AutoTileDirections::fromContextAt(map_layers, next, ref.name, p);
+    ref.orientation = directions.toOrientation();
+}
 
 static inline void reorient_next(SetTilesCommand::Changes &prev, SetTilesCommand::Changes &next, const QVector<SetTilesCommand::Coordinates> &original_coords, const MapLayers &map_layers)
 {
@@ -473,9 +484,49 @@ static inline void reorient_next(SetTilesCommand::Changes &prev, SetTilesCommand
         auto ref = map_layers[k][j][i];
         prev[{i, j, k}] = ref;
 
-        const auto directions =
-            AutoTileDirections::fromContextAt(map_layers, next, ref.name, {i, j, k});
-        ref.orientation = directions.toOrientation();
+        reorient(ref, map_layers, next, {i, j, k});
+        next[{i, j, k}] = ref;
+    }
+}
+
+static inline void reorient_prev(SetTilesCommand::Changes &prev, SetTilesCommand::Changes &next, const QVector<SetTilesCommand::Coordinates> &original_coords, const MapLayers &map_layers)
+{
+    QSet<SetTilesCommand::Coordinates> affected_neighbours;
+
+    for (auto &[i, j, k]: original_coords)
+    {
+        if (const auto ref = ref_at(map_layers, next, {i-1, j, k}))
+            if (ref->autotile && !next.contains({i-1, j, k}))
+                affected_neighbours.insert({i-1, j, k});
+        if (const auto ref = ref_at(map_layers, next, {i-1, j-1, k}))
+            if (ref->autotile && !next.contains({i-1, j-1, k}))
+                affected_neighbours.insert({i-1, j-1, k});
+        if (const auto ref = ref_at(map_layers, next, {i, j-1, k}))
+            if (ref->autotile && !next.contains({i, j-1, k}))
+                affected_neighbours.insert({i, j-1, k});
+        if (const auto ref = ref_at(map_layers, next, {i+1, j-1, k}))
+            if (ref->autotile && !next.contains({i+1, j-1, k}))
+                affected_neighbours.insert({i+1, j-1, k});
+        if (const auto ref = ref_at(map_layers, next, {i+1, j, k}))
+            if (ref->autotile && !next.contains({i+1, j, k}))
+                affected_neighbours.insert({i+1, j, k});
+        if (const auto ref = ref_at(map_layers, next, {i+1, j+1, k}))
+            if (ref->autotile && !next.contains({i+1, j+1, k}))
+                affected_neighbours.insert({i+1, j+1, k});
+        if (const auto ref = ref_at(map_layers, next, {i, j+1, k}))
+            if (ref->autotile && !next.contains({i, j+1, k}))
+                affected_neighbours.insert({i, j+1, k});
+        if (const auto ref = ref_at(map_layers, next, {i-1, j+1, k}))
+            if (ref->autotile && !next.contains({i-1, j+1, k}))
+                affected_neighbours.insert({i-1, j+1, k});
+    }
+
+    for (auto &[i, j, k]: affected_neighbours)
+    {
+        auto ref = map_layers[k][j][i];
+        prev[{i, j, k}] = ref;
+
+        reorient(ref, map_layers, next, {i, j, k});
         next[{i, j, k}] = ref;
     }
 }
@@ -514,8 +565,8 @@ void MapEditorWidget::handleTileSetting()
     if (!next.isEmpty())
     {
         const auto original_coords = next.keys();
-        reorient_prev(prev, next, original_coords, *map_layers);
         reorient_next(prev, next, original_coords, *map_layers);
+        reorient_prev(prev, next, original_coords, *map_layers);
         undo_stack->push(new SetTilesCommand(map_layers, prev, next));
     }
 
