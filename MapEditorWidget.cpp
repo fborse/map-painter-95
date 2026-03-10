@@ -294,6 +294,284 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
         paintRectOutlines(painter);
 }
 
+static inline std::optional<QString> name_at(const MapLayers &map_layers, const SetTilesCommand::Changes &next, const SetTilesCommand::Coordinates &p)
+{
+    if (next.contains(p))
+        return next[p].name;
+    else if (p.i < 0 || p.j < 0 || p.k < 0)
+        return {};
+    else if (p.k >= map_layers.length())
+        return {};
+    else if (p.j >= map_layers[p.k].length())
+        return {};
+    else if (p.i >= map_layers[p.k][p.j].length())
+        return {};
+    else
+        return map_layers[p.k][p.j][p.i].name;
+}
+
+//  Remember modified RPG Maker scheme (see Types.hpp)
+//  top-left            top2                top1                top-right
+//  left2               middle4             middle3             right2
+//  left1               middle2             middle1             right1
+//  bottom-left         bottom2             bottom1             bottom-right
+//  top-left-joint      top-right-joint     bottom-left-joint   bottom-right-joint
+
+static constexpr int TOP_LEFT = 0;
+static constexpr int TOP2 = 1;
+static constexpr int TOP1 = 2;
+static constexpr int TOP_RIGHT = 3;
+static constexpr int LEFT2 = 4;
+static constexpr int MIDDLE4 = 5;
+static constexpr int MIDDLE3 = 6;
+static constexpr int RIGHT2 = 7;
+static constexpr int LEFT1 = 8;
+static constexpr int MIDDLE2 = 9;
+static constexpr int MIDDLE1 = 10;
+static constexpr int RIGHT1 = 11;
+static constexpr int BOTTOM_LEFT = 12;
+static constexpr int BOTTOM2 = 13;
+static constexpr int BOTTOM1 = 14;
+static constexpr int BOTTOM_RIGHT = 15;
+static constexpr int TOP_LEFT_JOINT = 16;
+static constexpr int TOP_RIGHT_JOINT = 17;
+static constexpr int BOTTOM_LEFT_JOINT = 18;
+static constexpr int BOTTOM_RIGHT_JOINT = 19;
+
+struct AutoTileDirections
+{
+    bool left = false, top = false, right = false, bottom = false;
+    bool top_left = false, top_right = false, bottom_left = false, bottom_right = false;
+
+    int getTopLeft() const
+    {
+        if (left && top)
+            return top_left? MIDDLE1 : TOP_LEFT_JOINT;
+        else if (left)
+            return TOP1;
+        else if (top)
+            return LEFT1;
+        else
+            return TOP_LEFT;
+    }
+
+    int getTopRight() const
+    {
+        if (right && top)
+            return top_right? MIDDLE2 : TOP_RIGHT_JOINT;
+        else if (right)
+            return TOP2;
+        else if (top)
+            return RIGHT1;
+        else
+            return TOP_RIGHT;
+    }
+
+    int getBottomLeft() const
+    {
+        if (left && bottom)
+            return bottom_left? MIDDLE3 : BOTTOM_LEFT_JOINT;
+        else if (left)
+            return BOTTOM1;
+        else if (bottom)
+            return LEFT2;
+        else
+            return BOTTOM_LEFT;
+    }
+
+    int getBottomRight() const
+    {
+        if (right && bottom)
+            return bottom_right? MIDDLE4 : BOTTOM_RIGHT_JOINT;
+        else if (right)
+            return BOTTOM2;
+        else if (bottom)
+            return RIGHT2;
+        else
+            return BOTTOM_RIGHT;
+    }
+
+    Orientation toOrientation() const
+    {
+        Orientation orientation;
+
+        orientation.top_left = getTopLeft();
+        orientation.top_right = getTopRight();
+        orientation.bottom_left = getBottomLeft();
+        orientation.bottom_right = getBottomRight();
+
+        return orientation;
+    }
+
+    static AutoTileDirections fromContextAt(const MapLayers &map_layers, const SetTilesCommand::Changes &next, const QString id, const SetTilesCommand::Coordinates &ijk)
+    {
+        AutoTileDirections directions;
+
+        const auto &[i, j, k] = ijk;
+        if (const auto name = name_at(map_layers, next, {i-1, j, k}))
+            directions.left = (*name == id);
+        if (const auto name = name_at(map_layers, next, {i-1, j-1, k}))
+            directions.top_left = (*name == id);
+        if (const auto name = name_at(map_layers, next, {i, j-1, k}))
+            directions.top = (*name == id);
+        if (const auto name = name_at(map_layers, next, {i+1, j-1, k}))
+            directions.top_right = (*name == id);
+        if (const auto name = name_at(map_layers, next, {i+1, j, k}))
+            directions.right = (*name == id);
+        if (const auto name = name_at(map_layers, next, {i+1, j+1, k}))
+            directions.bottom_right = (*name == id);
+        if (const auto name = name_at(map_layers, next, {i, j+1, k}))
+            directions.bottom = (*name == id);
+        if (const auto name = name_at(map_layers, next, {i-1, j+1, k}))
+            directions.bottom_left = (*name == id);
+
+        return directions;
+    }
+
+//  this union operation is to be used in conjunction with the next few functions
+    void unionWith(const AutoTileDirections &other)
+    {
+        left |= other.left;
+        top |= other.top;
+        right |= other.right;
+        bottom |= other.bottom;
+
+        top_left |= other.top_left;
+        top_right |= other.top_right;
+        bottom_left |= other.bottom_left;
+        bottom_right |= other.bottom_right;
+    }
+
+//  remember everything starts as false
+    static AutoTileDirections fromTopLeft(const int index)
+    {
+        AutoTileDirections directions;
+
+        if (index == TOP1)
+            directions.left = true;
+        else if (index == LEFT1)
+            directions.top = true;
+        else if (index == MIDDLE1)
+            directions.top_left = directions.left = directions.top = true;
+        else if (index == TOP_LEFT_JOINT)
+            directions.left = directions.top = true;
+
+        return directions;
+    }
+
+    static AutoTileDirections fromTopRight(const int index)
+    {
+        AutoTileDirections directions;
+
+        if (index == TOP2)
+            directions.right = true;
+        else if (index == MIDDLE2)
+            directions.top_right = directions.right = directions.top = true;
+        else if (index == RIGHT1)
+            directions.top = true;
+        else if (index == TOP_RIGHT_JOINT)
+            directions.right = directions.top = true;
+
+        return directions;
+    }
+
+    static AutoTileDirections fromBottomLeft(const int index)
+    {
+        AutoTileDirections directions;
+
+        if (index == LEFT2)
+            directions.bottom = true;
+        else if (index == MIDDLE3)
+            directions.bottom_left = directions.left = directions.bottom = true;
+        else if (index == BOTTOM1)
+            directions.left = true;
+        else if (index == BOTTOM_LEFT_JOINT)
+            directions.left = directions.bottom = true;
+
+        return directions;
+    }
+
+    static AutoTileDirections fromBottomRight(const int index)
+    {
+        AutoTileDirections directions;
+
+        if (index == MIDDLE4)
+            directions.bottom_right = directions.right = directions.bottom = true;
+        else if (index == RIGHT2)
+            directions.bottom = true;
+        else if (index == BOTTOM2)
+            directions.right = true;
+        else if (index == BOTTOM_RIGHT_JOINT)
+            directions.right = directions.bottom = true;
+
+        return directions;
+    }
+
+//  let's hope the four quadrants are consistent
+    static AutoTileDirections fromOrientation(const Orientation &orientation)
+    {
+        AutoTileDirections directions;
+
+        directions.unionWith(fromTopLeft(orientation.top_left));
+        directions.unionWith(fromTopRight(orientation.top_right));
+        directions.unionWith(fromBottomLeft(orientation.bottom_left));
+        directions.unionWith(fromBottomRight(orientation.bottom_right));
+
+        return directions;
+    }
+};
+
+static inline void reorient_prev(SetTilesCommand::Changes &prev, SetTilesCommand::Changes &next, const QVector<SetTilesCommand::Coordinates> &original_coords, const MapLayers &map_layers)
+{}
+
+static inline void reorient_next(SetTilesCommand::Changes &prev, SetTilesCommand::Changes &next, const QVector<SetTilesCommand::Coordinates> &original_coords, const MapLayers &map_layers)
+{
+    QHash<SetTilesCommand::Coordinates, AutoTileDirections> affected_neighbours;
+
+    for (auto &[i, j, k]: original_coords)
+    {
+        auto &ref = next[{i, j, k}];
+
+        if (ref.autotile)
+        {
+            const auto directions =
+                AutoTileDirections::fromContextAt(map_layers, next, ref.name, {i, j, k});
+            ref.orientation = directions.toOrientation();
+
+        //  these coordinates are guaranteed valid when the boolean is true
+        //  additionally, the direction values are preset to false
+        //  also, "constant-time" retrieval, as opposed to original_coords.contains()
+            if (directions.left && !next.contains({i-1, j, k}))
+                affected_neighbours[{i-1, j, k}].right = true;
+            if (directions.top_left && !next.contains({i-1, j-1, k}))
+                affected_neighbours[{i-1, j-1, k}].bottom_right = true;
+            if (directions.top && !next.contains({i, j-1, k}))
+                affected_neighbours[{i, j-1, k}].bottom = true;
+            if (directions.top_right && !next.contains({i+1, j-1, k}))
+                affected_neighbours[{i+1, j-1, k}].bottom_left = true;
+            if (directions.right && !next.contains({i+1, j, k}))
+                affected_neighbours[{i+1, j, k}].left = true;
+            if (directions.bottom_right && !next.contains({i+1, j+1, k}))
+                affected_neighbours[{i+1, j+1, k}].top_left = true;
+            if (directions.bottom && !next.contains({i, j+1, k}))
+                affected_neighbours[{i, j+1, k}].top = true;
+            if (directions.bottom_left && !next.contains({i-1, j+1, k}))
+                affected_neighbours[{i-1, j+1, k}].top_right = true;
+        }
+    }
+
+    for (auto &[i, j, k]: affected_neighbours.keys())
+    {
+        auto ref = map_layers[k][j][i];
+        prev[{i, j, k}] = ref;
+
+        auto directions = AutoTileDirections::fromOrientation(ref.orientation);
+        directions.unionWith(affected_neighbours[{i, j, k}]);
+        ref.orientation = directions.toOrientation();
+        next[{i, j, k}] = ref;
+    }
+}
+
 void MapEditorWidget::handleTileSetting()
 {
     Q_ASSERT(!selected_tiles.isNull());
@@ -315,18 +593,23 @@ void MapEditorWidget::handleTileSetting()
     {
         for (int i = 0; i < w; ++i)
         {
-            const auto prev_id = layer.at(y+j).at(x+i);
-            const auto next_id = selected_tiles->at(j % sh).at(i % sw);
+            const auto prev_ref = layer.at(y+j).at(x+i);
+            const auto next_ref = selected_tiles->at(j % sh).at(i % sw);
 
-            if (prev_id != next_id)
+            if (prev_ref != next_ref)
             {
-                prev[{x+i, y+j, current_layer}] = prev_id;
-                next[{x+i, y+j, current_layer}] = next_id;
+                prev[{x+i, y+j, current_layer}] = prev_ref;
+                next[{x+i, y+j, current_layer}] = next_ref;
             }
         }
     }
     if (!next.isEmpty())
+    {
+        const auto original_coords = next.keys();
+        reorient_prev(prev, next, original_coords, *map_layers);
+        reorient_next(prev, next, original_coords, *map_layers);
         undo_stack->push(new SetTilesCommand(map_layers, prev, next));
+    }
 
     emit tilesSet();
 }
