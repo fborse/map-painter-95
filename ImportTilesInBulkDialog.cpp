@@ -12,7 +12,7 @@ ImportTilesInBulkWidget::ImportTilesInBulkWidget(QWidget *parent):
     tilesize{0}, original_texture{}, areas{},
     zoom{1}, scaling{1}, color_key{}, magnetic{true},
     selected{-1}, displayed_texture{},
-    mouse_cursor{}, click_origin{}
+    mouse_cursor{}, click_origin{}, move_offset{}
 {
     setFixedSize(0, 0);
 }

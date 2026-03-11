@@ -1,0 +1,610 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ImportAutoTileDialog</class>
+ <widget class="QDialog" name="ImportAutoTileDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Import Autotile</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,3">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1,0">
+       <item>
+        <widget class="QGroupBox" name="texturePropertiesGroupBox">
+         <property name="title">
+          <string>Texture Properties</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QLineEdit" name="pathLineEdit">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="changePathPushButton">
+              <property name="text">
+               <string>Change Path...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <layout class="QFormLayout" name="formLayout">
+              <item row="0" column="0">
+               <widget class="QLabel" name="scalingLabel">
+                <property name="text">
+                 <string>Scaling :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="scalingDoubleSpinBox">
+                <property name="suffix">
+                 <string>x</string>
+                </property>
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="minimum">
+                 <double>0.100000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>16.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.500000000000000</double>
+                </property>
+                <property name="value">
+                 <double>1.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="colorKeyLabel">
+                <property name="text">
+                 <string>Color Key :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="ColorSelectionWidget" name="colorKeyWidget" native="true"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="metatilesGroupBox">
+         <property name="title">
+          <string>Metatiles</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
+          <item>
+           <widget class="QScrollArea" name="metatilesScrollArea">
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents_2">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>282</width>
+               <height>281</height>
+              </rect>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_5">
+              <item>
+               <widget class="AutoTileViewWidget" name="metatilesView" native="true">
+                <property name="mouseTracking">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="metatileGroupBox">
+         <property name="title">
+          <string>Metatile</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QLabel" name="xLabel">
+            <property name="text">
+             <string>x :</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="xSpinBox">
+            <property name="suffix">
+             <string>px</string>
+            </property>
+            <property name="maximum">
+             <number>65535</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="yLabel">
+            <property name="text">
+             <string>y :</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="ySpinBox">
+            <property name="suffix">
+             <string>px</string>
+            </property>
+            <property name="maximum">
+             <number>65535</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>65</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="autotileViewGroupBox">
+       <property name="title">
+        <string>Autotile View</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QCheckBox" name="magneticCheckBox">
+            <property name="text">
+             <string>Snap to nearest tile</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="zoomLabel">
+            <property name="text">
+             <string>Zoom :</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="zoomDoubleSpinBox">
+            <property name="suffix">
+             <string>x</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="minimum">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>16.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.500000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QScrollArea" name="autotileViewScrollArea">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>438</width>
+             <height>466</height>
+            </rect>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <item>
+             <widget class="ImportAutoTileWidget" name="autotileView" native="true">
+              <property name="mouseTracking">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ColorSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>ColorSelectionWidget.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>clicked(QColor)</signal>
+    <signal>colorChanged(QColor)</signal>
+    <slot>setHue(double)</slot>
+    <slot>setSaturation(double)</slot>
+    <slot>setValue(double)</slot>
+    <slot>setAlpha(int)</slot>
+    <slot>setColor(QColor)</slot>
+    <slot>setHue(int)</slot>
+    <slot>setSaturation(int)</slot>
+    <slot>setValue(int)</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>AutoTileViewWidget</class>
+   <extends>QWidget</extends>
+   <header>ImportAutoTileDialog.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>metatileSelected(int)</signal>
+    <slot>setSelectedMetatile(int)</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>ImportAutoTileWidget</class>
+   <extends>QWidget</extends>
+   <header>ImportAutoTileDialog.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>metatileSelected(int)</signal>
+    <signal>metatileChanged(QPoint)</signal>
+    <signal>displayedTextureChanged()</signal>
+    <slot>setZoom(double)</slot>
+    <slot>setScaling(double)</slot>
+    <slot>setColorKey(QColor)</slot>
+    <slot>setMagnetic(bool)</slot>
+    <slot>setSelectedMetatile(int)</slot>
+   </slots>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>onAccept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>227</x>
+     <y>579</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>295</x>
+     <y>585</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>changePathPushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>onChangeTexturePath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>258</x>
+     <y>55</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>259</x>
+     <y>10</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorKeyWidget</sender>
+   <signal>clicked(QColor)</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>onChangeColorKey()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>112</x>
+     <y>119</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2</x>
+     <y>121</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>scalingDoubleSpinBox</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>autotileView</receiver>
+   <slot>setScaling(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>152</x>
+     <y>90</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>521</x>
+     <y>88</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>zoomDoubleSpinBox</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>autotileView</receiver>
+   <slot>setZoom(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>719</x>
+     <y>64</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>717</x>
+     <y>154</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorKeyWidget</sender>
+   <signal>colorChanged(QColor)</signal>
+   <receiver>autotileView</receiver>
+   <slot>setColorKey(QColor)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>109</x>
+     <y>121</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>420</x>
+     <y>122</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>magneticCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>autotileView</receiver>
+   <slot>setMagnetic(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>417</x>
+     <y>63</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>480</x>
+     <y>118</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>metatilesView</sender>
+   <signal>metatileSelected(int)</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>onSelectedMetatileChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>104</x>
+     <y>320</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2</x>
+     <y>320</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>autotileView</sender>
+   <signal>metatileChanged(QPoint)</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>onMetatileChanged(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>747</x>
+     <y>376</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>797</x>
+     <y>381</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>xSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>onChangeMetatile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>77</x>
+     <y>534</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>74</x>
+     <y>598</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ySpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>onChangeMetatile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>192</x>
+     <y>534</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>190</x>
+     <y>598</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>autotileView</sender>
+   <signal>metatileSelected(int)</signal>
+   <receiver>metatilesView</receiver>
+   <slot>setSelectedMetatile(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>424</x>
+     <y>321</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>245</x>
+     <y>325</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>autotileView</sender>
+   <signal>metatileSelected(int)</signal>
+   <receiver>autotileView</receiver>
+   <slot>setSelectedMetatile(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>753</x>
+     <y>233</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>753</x>
+     <y>158</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>autotileView</sender>
+   <signal>displayedTextureChanged()</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>redrawMetatiles()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>752</x>
+     <y>304</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>799</x>
+     <y>304</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>onChangeTexturePath()</slot>
+  <slot>onChangeColorKey()</slot>
+  <slot>onAccept()</slot>
+  <slot>onSelectedMetatileChanged(int)</slot>
+  <slot>onChangeMetatile()</slot>
+  <slot>onMetatileChanged(QPoint)</slot>
+  <slot>redrawMetatiles()</slot>
+ </slots>
+</ui>

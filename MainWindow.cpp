@@ -14,6 +14,7 @@
 #include "ScaleSelectionDialog.hpp"
 #include "ImportSingleTileDialog.hpp"
 #include "ImportTilesInBulkDialog.hpp"
+#include "ImportAutoTileDialog.hpp"
 #include "ExportTilesetAndMapDialog.hpp"
 #include "ExportAsTexturesDialog.hpp"
 
@@ -358,6 +359,20 @@ void MainWindow::onImportTilesInBulk()
         undo_stack->endMacro();
 
         refreshViews();
+        updateFramesBoxes();
+    }
+}
+
+void MainWindow::onImportAutoTile()
+{
+    const int tilesize = ui->tilesetView->getTilesize();
+
+    ImportAutoTileDialog dialog(tilesize, this);
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        ui->tilesetView->addAutoTile(dialog.getAutoTile());
+        refreshViews();
+        updateFramesBoxes();
     }
 }
 

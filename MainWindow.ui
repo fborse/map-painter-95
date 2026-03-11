@@ -873,6 +873,8 @@
      </property>
      <addaction name="actionImportSingleTile"/>
      <addaction name="actionImportTilesInBulk"/>
+     <addaction name="separator"/>
+     <addaction name="actionImportAutotile"/>
     </widget>
     <widget class="QMenu" name="menuExport">
      <property name="title">
@@ -1283,6 +1285,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+A, Ctrl+Shift+A, Ctrl+Shift+T</string>
+   </property>
+  </action>
+  <action name="actionImportAutotile">
+   <property name="text">
+    <string>&amp;Autotile...</string>
+   </property>
+   <property name="toolTip">
+    <string>Import Autotile</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I, Ctrl+Shift+A</string>
    </property>
   </action>
  </widget>
@@ -2956,6 +2969,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionImportAutotile</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onImportAutoTile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -2993,5 +3022,6 @@
   <slot>onImportSingleTile()</slot>
   <slot>onMapWidgetScrolled(QPoint)</slot>
   <slot>onAddAutoTile()</slot>
+  <slot>onImportAutoTile()</slot>
  </slots>
 </ui>

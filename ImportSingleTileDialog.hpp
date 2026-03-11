@@ -12,7 +12,7 @@ class ImportSingleTileWidget final: public QWidget
 {
     Q_OBJECT
 public:
-    ImportSingleTileWidget(QWidget *parent = nullptr);
+    explicit ImportSingleTileWidget(QWidget *parent = nullptr);
 
     void setTexture(const QString &path);
     void setTilesize(const int size) { tilesize = size; update(); }

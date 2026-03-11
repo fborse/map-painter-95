@@ -24,6 +24,7 @@ public slots:
     bool onSaveAs();
     void onImportSingleTile();
     void onImportTilesInBulk();
+    void onImportAutoTile();
     void onExportTilesetAndMap();
     void onExportAsTextures();
     void onQuit();

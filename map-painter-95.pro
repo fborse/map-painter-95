@@ -21,6 +21,7 @@ SOURCES += \
     EditorWidget.cpp \
     ExportAsTexturesDialog.cpp \
     ExportTilesetAndMapDialog.cpp \
+    ImportAutoTileDialog.cpp \
     ImportSingleTileDialog.cpp \
     ImportTilesInBulkDialog.cpp \
     MapEditorWidget.cpp \
@@ -46,6 +47,7 @@ HEADERS += \
     EditorWidget.hpp \
     ExportAsTexturesDialog.hpp \
     ExportTilesetAndMapDialog.hpp \
+    ImportAutoTileDialog.hpp \
     ImportSingleTileDialog.hpp \
     ImportTilesInBulkDialog.hpp \
     MainWindow.hpp \
@@ -62,6 +64,7 @@ FORMS += \
     BrushEditorDialog.ui \
     ExportAsTexturesDialog.ui \
     ExportTilesetAndMapDialog.ui \
+    ImportAutoTileDialog.ui \
     ImportSingleTileDialog.ui \
     ImportTilesInBulkDialog.ui \
     MainWindow.ui \
