@@ -253,11 +253,11 @@ void ImportAutoTileWidget::updateDisplayedTexture()
         if (scaling >= 1)
         {
             apply_color_key(displayed_texture, color_key);
-            scale_texture(displayed_texture, zoom * scaling);
+            scale_texture(displayed_texture, scaling);
         }
         else
         {
-            scale_texture(displayed_texture, zoom * scaling);
+            scale_texture(displayed_texture, scaling);
             apply_color_key(displayed_texture, color_key);
         }
 
