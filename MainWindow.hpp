@@ -43,6 +43,9 @@ public slots:
     void onAddFrame();
     void onCloneCurrentFrame();
     void onRemoveCurrentFrame();
+    void onConvertToSimpleTiles();
+    void onConvertToAutoTiles();
+    void onOpenTileConverter();
 
     void onResizeMap();
     void onAddLayer();

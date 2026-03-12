@@ -738,7 +738,7 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>66</width>
+                         <width>98</width>
                          <height>28</height>
                         </rect>
                        </property>
@@ -936,8 +936,22 @@
      <addaction name="separator"/>
      <addaction name="actionRemoveCurrentFrame"/>
     </widget>
+    <widget class="QMenu" name="menuConvert">
+     <property name="title">
+      <string>Convert</string>
+     </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::MediaPlaylistShuffle"/>
+     </property>
+     <addaction name="actionConvertToSimpleTiles"/>
+     <addaction name="actionConvertToAutoTiles"/>
+     <addaction name="separator"/>
+     <addaction name="actionOpenTileConverter"/>
+    </widget>
     <addaction name="menuAdd"/>
     <addaction name="menuRemove"/>
+    <addaction name="separator"/>
+    <addaction name="menuConvert"/>
    </widget>
    <widget class="QMenu" name="menuMap">
     <property name="title">
@@ -1296,6 +1310,39 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+I, Ctrl+Shift+A</string>
+   </property>
+  </action>
+  <action name="actionConvertToSimpleTiles">
+   <property name="text">
+    <string>To &amp;Simple &amp;Tiles</string>
+   </property>
+   <property name="toolTip">
+    <string>Convert To Simple Tiles</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C, Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionConvertToAutoTiles">
+   <property name="text">
+    <string>To &amp;Autotiles</string>
+   </property>
+   <property name="toolTip">
+    <string>Convert To Autotiles</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C, Ctrl+A</string>
+   </property>
+  </action>
+  <action name="actionOpenTileConverter">
+   <property name="text">
+    <string>Tile Converter...</string>
+   </property>
+   <property name="toolTip">
+    <string>Open Tile Converter</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T, Ctrl+C</string>
    </property>
   </action>
  </widget>
@@ -2985,6 +3032,54 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionConvertToAutoTiles</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onConvertToAutoTiles()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionConvertToSimpleTiles</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onConvertToSimpleTiles()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionOpenTileConverter</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onOpenTileConverter()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -3023,5 +3118,8 @@
   <slot>onMapWidgetScrolled(QPoint)</slot>
   <slot>onAddAutoTile()</slot>
   <slot>onImportAutoTile()</slot>
+  <slot>onConvertToSimpleTiles()</slot>
+  <slot>onConvertToAutoTiles()</slot>
+  <slot>onOpenTileConverter()</slot>
  </slots>
 </ui>

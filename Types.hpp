@@ -76,7 +76,11 @@ struct TileReference
 
 inline uint qHash(const TileReference &ref, uint seed = 0)
 {
-    return seed ^ (qHash(ref.name, seed) * 31 + qHash(ref.autotile, seed) * 37);
+    return seed ^ (
+        qHash(ref.name, seed) * 31
+      + qHash(ref.autotile, seed) * 37
+      + qHash(ref.orientation, seed) * 41
+    );
 }
 
 using SelectedTiles = QVector<QVector<TileReference>>;

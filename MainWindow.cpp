@@ -81,6 +81,9 @@ MainWindow::MainWindow(QWidget *parent):
     ui->actionCloneCurrentFrame->setEnabled(false);
     ui->actionRemoveSelectedTiles->setEnabled(false);
     ui->actionRemoveCurrentFrame->setEnabled(false);
+    ui->actionConvertToSimpleTiles->setEnabled(false);
+    ui->actionConvertToAutoTiles->setEnabled(false);
+    ui->actionOpenTileConverter->setEnabled(true);
 
     refreshViews();
     updateLayersBoxes();
@@ -279,6 +282,7 @@ void MainWindow::onNew()
             updateLayersBoxes();
             updateFramesBoxes();
             refreshViews();
+            ui->actionOpenTileConverter->setEnabled(false);
         }
     }
 }
@@ -467,6 +471,26 @@ static inline bool can_remove_frames(const SimpleTiles &simple_tiles, const Auto
         return false;
 }
 
+static inline bool can_convert_to_simple(const SelectedTiles &selected_tiles)
+{
+    for (auto &row: selected_tiles)
+        for (auto &ref: row)
+            if (!ref || !ref.autotile)
+                return false;
+
+    return not_empty(selected_tiles);
+}
+
+static inline bool can_convert_to_auto(const SelectedTiles &selected_tiles)
+{
+    for (auto &row: selected_tiles)
+        for (auto &ref: row)
+            if (!ref || ref.autotile)
+                return false;
+
+    return not_empty(selected_tiles);
+}
+
 void MainWindow::onSelectedChanged()
 {
     Q_ASSERT(!simple_tiles.isNull());
@@ -481,6 +505,10 @@ void MainWindow::onSelectedChanged()
     ui->actionAddFrame->setEnabled(can_add_frames(*simple_tiles, *autotiles, *selected_tiles));
     ui->actionCloneCurrentFrame->setEnabled(can_add_frames(*simple_tiles, *autotiles, *selected_tiles));
     ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *autotiles, *selected_tiles));
+
+    ui->actionConvertToSimpleTiles->setEnabled(can_convert_to_simple(*selected_tiles));
+    ui->actionConvertToAutoTiles->setEnabled(can_convert_to_auto(*selected_tiles));
+    ui->actionOpenTileConverter->setEnabled(!simple_tiles->isEmpty() || !autotiles->isEmpty());
 }
 
 void MainWindow::refreshViews()
@@ -662,14 +690,14 @@ void MainWindow::onAddAutoTile()
 }
 
 template <typename T>
-static inline QSet<TileReference> get_unique_valid_ids(const Tileset<T> &tiles, const SelectedTiles &selected)
+static inline QSet<QString> get_unique_valid_ids(const Tileset<T> &tiles, const SelectedTiles &selected)
 {
-    QSet<TileReference> uniques;
+    QSet<QString> uniques;
 
     for (auto &row: selected)
         for (auto &ref: row)
             if (tiles.contains(ref.name))
-                uniques.insert(ref);
+                uniques.insert(ref.name);
 
     return uniques;
 }
@@ -679,21 +707,21 @@ void MainWindow::onCloneSelectedTiles()
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
 
-    QSet<TileReference> unique_simples = get_unique_valid_ids(*simple_tiles, *selected_tiles);
-    QSet<TileReference> unique_autos = get_unique_valid_ids(*autotiles, *selected_tiles);
+    QSet<QString> unique_simples = get_unique_valid_ids(*simple_tiles, *selected_tiles);
+    QSet<QString> unique_autos = get_unique_valid_ids(*autotiles, *selected_tiles);
     if (unique_simples.isEmpty() && unique_autos.isEmpty())
         return;
 
     undo_stack->beginMacro("Clone Selected Tiles");
-    for (auto &ref: unique_simples)
+    for (auto &id: unique_simples)
     {
-        Q_ASSERT(simple_tiles->contains(ref.name));
-        ui->tilesetView->addSimpleTile(simple_tiles->value(ref.name));
+        Q_ASSERT(simple_tiles->contains(id));
+        ui->tilesetView->addSimpleTile(simple_tiles->value(id));
     }
-    for (auto &ref: unique_autos)
+    for (auto &id: unique_autos)
     {
-        Q_ASSERT(autotiles->contains(ref.name));
-        ui->tilesetView->addAutoTile(autotiles->value(ref.name));
+        Q_ASSERT(autotiles->contains(id));
+        ui->tilesetView->addAutoTile(autotiles->value(id));
     }
     undo_stack->endMacro();
 }
@@ -704,16 +732,22 @@ void MainWindow::onRemoveSelectedTiles()
     Q_ASSERT(!autotiles.isNull());
     Q_ASSERT(!selected_tiles.isNull());
 
-    QSet<TileReference> uniques = get_unique_valid_ids(*simple_tiles, *selected_tiles);
-    uniques += get_unique_valid_ids(*autotiles, *selected_tiles);
-    if (uniques.isEmpty())
+    const QSet<QString> simples = get_unique_valid_ids(*simple_tiles, *selected_tiles);
+    const QSet<QString> autos = get_unique_valid_ids(*autotiles, *selected_tiles);
+    if (simples.isEmpty() && autos.isEmpty())
         return;
 
     QVector<TileReference> tiles;
-    for (auto &ref: uniques)
+    for (auto &id: simples)
     {
-        Q_ASSERT(simple_tiles->contains(ref.name) || autotiles->contains(ref.name));
-        tiles.push_back(ref);
+        Q_ASSERT(simple_tiles->contains(id));
+        tiles.push_back({id, false, {}});
+    }
+    for (auto &id: autos)
+    {
+        Q_ASSERT(autotiles->contains(id));
+    //  orientation doesn't matter, downstream
+        tiles.push_back({id, true, {}});
     }
 
     ui->tilesetView->removeTiles(tiles);
@@ -808,6 +842,68 @@ void MainWindow::onRemoveCurrentFrame()
     updateFramesBoxes();
     ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *autotiles, *selected_tiles));
 }
+
+//  convert each orientation of the selected autotiles
+void MainWindow::onConvertToSimpleTiles()
+{
+    Q_ASSERT(!simple_tiles.isNull());
+    Q_ASSERT(!autotiles.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+
+    QSet<TileReference> uniques;
+    for (auto &row: *selected_tiles)
+        for (auto &ref: row)
+            uniques.insert(ref);
+
+    undo_stack->beginMacro("Convert To Simple Tiles");
+    for (auto &ref: uniques)
+    {
+        Q_ASSERT(autotiles->contains(ref.name));
+        const AutoTile &autotile = autotiles->value(ref.name);
+
+        SimpleTile tile;
+        for (auto &frame: autotile.frames)
+            tile.frames.push_back(frame.genTile(ref.orientation));
+        ui->tilesetView->addSimpleTile(tile);
+    }
+    undo_stack->endMacro();
+}
+
+void MainWindow::onConvertToAutoTiles()
+{
+    Q_ASSERT(!simple_tiles.isNull());
+    Q_ASSERT(!autotiles.isNull());
+    Q_ASSERT(!selected_tiles.isNull());
+
+    const int s = ui->tilesetView->getTilesize() / 2;
+    const QSet<QString> uniques = get_unique_valid_ids(*simple_tiles, *selected_tiles);
+
+    undo_stack->beginMacro("Convert To Autotiles");
+    for (auto &id: uniques)
+    {
+        Q_ASSERT(simple_tiles->contains(id));
+        const SimpleTile &simple_tile = simple_tiles->value(id);
+
+        AutoTile tile;
+        for (auto &frame: simple_tile.frames)
+        {
+            QVector<QImage> metatiles(20);
+        //  modified RPG Maker scheme allows this ; see Types.hpp
+            for (int i = 0; i < 16; ++i)
+                metatiles[i] = frame.copy((i%2) * s, ((i/4)%2) * s, s, s);
+        //  the joints are slightly different though
+            for (int i = 16; i < 20; ++i)
+                metatiles[i] = frame.copy((i%2) * s, ((i/2)%2) * s, s, s);
+            tile.frames.push_back({metatiles});
+        }
+
+        ui->tilesetView->addAutoTile(tile);
+    }
+    undo_stack->endMacro();
+}
+
+void MainWindow::onOpenTileConverter()
+{}
 
 void MainWindow::onResizeMap()
 {
