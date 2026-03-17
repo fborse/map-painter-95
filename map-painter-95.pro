@@ -29,6 +29,7 @@ SOURCES += \
     NewMapDialog.cpp \
     ResizeMapDialog.cpp \
     ScaleSelectionDialog.cpp \
+    TileConverterDialog.cpp \
     TilesetViewWidget.cpp \
     Types.cpp \
     main.cpp \
@@ -56,6 +57,7 @@ HEADERS += \
     NewMapDialog.hpp \
     ResizeMapDialog.hpp \
     ScaleSelectionDialog.hpp \
+    TileConverterDialog.hpp \
     TilesetViewWidget.hpp \
     Types.hpp
 
@@ -70,7 +72,8 @@ FORMS += \
     MainWindow.ui \
     NewMapDialog.ui \
     ResizeMapDialog.ui \
-    ScaleSelectionDialog.ui
+    ScaleSelectionDialog.ui \
+    TileConverterDialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

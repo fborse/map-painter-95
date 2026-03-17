@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TileConverterDialog</class>
+ <widget class="QDialog" name="TileConverterDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>640</width>
+    <height>480</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Tile Converter</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>1</number>
+     </property>
+     <widget class="QWidget" name="simpleTilesTab">
+      <attribute name="title">
+       <string>Simple Tiles to Autotile</string>
+      </attribute>
+     </widget>
+     <widget class="QWidget" name="autoTilesTab">
+      <attribute name="title">
+       <string>Autotile to Simple Tiles</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0">
+         <item>
+          <widget class="QGroupBox" name="autoTilesGroupBox">
+           <property name="title">
+            <string>Autotiles</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <item>
+               <widget class="QLabel" name="autoTilesColumnsLabel">
+                <property name="text">
+                 <string>Columns :</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSpinBox" name="autoTilesColumnsSpinBox">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>16</number>
+                </property>
+                <property name="value">
+                 <number>8</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QScrollArea" name="autoTilesScrollArea">
+              <property name="widgetResizable">
+               <bool>true</bool>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+              </property>
+              <widget class="QWidget" name="scrollAreaWidgetContents">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>269</width>
+                 <height>175</height>
+                </rect>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_2">
+                <item>
+                 <widget class="TileSelectionWidget" name="autoTileSelectionWidget" native="true">
+                  <property name="mouseTracking">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="generatedSimpleTilesGroupBox">
+           <property name="title">
+            <string>Generated</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QScrollArea" name="generatedSimpleTilesScrollArea">
+              <property name="widgetResizable">
+               <bool>true</bool>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+              </property>
+              <widget class="QWidget" name="scrollAreaWidgetContents_2">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>269</width>
+                 <height>68</height>
+                </rect>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <item>
+                 <widget class="GeneratedTilesWidget" name="generatedSimpleTilesWidget" native="true">
+                  <property name="mouseTracking">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="metaTilesGroupBox">
+         <property name="title">
+          <string>Metatiles</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QScrollArea" name="metaTilesScrollArea">
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents_3">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>271</width>
+               <height>333</height>
+              </rect>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <item>
+               <widget class="MetatileSelectionWidget" name="metatileSelectionWidget" native="true">
+                <property name="mouseTracking">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>TileSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>TileConverterDialog.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>tileSelected(QString)</signal>
+    <slot>setNumberOfColumns(int)</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>GeneratedTilesWidget</class>
+   <extends>QWidget</extends>
+   <header>TileConverterDialog.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>addTileClicked()</signal>
+    <signal>removeTileClicked(QString)</signal>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>MetatileSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>TileConverterDialog.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>selectedMoved()</signal>
+   </slots>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>TileConverterDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>227</x>
+     <y>459</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>TileConverterDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>295</x>
+     <y>465</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>autoTilesColumnsSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>autoTileSelectionWidget</receiver>
+   <slot>setNumberOfColumns(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>119</x>
+     <y>102</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>120</x>
+     <y>169</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>autoTileSelectionWidget</sender>
+   <signal>tileSelected(QString)</signal>
+   <receiver>TileConverterDialog</receiver>
+   <slot>onSelectedAutoTileChanged(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>69</x>
+     <y>207</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>3</x>
+     <y>206</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>generatedSimpleTilesWidget</sender>
+   <signal>addTileClicked()</signal>
+   <receiver>TileConverterDialog</receiver>
+   <slot>onAddSimpleTile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>76</x>
+     <y>383</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>0</x>
+     <y>379</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>generatedSimpleTilesWidget</sender>
+   <signal>removeTileClicked(QString)</signal>
+   <receiver>TileConverterDialog</receiver>
+   <slot>onRemoveSimpleTile(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>162</x>
+     <y>390</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>160</x>
+     <y>478</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>metatileSelectionWidget</sender>
+   <signal>selectedMoved()</signal>
+   <receiver>TileConverterDialog</receiver>
+   <slot>onUpdateGeneratedSimpleTile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>532</x>
+     <y>248</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>636</x>
+     <y>253</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>onSelectedAutoTileChanged(QString)</slot>
+  <slot>onAddSimpleTile()</slot>
+  <slot>onRemoveSimpleTile(QString)</slot>
+  <slot>onUpdateGeneratedSimpleTile()</slot>
+ </slots>
+</ui>

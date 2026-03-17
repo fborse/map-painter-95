@@ -17,6 +17,7 @@
 #include "ImportAutoTileDialog.hpp"
 #include "ExportTilesetAndMapDialog.hpp"
 #include "ExportAsTexturesDialog.hpp"
+#include "TileConverterDialog.hpp"
 
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow),
@@ -903,7 +904,18 @@ void MainWindow::onConvertToAutoTiles()
 }
 
 void MainWindow::onOpenTileConverter()
-{}
+{
+    TileConverterDialog dialog(this);
+    dialog.setUndoStackPointer(undo_stack);
+    dialog.setSimpleTilesOrderPointer(simple_tiles_order);
+    dialog.setSimpleTilesPointer(simple_tiles);
+    dialog.setAutoTilesOrderPointer(autotiles_order);
+    dialog.setAutoTilesPointer(autotiles);
+    const int tilesize = ui->tilesetView->getTilesize();
+    dialog.setTilesize(tilesize);
+    dialog.updateSelectionWidgets();
+    dialog.exec();
+}
 
 void MainWindow::onResizeMap()
 {
