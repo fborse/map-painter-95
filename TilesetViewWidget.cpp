@@ -35,26 +35,6 @@ private:
     QWeakPointer<T> tiles_ptr;
 };
 
-class SimpleTilesCommand
-{
-public:
-    SimpleTilesCommand(QWeakPointer<SimpleTiles> simple_tiles): simple_tiles_ptr{simple_tiles} {}
-    QSharedPointer<SimpleTiles> lockSimpleTiles() { return lock_ptr(simple_tiles_ptr); }
-
-private:
-    QWeakPointer<SimpleTiles> simple_tiles_ptr;
-};
-
-class AutoTilesCommand
-{
-public:
-    AutoTilesCommand(QWeakPointer<AutoTiles> autotiles): autotiles_ptr{autotiles} {}
-    QSharedPointer<AutoTiles> lockAutoTiles() { return lock_ptr(autotiles_ptr); }
-
-private:
-    QWeakPointer<AutoTiles> autotiles_ptr;
-};
-
 class MapLayersCommand
 {
 public:
@@ -157,8 +137,8 @@ public:
         AddTileCommand(tiles_order, tiles, tile)
     {
         added_ref.autotile = true;
-    //  see RPG Maker scheme
-        added_ref.orientation = {8, 11, 20, 23};
+    //  see Types.hpp for why this represents a single isolated tile
+        added_ref.orientation = {0, 3, 12, 15};
     }
 };
 
