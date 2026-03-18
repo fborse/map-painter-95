@@ -65,6 +65,36 @@ private:
     void mousePressEvent(QMouseEvent *event) final override;
 };
 
+class SimpleTileViewWidget final: public QWidget
+{
+    Q_OBJECT
+public:
+    explicit SimpleTileViewWidget(QWidget *parent = nullptr);
+
+    void setMetaTileSize(const int size) { metatilesize = size; }
+    void setTileCaption(const QImage &simple_tile);
+
+    QRect getMetaTileRect() const;
+    QImage getMetatile() const;
+
+private:
+    int metatilesize;
+    QImage tile;
+
+    QPoint metatile_coordinates;
+
+    QPoint mouse_position;
+    std::optional<QPoint> move_offset;
+
+    void paintBackground(QPainter &painter);
+    void paintMetatileCursor(QPainter &painter);
+    void paintEvent(QPaintEvent *) final override;
+
+    void mouseMoveEvent(QMouseEvent *event) final override;
+    void mousePressEvent(QMouseEvent *event) final override;
+    void mouseReleaseEvent(QMouseEvent *event) final override;
+};
+
 //  this widget also only stores captions as to
 //  be usable for both simple and auto tiles
 class GeneratedTilesWidget final: public SelectionGridWidget
@@ -91,6 +121,30 @@ private:
     void paintCaptions(QPainter &painter);
     void paintNewTileCaption(QPainter &painter);
     void paintAddSymbol(QPainter &painter);
+    void paintEvent(QPaintEvent *) final override;
+
+    void mousePressEvent(QMouseEvent *event) final override;
+};
+
+class MetatilesViewWidget final: public SelectionGridWidget
+{
+    Q_OBJECT
+public:
+    explicit MetatilesViewWidget(QWidget *parent = nullptr);
+
+    void setMetatileOrigin(const int index, const QString &id, const QRect &rect);
+    void setMetatileCaption(const int index, const QImage &pixels);
+
+    QPair<QString, QRect> getMetatileOrigin(const int index) const { return origins[index]; }
+
+signals:
+    void metatileClicked(const int index);
+
+private:
+    QVector<QPair<QString, QRect>> origins;
+    QVector<QImage> metatiles;
+
+    void paintMetatiles(QPainter &painter);
     void paintEvent(QPaintEvent *) final override;
 
     void mousePressEvent(QMouseEvent *event) final override;
@@ -154,6 +208,11 @@ public:
     void updateSelectionWidgets();
 
 public slots:
+    void onSelectedSimpleTileChanged(const QString id);
+    void onMetaTileClicked(const int index);
+    void onAddAutoTile();
+    void onRemoveAutoTile(const QString id);
+
     void onSelectedAutoTileChanged(const QString id);
     void onAddSimpleTile();
     void onRemoveSimpleTile(const QString id);
@@ -172,8 +231,10 @@ private:
     QString selected_simple_tile, selected_autotile;
     QVector<QPair<QString, SimpleTile>> added_simple_tiles;
     QVector<QPair<QString, AutoTile>> added_autotiles;
+    QHash<QString, QVector<QPair<QString, QRect>>> added_metatile_origins;
 
     void updateMetatileSelectionWidget();
 
+    void updateSimpleTileSelectionWidget();
     void updateAutoTileSelectionWidget();
 };

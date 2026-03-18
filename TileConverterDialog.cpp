@@ -154,6 +154,120 @@ void TileSelectionWidget::mousePressEvent(QMouseEvent *event)
     }
 }
 
+SimpleTileViewWidget::SimpleTileViewWidget(QWidget *parent):
+    QWidget(parent),
+    metatilesize{0}, tile{},
+    metatile_coordinates{0, 0}, mouse_position{0, 0}, move_offset{}
+{
+    setFixedSize(0, 0);
+}
+
+void SimpleTileViewWidget::setTileCaption(const QImage &simple_tile)
+{
+    tile = simple_tile;
+    setFixedSize(tile.size());
+    update();
+}
+
+QRect SimpleTileViewWidget::getMetaTileRect() const
+{
+    Q_ASSERT(metatilesize > 0);
+    const QSize s = {metatilesize, metatilesize};
+
+    return QRect(metatile_coordinates, s);
+}
+
+QImage SimpleTileViewWidget::getMetatile() const
+{
+    Q_ASSERT(!tile.isNull());
+    return tile.copy(getMetaTileRect());
+}
+
+void SimpleTileViewWidget::paintBackground(QPainter &painter)
+{
+    const int s = tile.width();
+    const QColor dark = {64, 64, 64};
+    const QColor light = {128, 128, 128};
+
+    painter.fillRect(0, 0, s, s, dark);
+    painter.fillRect(s, 0, s, s, light);
+    painter.fillRect(0, s, s, s, light);
+    painter.fillRect(s, s, s, s, dark);
+}
+
+void SimpleTileViewWidget::paintMetatileCursor(QPainter &painter)
+{
+    const auto &[x, y] = metatile_coordinates;
+    const int s = metatilesize;
+
+    painter.setPen(Qt::black);
+    painter.drawRect(x, y, s, s);
+
+    painter.setPen(Qt::white);
+    painter.drawRect(x+1, y+1, s-2, s-2);
+
+    const QColor white64 = {255, 255, 255, 64};
+    const QColor white128 = {255, 255, 255, 128};
+
+    const QRect r(x, y, s, s);
+    painter.fillRect(r, r.contains(mouse_position)? white128 : white64);
+}
+
+void SimpleTileViewWidget::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+
+    paintBackground(painter);
+    painter.drawImage(0, 0, tile);
+    paintMetatileCursor(painter);
+}
+
+static inline void clamp_to(QPoint &p, const QRect &r)
+{
+    if (p.x() < r.left())
+        p.setX(r.left());
+    if (p.x() > r.right())
+        p.setX(r.right());
+
+    if (p.y() < r.top())
+        p.setY(r.top());
+    if (p.y() > r.bottom())
+        p.setY(r.bottom());
+}
+
+void SimpleTileViewWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    mouse_position = event->pos();
+
+    if (move_offset)
+    {
+        metatile_coordinates = mouse_position - *move_offset;
+
+        const QSize s = {metatilesize, metatilesize};
+        clamp_to(metatile_coordinates, QRect({0, 0}, size() - s));
+    }
+
+    update();
+}
+
+void SimpleTileViewWidget::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton)
+    {
+        const auto &[x, y] = metatile_coordinates;
+        const int s = metatilesize;
+
+        if (QRect(x, y, s, s).contains(mouse_position))
+            move_offset = mouse_position - metatile_coordinates;
+    }
+}
+
+void SimpleTileViewWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton)
+        move_offset = {};
+}
+
 GeneratedTilesWidget::GeneratedTilesWidget(QWidget *parent):
     SelectionGridWidget(parent), captions{}, new_caption{}, selected{-1}
 {
@@ -242,6 +356,84 @@ void GeneratedTilesWidget::mousePressEvent(QMouseEvent *event)
     {
         if (index < captions.length())
             emit removeTileClicked(captions[index].first);
+    }
+}
+
+MetatilesViewWidget::MetatilesViewWidget(QWidget *parent):
+    SelectionGridWidget(parent), origins(20), metatiles(20)
+{
+//  RPG Maker scheme
+    setGridAspect(4, 6);
+}
+
+void MetatilesViewWidget::setMetatileOrigin(const int index, const QString &id, const QRect &rect)
+{
+    Q_ASSERT(0 <= index && index < origins.length());
+    origins[index] = {id, rect};
+}
+
+void MetatilesViewWidget::setMetatileCaption(const int index, const QImage &pixels)
+{
+    Q_ASSERT(0 <= index && index < metatiles.length());
+    metatiles[index] = pixels.scaled(tilesize, tilesize);
+    update();
+}
+
+void MetatilesViewWidget::paintMetatiles(QPainter &painter)
+{
+//  top-left 2x2 depict a single isolated tile
+//  see Types.hpp for why these values
+    painter.drawImage(0, 0, metatiles[0]);
+    painter.drawImage(tilesize, 0, metatiles[3]);
+    painter.drawImage(0, tilesize, metatiles[12]);
+    painter.drawImage(tilesize, tilesize, metatiles[15]);
+
+//  top-right 2x2 are the joints
+    painter.drawImage(2 * tilesize, 0, metatiles[16]);
+    painter.drawImage(3 * tilesize, 0, metatiles[17]);
+    painter.drawImage(2 * tilesize, tilesize, metatiles[18]);
+    painter.drawImage(3 * tilesize, tilesize, metatiles[19]);
+
+//  now the rest is linear
+    const int w = grid_aspect.width();
+    for (int i = 0; i < 16; ++i)
+        painter.drawImage((i%w) * tilesize, (i/w + 2) * tilesize, metatiles[i]);
+}
+
+void MetatilesViewWidget::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+
+    paintBackground(painter);
+    paintMetatiles(painter);
+    paintGrid(painter);
+//  no bad cursor position here
+    paintHoverCursor(painter, true);
+}
+
+void MetatilesViewWidget::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton)
+    {
+        const auto &[i, j] = divide(mouse_position, tilesize);
+
+        if (j < 2)
+        {
+            const QHash<QPoint, int> coords = {
+            //  top-left 2x2 depict a single isolated tile
+                {{0, 0}, 0}, {{1, 0}, 3}, {{0, 1}, 12}, {{1, 1}, 15},
+            //  top-right 2x2 are the joint
+                {{2, 0}, 16}, {{3, 0}, 17}, {{2, 1}, 18}, {{3, 1}, 19}
+            };
+
+            Q_ASSERT(coords.contains({i, j}));
+            emit metatileClicked(coords[{i, j}]);
+        }
+        else
+        {
+            const int w = grid_aspect.width();
+            emit metatileClicked(i + (j-2) * w);
+        }
     }
 }
 
@@ -448,16 +640,139 @@ TileConverterDialog::TileConverterDialog(QWidget *parent):
     simple_tiles_order_ptr{nullptr}, autotiles_order_ptr{nullptr},
     simple_tiles_ptr{nullptr}, autotiles_ptr{nullptr},
     selected_simple_tile{}, selected_autotile{},
-    added_simple_tiles{}, added_autotiles{}
+    added_simple_tiles{}, added_autotiles{}, added_metatile_origins{}
 {
     ui->setupUi(this);
 
+    ui->simpleTileViewWidget->setEnabled(false);
+    ui->metatilesViewWidget->setEnabled(false);
     ui->metatileSelectionWidget->setEnabled(false);
 }
 
 TileConverterDialog::~TileConverterDialog()
 {
     delete ui;
+}
+
+void TileConverterDialog::onSelectedSimpleTileChanged(const QString id)
+{
+    selected_simple_tile = id;
+
+    auto simple_tiles = simple_tiles_ptr.toStrongRef();
+    Q_ASSERT(!simple_tiles.isNull());
+
+    Q_ASSERT(simple_tiles->contains(id));
+    const auto &frames = simple_tiles->value(id).frames;
+    Q_ASSERT(!frames.isEmpty());
+
+    ui->simpleTileViewWidget->setTileCaption(frames[0]);
+    ui->simpleTileViewWidget->setEnabled(true);
+
+    ui->metatilesViewWidget->setEnabled(true);
+}
+
+void TileConverterDialog::onMetaTileClicked(const int index)
+{
+    const QRect rect = ui->simpleTileViewWidget->getMetaTileRect();
+    const QImage pixels = ui->simpleTileViewWidget->getMetatile();
+    ui->metatilesViewWidget->setMetatileOrigin(index, selected_simple_tile, rect);
+    ui->metatilesViewWidget->setMetatileCaption(index, pixels);
+}
+
+static inline int get_n_frames(const SimpleTiles &simple_tiles, const MetatilesViewWidget *widget)
+{
+    int max = 0;
+
+    for (int i = 0; i < 20; ++i)
+    {
+        const auto &[id, _] = widget->getMetatileOrigin(i);
+
+        if (simple_tiles.contains(id))
+        {
+            const int l = simple_tiles.value(id).frames.length();
+
+            if (l > max)
+                max = l;
+        }
+    }
+
+    return (max > 0)? max : 1;
+}
+
+//  TODO: factorise this ; keep functions with LOW number of parameters
+void TileConverterDialog::onAddAutoTile()
+{
+    auto simple_tiles = simple_tiles_ptr.toStrongRef();
+    Q_ASSERT(!simple_tiles.isNull());
+
+    const int n_frames = get_n_frames(*simple_tiles, ui->metatilesViewWidget);
+    QImage empty = QImage(tilesize, tilesize, QImage::Format_ARGB32_Premultiplied);
+    empty.fill(Qt::transparent);
+
+    AutoTile autotile;
+    autotile.frames.resize(n_frames);
+
+    QVector<QPair<QString, QRect>> origins(20);
+
+//  the next frames depend on the previous frame
+//  the first one is thus initialised a bit differently
+    autotile.frames[0].metatiles.resize(20);
+    for (int i = 0; i < 20; ++i)
+    {
+        origins[i] = ui->metatilesViewWidget->getMetatileOrigin(i);
+        const auto &[id, rect] = origins[i];
+
+        if (simple_tiles->contains(id))
+        {
+            const QImage tile = simple_tiles->value(id).frames[0];
+            autotile.frames[0].metatiles[i] = tile.copy(rect);
+        }
+        else
+        {
+            autotile.frames[0].metatiles[i] = empty;
+        }
+    }
+
+    for (int j = 1; j < n_frames; ++j)
+    {
+        autotile.frames[j].metatiles.resize(20);
+
+        for (int i = 0; i < 20; ++i)
+        {
+            const auto &[id, rect] = ui->metatilesViewWidget->getMetatileOrigin(i);
+
+            if (simple_tiles->contains(id))
+            {
+                const auto &frames = simple_tiles->value(id).frames;
+
+                if (j < frames.length())
+                    autotile.frames[j].metatiles[i] = frames[j].copy(rect);
+                else
+                    autotile.frames[j].metatiles[i] = autotile.frames[j-1].metatiles[i];
+            }
+            else
+            {
+                autotile.frames[j].metatiles[i] = autotile.frames[j-1].metatiles[i];
+            }
+        }
+    }
+
+    const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+//  see Types.hpp for why this represents a single isolated tile
+    const Orientation single = {0, 3, 12, 15};
+    ui->generatedAutoTilesWidget->addCaption(id, autotile.frames[0].genTile(single));
+    added_autotiles.push_back({id, autotile});
+    added_metatile_origins[id] = origins;
+}
+
+void TileConverterDialog::onRemoveAutoTile(const QString id)
+{
+    const int index = index_of(added_autotiles, id);
+    Q_ASSERT(index >= 0);
+
+    added_autotiles.remove(index);
+    added_metatile_origins.remove(id);
+    ui->generatedAutoTilesWidget->removeCaption(id);
 }
 
 void TileConverterDialog::updateMetatileSelectionWidget()
@@ -521,6 +836,26 @@ void TileConverterDialog::onUpdateGeneratedSimpleTile()
     ui->generatedSimpleTilesWidget->setNewTileCaption(assembled);
 }
 
+void TileConverterDialog::updateSimpleTileSelectionWidget()
+{
+    auto simple_tiles_order = simple_tiles_order_ptr.toStrongRef();
+    Q_ASSERT(!simple_tiles_order.isNull());
+    auto simple_tiles = simple_tiles_ptr.toStrongRef();
+    Q_ASSERT(!simple_tiles.isNull());
+
+    for (auto &id: *simple_tiles_order)
+    {
+        Q_ASSERT(simple_tiles->contains(id));
+        const auto &frames = simple_tiles->value(id).frames;
+        Q_ASSERT(frames.length() > 0);
+
+        ui->simpleTileSelectionWidget->addCaption(id, frames[0]);
+    }
+
+    ui->simpleTileSelectionWidget->setTilesize(tilesize);
+    ui->simpleTileSelectionWidget->resize();
+}
+
 void TileConverterDialog::updateAutoTileSelectionWidget()
 {
     auto autotiles_order = autotiles_order_ptr.toStrongRef();
@@ -545,6 +880,16 @@ void TileConverterDialog::updateAutoTileSelectionWidget()
 
 void TileConverterDialog::updateSelectionWidgets()
 {
+    updateSimpleTileSelectionWidget();
+
+    ui->simpleTileViewWidget->setMetaTileSize(tilesize / 2);
+
+    ui->metatilesViewWidget->setTilesize(tilesize);
+    ui->metatilesViewWidget->resize();
+
+    ui->generatedAutoTilesWidget->setTilesize(tilesize);
+    ui->generatedAutoTilesWidget->resize();
+
     updateAutoTileSelectionWidget();
 
     ui->generatedSimpleTilesWidget->setTilesize(tilesize);
