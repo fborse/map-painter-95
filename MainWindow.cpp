@@ -446,6 +446,16 @@ static inline bool is_1x1(const SelectedTiles &tiles)
     return (tiles.length() == 1) && (tiles.at(0).length() == 1);
 }
 
+static inline bool has_non_empty(const SelectedTiles &tiles)
+{
+    for (auto &row: tiles)
+        for (auto &ref: row)
+            if (!ref.isEmpty())
+                return true;
+
+    return false;
+}
+
 static inline bool can_add_frames(const SimpleTiles &simple_tiles, const AutoTiles &autotiles, const SelectedTiles &tiles)
 {
     if (!is_1x1(tiles))
@@ -500,8 +510,8 @@ void MainWindow::onSelectedChanged()
 
     ui->tilesetView->update();
 
-    ui->actionCloneSelectedTiles->setEnabled(not_empty(*selected_tiles));
-    ui->actionRemoveSelectedTiles->setEnabled(not_empty(*selected_tiles));
+    ui->actionCloneSelectedTiles->setEnabled(has_non_empty(*selected_tiles));
+    ui->actionRemoveSelectedTiles->setEnabled(has_non_empty(*selected_tiles));
 
     ui->actionAddFrame->setEnabled(can_add_frames(*simple_tiles, *autotiles, *selected_tiles));
     ui->actionCloneCurrentFrame->setEnabled(can_add_frames(*simple_tiles, *autotiles, *selected_tiles));
@@ -752,6 +762,7 @@ void MainWindow::onRemoveSelectedTiles()
     }
 
     ui->tilesetView->removeTiles(tiles);
+    onSelectedChanged();
 }
 
 void MainWindow::onAddFrame()
