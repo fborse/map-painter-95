@@ -218,6 +218,8 @@ public slots:
     void onRemoveSimpleTile(const QString id);
     void onUpdateGeneratedSimpleTile();
 
+    void onAccept();
+
 private:
     Ui::TileConverterDialog *ui;
 

@@ -5,6 +5,78 @@
 #include <QMouseEvent>
 #include <QUuid>
 
+template <typename T>
+static inline QSharedPointer<T> lock_ptr(QWeakPointer<T> &weak)
+{
+    auto shared = weak.toStrongRef();
+    Q_ASSERT(!shared.isNull());
+
+    return shared;
+}
+
+class TilesOrderCommand
+{
+public:
+    TilesOrderCommand(QWeakPointer<Names> tiles_order): tiles_order_ptr{tiles_order} {}
+    QSharedPointer<Names> lockTilesOrder() { return lock_ptr(tiles_order_ptr); }
+
+private:
+    QWeakPointer<Names> tiles_order_ptr;
+};
+
+template <typename T>
+class TilesCommand
+{
+public:
+    TilesCommand(QWeakPointer<T> tiles): tiles_ptr{tiles} {}
+    QSharedPointer<T> lockTiles() { return lock_ptr(tiles_ptr); }
+
+private:
+    QWeakPointer<T> tiles_ptr;
+};
+
+template <typename T>
+class AddTileCommand: public QUndoCommand, public TilesOrderCommand, public TilesCommand<Tileset<T>>
+{
+public:
+    AddTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<Tileset<T>> tiles, const QString &id, const T &tile):
+        QUndoCommand(), TilesOrderCommand(tiles_order), TilesCommand<Tileset<T>>(tiles),
+    //  see Types.hpp for why {0, 3, 12, 15} (single isolated tile)
+        index{0}, added_tile{tile}, added_ref{id, false, {0, 3, 12, 15}}
+    {
+        index = lockTilesOrder()->length();
+    }
+
+    void undo() final override
+    {
+        lockTilesOrder()->remove(index);
+        TilesCommand<Tileset<T>>::lockTiles()->remove(added_ref.name);
+    }
+
+    void redo() final override
+    {
+        lockTilesOrder()->push_back(added_ref.name);
+        TilesCommand<Tileset<T>>::lockTiles()->insert(added_ref.name, added_tile);
+    }
+
+private:
+    int index;
+    T added_tile;
+
+protected:
+    TileReference added_ref;
+};
+
+class AddAutoTileCommand final: public AddTileCommand<AutoTile>
+{
+public:
+    AddAutoTileCommand(QWeakPointer<Names> tiles_order, QWeakPointer<AutoTiles> tiles, const QString &id, const AutoTile &tile):
+        AddTileCommand(tiles_order, tiles, id, tile)
+    {
+        added_ref.autotile = true;
+    }
+};
+
 SelectionGridWidget::SelectionGridWidget(QWidget *parent):
     QWidget(parent), grid_aspect{0, 0}, tilesize{0}, mouse_position{}
 {}
@@ -897,4 +969,22 @@ void TileConverterDialog::updateSelectionWidgets()
 
     ui->metatileSelectionWidget->setTilesize(tilesize);
     ui->metatileSelectionWidget->resize();
+}
+
+void TileConverterDialog::onAccept()
+{
+    if (!added_simple_tiles.isEmpty() || !added_autotiles.isEmpty())
+    {
+        auto undo_stack = undo_stack_ptr.toStrongRef();
+        Q_ASSERT(!undo_stack.isNull());
+
+        undo_stack->beginMacro("Tile Conversions");
+        for (auto &[id, tile]: added_simple_tiles)
+            undo_stack->push(new AddTileCommand<SimpleTile>(simple_tiles_order_ptr, simple_tiles_ptr, id, tile));
+        for (auto &[id, tile]: added_autotiles)
+            undo_stack->push(new AddAutoTileCommand(autotiles_order_ptr, autotiles_ptr, id, tile));
+        undo_stack->endMacro();
+    }
+
+    accept();
 }

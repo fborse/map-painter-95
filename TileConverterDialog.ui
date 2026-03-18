@@ -448,7 +448,7 @@
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
    <receiver>TileConverterDialog</receiver>
-   <slot>accept()</slot>
+   <slot>onAccept()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>227</x>
@@ -646,5 +646,6 @@
   <slot>onMetaTileClicked(int)</slot>
   <slot>onAddAutoTile()</slot>
   <slot>onRemoveAutoTile(QString)</slot>
+  <slot>onAccept()</slot>
  </slots>
 </ui>
