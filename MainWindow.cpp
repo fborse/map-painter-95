@@ -18,6 +18,7 @@
 #include "ExportTilesetAndMapDialog.hpp"
 #include "ExportAsTexturesDialog.hpp"
 #include "TileConverterDialog.hpp"
+#include "FrameOrderEditorDialog.hpp"
 
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow),
@@ -853,6 +854,20 @@ void MainWindow::onRemoveCurrentFrame()
 
     updateFramesBoxes();
     ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *autotiles, *selected_tiles));
+}
+
+void MainWindow::onOpenFrameOrderEditor()
+{
+    FrameOrderEditorDialog dialog(this);
+    dialog.setUndoStackPointer(undo_stack);
+    dialog.setSimpleTilesOrderPointer(simple_tiles_order);
+    dialog.setSimpleTilesPointer(simple_tiles);
+    dialog.setAutoTilesOrderPointer(autotiles_order);
+    dialog.setAutoTilesPointer(autotiles);
+    const int tilesize = ui->tilesetView->getTilesize();
+    dialog.setTilesize(tilesize);
+    dialog.updateTileset();
+    dialog.exec();
 }
 
 //  convert each orientation of the selected autotiles

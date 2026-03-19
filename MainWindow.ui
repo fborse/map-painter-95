@@ -1001,6 +1001,8 @@
     <addaction name="menuRemove"/>
     <addaction name="separator"/>
     <addaction name="menuConvert"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpenFrameOrderEditor"/>
    </widget>
    <widget class="QMenu" name="menuMap">
     <property name="title">
@@ -1392,6 +1394,20 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+T, Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionOpenFrameOrderEditor">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MediaPlaylistShuffle"/>
+   </property>
+   <property name="text">
+    <string>&amp;Frame &amp;Order Editor...</string>
+   </property>
+   <property name="toolTip">
+    <string>Open Frame Order Editor</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F, Ctrl+O</string>
    </property>
   </action>
  </widget>
@@ -3138,8 +3154,8 @@
    <slot>setAirbrushSpreadRadius(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>909</x>
-     <y>633</y>
+     <x>864</x>
+     <y>620</y>
     </hint>
     <hint type="destinationlabel">
      <x>694</x>
@@ -3154,12 +3170,28 @@
    <slot>setAirbrushIntensity(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>897</x>
-     <y>666</y>
+     <x>864</x>
+     <y>629</y>
     </hint>
     <hint type="destinationlabel">
      <x>649</x>
      <y>664</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionOpenFrameOrderEditor</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onOpenFrameOrderEditor()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
     </hint>
    </hints>
   </connection>
@@ -3204,5 +3236,6 @@
   <slot>onConvertToSimpleTiles()</slot>
   <slot>onConvertToAutoTiles()</slot>
   <slot>onOpenTileConverter()</slot>
+  <slot>onOpenFrameOrderEditor()</slot>
  </slots>
 </ui>
