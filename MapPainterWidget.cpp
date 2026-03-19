@@ -165,6 +165,7 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     ellipse_shape{false}, fill_shape{false}, rect_radius{false},
     fill_tolerance{0}, fill_this_tile_only{true},
     darken{true},
+    spread_radius{10},
     selection_shape{RECTANGLE}, selection_color_key{false},
     mouse_cursor{}, click_origin{}, right_click{false}, shift_key{false},
     selection_rect{}, original_rect{},
@@ -202,7 +203,7 @@ void MapPainterWidget::setDrawTool(const int index)
         update();
     }
 
-    Q_ASSERT(0 <= index && index < 9);
+    Q_ASSERT(0 <= index && index < 10);
     draw_tool = DrawTool(index);
     redrawCursorImage();
 }
@@ -352,6 +353,7 @@ void MapPainterWidget::paintCursor(QPainter &painter) const
     case LINE:
     case ERASER:
     case SHADER:
+    case AIRBRUSH:
         offset = {pen_size / 2, pen_size / 2};
         break;
     case BRUSH:
@@ -659,6 +661,8 @@ QImage MapPainterWidget::getDrawnLayer() const
             break;
         case SHADER:
             if (!drag_points.isEmpty()) drawShader(painter);
+            break;
+        case AIRBRUSH:
             break;
         default:    //  PIPETTE, SELECTION
             break;
@@ -1230,6 +1234,8 @@ void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
         case SHADER:
             if (drag_points.back() != mouse_cursor)
                 drag_points.push_back(mouse_cursor);
+            break;
+        case AIRBRUSH:
             break;
         case PIPETTE:
             emit colorChanged(getColorAt(mouse_cursor));

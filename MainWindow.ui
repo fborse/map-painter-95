@@ -571,6 +571,11 @@
                </item>
                <item>
                 <property name="text">
+                 <string>Airbrush</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
                  <string>Pipette</string>
                 </property>
                </item>
@@ -835,6 +840,50 @@
                        </size>
                       </property>
                      </spacer>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="airbrushPage">
+                   <layout class="QFormLayout" name="formLayout_5">
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="airbrushSpreadRadiusLabel">
+                      <property name="text">
+                       <string>Spread Radius :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QSpinBox" name="airbrushSpreadRadiusSpinBox">
+                      <property name="minimum">
+                       <number>1</number>
+                      </property>
+                      <property name="maximum">
+                       <number>2048</number>
+                      </property>
+                      <property name="value">
+                       <number>10</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="airbrushIntensityLabel">
+                      <property name="text">
+                       <string>Intensity :</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QSpinBox" name="airbrushIntensitySpinBox">
+                      <property name="minimum">
+                       <number>1</number>
+                      </property>
+                      <property name="maximum">
+                       <number>10</number>
+                      </property>
+                      <property name="value">
+                       <number>5</number>
+                      </property>
+                     </widget>
                     </item>
                    </layout>
                   </widget>
@@ -1425,6 +1474,8 @@
     <slot>setSelectionColorKey(bool)</slot>
     <slot>setCurrentLayer(int)</slot>
     <slot>setCurrentFrame(int)</slot>
+    <slot>setAirbrushSpreadRadius(int)</slot>
+    <slot>setAirbrushIntensity(int)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -3077,6 +3128,38 @@
     <hint type="destinationlabel">
      <x>511</x>
      <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>airbrushSpreadRadiusSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setAirbrushSpreadRadius(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>909</x>
+     <y>633</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>694</x>
+     <y>631</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>airbrushIntensitySpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>mapPainter</receiver>
+   <slot>setAirbrushIntensity(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>897</x>
+     <y>666</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>649</x>
+     <y>664</y>
     </hint>
    </hints>
   </connection>

@@ -591,15 +591,15 @@ void MainWindow::updateFramesBoxes()
 void MainWindow::updateDrawOptions(const int draw_tool)
 {
 //  TODO: find a way to remove the magic aspect of this magic value
-    const int n = 9;
-    Q_ASSERT(0 <= draw_tool && draw_tool < n);
+    const int n_tools = 10;
+    Q_ASSERT(0 <= draw_tool && draw_tool < n_tools);
 
 //  Stack 1 : Empty page, Pen page, Fill page, Selection page
 //  Stack 2 : Empty page, Brush page, Shape page, Shader page
 
-//  pen, line, brush, shape, fill, eraser, shader, pipette, selection
-    int stack1[n] = {1, 1, 1, 1, 2, 1, 1, 0, 3};
-    int stack2[n] = {0, 0, 1, 2, 0, 0, 3, 0, 0};
+//  pen, line, brush, shape, fill, eraser, shader, airbrush, pipette, selection
+    int stack1[n_tools] = {1, 1, 1, 1, 2, 1, 1, 1, 0, 3};
+    int stack2[n_tools] = {0, 0, 1, 2, 0, 0, 3, 4, 0, 0};
 
     ui->toolBox1StackedWidget->setCurrentIndex(stack1[draw_tool]);
     ui->toolBox2StackedWidget->setCurrentIndex(stack2[draw_tool]);

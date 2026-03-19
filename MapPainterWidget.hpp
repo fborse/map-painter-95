@@ -11,8 +11,9 @@ enum DrawTool
     FILL = 4,
     ERASER = 5,
     SHADER = 6,
-    PIPETTE = 7,
-    SELECTION = 8
+    AIRBRUSH = 7,
+    PIPETTE = 8,
+    SELECTION = 9
 };
 
 enum SelectionShape
@@ -70,6 +71,9 @@ public slots:
     void setFillThisTileOnly(const bool yes) { fill_this_tile_only = yes; }
 
     void setDarken(const bool yes) { darken = yes; }
+
+    void setAirbrushSpreadRadius(const int radius) { spread_radius = radius; }
+    void setAirbrushIntensity(const int intensity) { airbrush_intensity = intensity; }
 //  so does this one
     void setSelectionShape(const int index);
     void setSelectionColorKey(const bool yes);
@@ -100,6 +104,9 @@ private:
     bool fill_this_tile_only;
 
     bool darken;
+
+    int spread_radius;
+    int airbrush_intensity;
 
     SelectionShape selection_shape;
     bool selection_color_key;
