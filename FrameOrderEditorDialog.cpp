@@ -143,6 +143,14 @@ static inline int index_of(const QVector<QPair<QString, QImage>> &captions, cons
     return -1;
 }
 
+static inline void draw_cursor(QPainter &painter, const int i, const int j, const int unit)
+{
+    painter.setPen(Qt::black);
+    painter.drawRect(i * unit, j * unit, unit - 1, unit - 1);
+    painter.setPen(Qt::white);
+    painter.drawRect(i * unit + 1, j * unit + 1, unit - 3, unit - 3);
+}
+
 void FrameOrderTileSelectionWidget::paintSelected(QPainter &painter)
 {
     if (selected_tile.autotile && !selected_tile.name.isEmpty())
@@ -150,26 +158,20 @@ void FrameOrderTileSelectionWidget::paintSelected(QPainter &painter)
         const int index = index_of(autotile_captions, selected_tile.name);
         Q_ASSERT(index >= 0);
         Q_ASSERT(n_columns > 0);
-        const int x = index % n_columns, y = index / n_columns;
+        const int i = index % n_columns, j = index / n_columns;
 
-        painter.setPen(Qt::black);
-        painter.drawRect(x * tilesize, y * tilesize, tilesize - 1, tilesize - 1);
-        painter.setPen(Qt::white);
-        painter.drawRect(x * tilesize + 1, y * tilesize + 1, tilesize - 3, tilesize - 3);
+        draw_cursor(painter, i, j, tilesize);
     }
     else if (!selected_tile.autotile && !selected_tile.name.isEmpty())
     {
         const int index = index_of(simple_tile_captions, selected_tile.name);
         Q_ASSERT(index >= 0);
         Q_ASSERT(n_columns > 0);
-        const int x = index % n_columns, y = index / n_columns;
+        const int i = index % n_columns, j = index / n_columns;
         const int n = autotile_captions.length();
         const int h = qCeil(n / double(n_columns));
 
-        painter.setPen(Qt::black);
-        painter.drawRect(x * tilesize, (y+h) * tilesize, tilesize - 1, tilesize - 1);
-        painter.setPen(Qt::white);
-        painter.drawRect(x * tilesize + 1, (y+h) * tilesize + 1, tilesize - 3, tilesize - 3);
+        draw_cursor(painter, i, j + h, tilesize);
     }
 }
 
@@ -226,34 +228,43 @@ FrameOrderEditorDialog::~FrameOrderEditorDialog()
     delete ui;
 }
 
+template <typename T, class Fn>
+static inline auto get_captions(QWeakPointer<Names> orders_ptr, QWeakPointer<Tileset<T>> tiles_ptr, Fn fn)
+{
+    auto orders = orders_ptr.toStrongRef();
+    Q_ASSERT(!orders.isNull());
+    auto tiles = tiles_ptr.toStrongRef();
+    Q_ASSERT(!tiles.isNull());
+
+    QVector<QPair<QString, QImage>> captions;
+
+    for (auto &id: *orders)
+    {
+        Q_ASSERT(tiles->contains(id));
+        const auto &frames = tiles->value(id).frames;
+        Q_ASSERT(frames.length() > 0);
+
+        captions.push_back({id, fn(frames[0])});
+    }
+
+    return captions;
+}
+
 void FrameOrderEditorDialog::updateTileset()
 {
-    auto simple_tiles_order = simple_tiles_order_ptr.toStrongRef();
-    Q_ASSERT(!simple_tiles_order.isNull());
-    auto simple_tiles = simple_tiles_ptr.toStrongRef();
-    Q_ASSERT(!simple_tiles.isNull());
-    auto autotiles_order = autotiles_order_ptr.toStrongRef();
-    Q_ASSERT(!autotiles_order.isNull());
-    auto autotiles = autotiles_ptr.toStrongRef();
-    Q_ASSERT(!autotiles.isNull());
-
 //  see Types.hpp for why this represents a single isolated tile
     const Orientation isolated = {0, 3, 12, 15};
-    for (auto &id: *autotiles_order)
-    {
-        Q_ASSERT(autotiles->contains(id));
-        const auto &frames = autotiles->value(id).frames;
-        Q_ASSERT(frames.length() > 0);
-        ui->tileSelectionWidget->addAutoTileCaption(id, frames[0].genTile(isolated));
-    }
+    const auto autotiles = get_captions(autotiles_order_ptr, autotiles_ptr, [isolated]
+        (const AutoTile::Frame &frame) { return frame.genTile(isolated); }
+    );
+    for (auto &[id, caption]: autotiles)
+        ui->tileSelectionWidget->addAutoTileCaption(id, caption);
 
-    for (auto &id: *simple_tiles_order)
-    {
-        Q_ASSERT(simple_tiles->contains(id));
-        const auto &frames = simple_tiles->value(id).frames;
-        Q_ASSERT(frames.length() > 0);
-        ui->tileSelectionWidget->addSimpleTileCaption(id, frames[0]);
-    }
+    const auto simple_tiles = get_captions(simple_tiles_order_ptr, simple_tiles_ptr, []
+        (const QImage &caption) { return caption; }
+    );
+    for (auto &[id, caption]: simple_tiles)
+        ui->tileSelectionWidget->addSimpleTileCaption(id, caption);
 
     ui->tileSelectionWidget->setTilesize(tilesize);
     ui->tileSelectionWidget->resize();
@@ -264,5 +275,76 @@ void FrameOrderEditorDialog::onAccept()
     accepted();
 }
 
-void FrameOrderEditorDialog::onSelectedTileChanged(const TileReference /*ref*/)
-{}
+void FrameOrderEditorDialog::onSelectedTileChanged(const TileReference ref)
+{
+    ui->framesListWidget->clear();
+
+    const QColor dark = {64, 64, 64};
+    const QColor light = {128, 128, 128};
+
+    if (ref.autotile)
+    {
+        const int s = tilesize/2;
+    //  Modified RPG Maker scheme, here
+    //  0   1   2   3   16
+    //  4   5   6   7   17
+    //  8   9   10  11  18
+    //  12  13  14  15  19
+        ui->framesListWidget->setIconSize({5 * s, 4 * s});
+
+        auto autotiles = autotiles_ptr.toStrongRef();
+        Q_ASSERT(!autotiles.isNull());
+        Q_ASSERT(autotiles->contains(ref.name));
+        const auto &frames = autotiles->value(ref.name).frames;
+
+        for (auto &frame: frames)
+        {
+            QPixmap pixmap(5 * s, 4 * s);
+
+            QPainter painter(&pixmap);
+        //  background ; offshooting by tilesize/2 (aka s)
+            for (int j = 0; j < 3; ++j)
+            {
+                for (int i = 0; i < 2; ++i)
+                {
+                    painter.fillRect(i * tilesize, j * tilesize, s, s, dark);
+                    painter.fillRect(i * tilesize + s, j * tilesize, s, s, light);
+                    painter.fillRect(i * tilesize, j * tilesize + s, s, s, light);
+                    painter.fillRect(i * tilesize + s, j * tilesize + s, s, s, dark);
+                }
+            }
+        //  "regular" metatiles
+            for (int i = 0; i < 16; ++i)
+                painter.drawImage((i%4) * s, (i/4) * s, frame.metatiles[i]);
+        //  joint metatiles
+            for (int i = 0; i < 4; ++i)
+                painter.drawImage(4 * s, i * s, frame.metatiles[16 + i]);
+
+            ui->framesListWidget->addItem(new QListWidgetItem(QIcon(pixmap), ""));
+        }
+    }
+    else
+    {
+        ui->framesListWidget->setIconSize({tilesize, tilesize});
+
+        auto simple_tiles = simple_tiles_ptr.toStrongRef();
+        Q_ASSERT(!simple_tiles.isNull());
+        Q_ASSERT(simple_tiles->contains(ref.name));
+        const auto &frames = simple_tiles->value(ref.name).frames;
+
+        for (auto &original: frames)
+        {
+        //  it's relatively cheap to just redraw the background for every frame
+            QPixmap pixmap(tilesize, tilesize);
+
+            QPainter painter(&pixmap);
+            painter.fillRect(0, 0, tilesize/2, tilesize/2, dark);
+            painter.fillRect(tilesize/2, 0, tilesize/2, tilesize/2, light);
+            painter.fillRect(0, tilesize/2, tilesize/2, tilesize/2, dark);
+            painter.fillRect(tilesize/2, tilesize/2, tilesize/2, tilesize/2, dark);
+            painter.drawImage(0, 0, original);
+
+            ui->framesListWidget->addItem(new QListWidgetItem(QIcon(pixmap), ""));
+        }
+    }
+}
