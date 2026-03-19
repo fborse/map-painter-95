@@ -134,6 +134,45 @@ void FrameOrderTileSelectionWidget::paintGrid(QPainter &painter)
         painter.fillRect(i * tilesize + tilesize-1, 0, 1, h * tilesize, white128);
 }
 
+static inline int index_of(const QVector<QPair<QString, QImage>> &captions, const QString &id)
+{
+    for (int i = 0; i < captions.length(); ++i)
+        if (captions[i].first == id)
+            return i;
+
+    return -1;
+}
+
+void FrameOrderTileSelectionWidget::paintSelected(QPainter &painter)
+{
+    if (selected_tile.autotile && !selected_tile.name.isEmpty())
+    {
+        const int index = index_of(autotile_captions, selected_tile.name);
+        Q_ASSERT(index >= 0);
+        Q_ASSERT(n_columns > 0);
+        const int x = index % n_columns, y = index / n_columns;
+
+        painter.setPen(Qt::black);
+        painter.drawRect(x * tilesize, y * tilesize, tilesize - 1, tilesize - 1);
+        painter.setPen(Qt::white);
+        painter.drawRect(x * tilesize + 1, y * tilesize + 1, tilesize - 3, tilesize - 3);
+    }
+    else if (!selected_tile.autotile && !selected_tile.name.isEmpty())
+    {
+        const int index = index_of(simple_tile_captions, selected_tile.name);
+        Q_ASSERT(index >= 0);
+        Q_ASSERT(n_columns > 0);
+        const int x = index % n_columns, y = index / n_columns;
+        const int n = autotile_captions.length();
+        const int h = qCeil(n / double(n_columns));
+
+        painter.setPen(Qt::black);
+        painter.drawRect(x * tilesize, (y+h) * tilesize, tilesize - 1, tilesize - 1);
+        painter.setPen(Qt::white);
+        painter.drawRect(x * tilesize + 1, (y+h) * tilesize + 1, tilesize - 3, tilesize - 3);
+    }
+}
+
 void FrameOrderTileSelectionWidget::paintHoverCursor(QPainter &painter)
 {
     const QPoint p = divide(mouse_position, tilesize);
@@ -154,6 +193,8 @@ void FrameOrderTileSelectionWidget::paintEvent(QPaintEvent *)
     paintCaptions(painter);
     paintGrid(painter);
     paintHoverCursor(painter);
+    if (!selected_tile.isEmpty())
+        paintSelected(painter);
 }
 
 void FrameOrderTileSelectionWidget::mouseMoveEvent(QMouseEvent *event)
@@ -165,7 +206,7 @@ void FrameOrderTileSelectionWidget::mouseMoveEvent(QMouseEvent *event)
 void FrameOrderTileSelectionWidget::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
-        if (const auto ref = toRef(mouse_position))
+        if (const auto ref = toRef(divide(mouse_position, tilesize)))
             emit tileClicked(*ref);
 }
 
@@ -222,3 +263,6 @@ void FrameOrderEditorDialog::onAccept()
 {
     accepted();
 }
+
+void FrameOrderEditorDialog::onSelectedTileChanged(const TileReference /*ref*/)
+{}

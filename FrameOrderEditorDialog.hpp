@@ -25,6 +25,8 @@ public:
 public slots:
     void setNumberOfColumns(const int n) { n_columns = n; resize(); }
 
+    void setSelectedTile(const TileReference ref) { selected_tile = ref; update(); }
+
 signals:
     void tileClicked(const TileReference ref);
 
@@ -45,6 +47,7 @@ private:
     void paintCaptions(QPainter &painter);
     void paintGrid(QPainter &painter);
     void paintHoverCursor(QPainter &painter);
+    void paintSelected(QPainter &painter);
     void paintEvent(QPaintEvent *) final override;
 
     void mouseMoveEvent(QMouseEvent *event) final override;
@@ -70,6 +73,8 @@ public:
 
 public slots:
     void onAccept();
+
+    void onSelectedTileChanged(const TileReference ref);
 
 private:
     Ui::FrameOrderEditorDialog *ui;
