@@ -118,6 +118,7 @@ private:
     bool shift_key;
 
     QVector<QPoint> drag_points;
+    QVector<QPoint> airbrush_points;
 
     std::optional<QRect> selection_rect, original_rect;
     QImage selection_image, original_selection_image;
@@ -139,6 +140,7 @@ private:
     void drawFill(QImage &original) const;
     void drawEraser(QPainter &painter) const;
     void drawShader(QPainter &painter) const;
+    void drawAirbrush(QPainter &painter) const;
 
     void drawSelectionPixels(QPainter &painter) const;
     void drawSelectionOutline(QPainter &painter) const;

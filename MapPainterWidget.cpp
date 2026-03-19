@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QUuid>
+#include <QRandomGenerator>
 
 template <typename T>
 static inline QSharedPointer<T> lock_ptr(QWeakPointer<T> &weak)
@@ -165,9 +166,10 @@ MapPainterWidget::MapPainterWidget(QWidget *parent):
     ellipse_shape{false}, fill_shape{false}, rect_radius{false},
     fill_tolerance{0}, fill_this_tile_only{true},
     darken{true},
-    spread_radius{10},
+    spread_radius{10}, airbrush_intensity{5},
     selection_shape{RECTANGLE}, selection_color_key{false},
     mouse_cursor{}, click_origin{}, right_click{false}, shift_key{false},
+    drag_points{}, airbrush_points{},
     selection_rect{}, original_rect{},
     selection_image{}, original_selection_image{},
     move_offset{}, magic_points{},
@@ -581,6 +583,12 @@ void MapPainterWidget::drawShader(QPainter &painter) const
     }
 }
 
+void MapPainterWidget::drawAirbrush(QPainter &painter) const
+{
+    setPen(painter);
+    painter.drawPoints(airbrush_points.data(), airbrush_points.length());
+}
+
 void MapPainterWidget::drawSelectionPixels(QPainter &painter) const
 {
     if (selection_rect && !selection_image.isNull())
@@ -646,7 +654,8 @@ QImage MapPainterWidget::getDrawnLayer() const
         switch (draw_tool)
         {
         case PEN:
-            if (!drag_points.isEmpty()) drawPen(painter);
+            if (!drag_points.isEmpty())
+                drawPen(painter);
             break;
         case LINE:
             drawLine(painter); break;
@@ -657,12 +666,16 @@ QImage MapPainterWidget::getDrawnLayer() const
         case FILL:
             drawFill(original); break;
         case ERASER:
-            if (!drag_points.isEmpty()) drawEraser(painter);
+            if (!drag_points.isEmpty())
+                drawEraser(painter);
             break;
         case SHADER:
-            if (!drag_points.isEmpty()) drawShader(painter);
+            if (!drag_points.isEmpty())
+                drawShader(painter);
             break;
         case AIRBRUSH:
+            if (!airbrush_points.isEmpty())
+                drawAirbrush(painter);
             break;
         default:    //  PIPETTE, SELECTION
             break;
@@ -1221,6 +1234,14 @@ static inline QRect rect_from(const QPoint &p1, const QPoint &p2)
     };
 }
 
+static inline QPoint random_point(const QPoint &origin, const int radius)
+{
+    const double r = QRandomGenerator::global()->generateDouble();
+    const double a = QRandomGenerator::global()->generateDouble();
+
+    return origin + r * rotate(QPoint(radius, 0), a * 2 * pi);
+}
+
 void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
 {
     mouse_cursor = divide(event->pos(), zoom);
@@ -1236,6 +1257,8 @@ void MapPainterWidget::mouseMoveEvent(QMouseEvent *event)
                 drag_points.push_back(mouse_cursor);
             break;
         case AIRBRUSH:
+            for (int i = 0; i < airbrush_intensity; ++i)
+                airbrush_points.push_back(random_point(mouse_cursor, spread_radius));
             break;
         case PIPETTE:
             emit colorChanged(getColorAt(mouse_cursor));
@@ -1292,6 +1315,9 @@ void MapPainterWidget::mousePressEvent(QMouseEvent *event)
         click_origin = divide(event->pos(), zoom);
 
         drag_points = {mouse_cursor};
+        if (draw_tool == AIRBRUSH)
+            for (int i = 0; i < airbrush_intensity; ++i)
+                airbrush_points.push_back(random_point(mouse_cursor, spread_radius));
         if (draw_tool == PIPETTE)
             emit colorChanged(getColorAt(mouse_cursor));
 
@@ -1336,6 +1362,7 @@ void MapPainterWidget::mouseReleaseEvent(QMouseEvent *event)
 
         click_origin = {};
         drag_points = {};
+        airbrush_points = {};
         move_offset = {};
     }
 
