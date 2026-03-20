@@ -255,9 +255,111 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>framesListWidget</sender>
+   <signal>currentRowChanged(int)</signal>
+   <receiver>FrameOrderEditorDialog</receiver>
+   <slot>onSelectedFrameChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>598</x>
+     <y>196</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>638</x>
+     <y>204</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>addFramePushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>FrameOrderEditorDialog</receiver>
+   <slot>onAddFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>383</x>
+     <y>380</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>383</x>
+     <y>478</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cloneFramePushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>FrameOrderEditorDialog</receiver>
+   <slot>onCloneFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>476</x>
+     <y>378</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>475</x>
+     <y>478</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>removeFramePushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>FrameOrderEditorDialog</receiver>
+   <slot>onRemoveFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>601</x>
+     <y>376</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>634</x>
+     <y>377</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>moveFrameDownPushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>FrameOrderEditorDialog</receiver>
+   <slot>onMoveFrameDown()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>611</x>
+     <y>411</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>636</x>
+     <y>414</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>moveFrameUpPushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>FrameOrderEditorDialog</receiver>
+   <slot>onMoveFrameUp()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>344</x>
+     <y>419</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>4</x>
+     <y>412</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onAccept()</slot>
   <slot>onSelectedTileChanged(TileReference)</slot>
+  <slot>onSelectedFrameChanged(int)</slot>
+  <slot>onAddFrame()</slot>
+  <slot>onCloneFrame()</slot>
+  <slot>onRemoveFrame()</slot>
+  <slot>onMoveFrameUp()</slot>
+  <slot>onMoveFrameDown()</slot>
  </slots>
 </ui>

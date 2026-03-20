@@ -75,6 +75,13 @@ public slots:
     void onAccept();
 
     void onSelectedTileChanged(const TileReference ref);
+    void onSelectedFrameChanged(const int index);
+
+    void onAddFrame();
+    void onCloneFrame();
+    void onRemoveFrame();
+    void onMoveFrameUp();
+    void onMoveFrameDown();
 
 private:
     Ui::FrameOrderEditorDialog *ui;
@@ -87,4 +94,6 @@ private:
     QWeakPointer<AutoTiles> autotiles_ptr;
 
     TileReference selected_tile;
+
+    int selected_frame;
 };

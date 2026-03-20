@@ -4,6 +4,8 @@
 #include <QPainter>
 #include <QMouseEvent>
 
+#include "AddRectDialog.hpp"
+
 FrameOrderTileSelectionWidget::FrameOrderTileSelectionWidget(QWidget *parent):
     QWidget(parent),
     tilesize{0},
@@ -218,9 +220,15 @@ FrameOrderEditorDialog::FrameOrderEditorDialog(QWidget *parent):
     undo_stack_ptr{nullptr},
     simple_tiles_order_ptr{nullptr}, autotiles_order_ptr{nullptr},
     simple_tiles_ptr{nullptr}, autotiles_ptr{nullptr},
-    selected_tile{}
+    selected_tile{}, selected_frame{-1}
 {
     ui->setupUi(this);
+
+    ui->addFramePushButton->setEnabled(false);
+    ui->cloneFramePushButton->setEnabled(false);
+    ui->removeFramePushButton->setEnabled(false);
+    ui->moveFrameUpPushButton->setEnabled(false);
+    ui->moveFrameDownPushButton->setEnabled(false);
 }
 
 FrameOrderEditorDialog::~FrameOrderEditorDialog()
@@ -275,8 +283,47 @@ void FrameOrderEditorDialog::onAccept()
     accepted();
 }
 
+static inline QPixmap gen_caption(const QVector<QImage> &metatiles)
+{
+    Q_ASSERT(metatiles.length() == 20);
+    const int s = metatiles[0].width();
+
+    const QColor dark = {64, 64, 64};
+    const QColor light = {128, 128, 128};
+
+//  Modified RPG Maker scheme, here
+//  0   1   2   3   16
+//  4   5   6   7   17
+//  8   9   10  11  18
+//  12  13  14  15  19
+    QPixmap pixmap(5 * s, 4 * s);
+
+    QPainter painter(&pixmap);
+//  start with the background ; offshooting by s
+    for (int j = 0; j < 3; ++j)
+    {
+        for (int i = 0; i < 2; ++i)
+        {
+            painter.fillRect(i * 2*s, j * 2*s, s, s, dark);
+            painter.fillRect(i * 2*s + s, j * 2*s, s, s, light);
+            painter.fillRect(i * 2*s, j * 2*s + s, s, s, light);
+            painter.fillRect(i * 2*s + s, j * 2*s + s, s, s, dark);
+        }
+    }
+//  regular metatiles
+    for (int i = 0; i < 16; ++i)
+        painter.drawImage((i%4) * s, (i/4) * s, metatiles[i]);
+//  joint metatiles
+    for (int i = 0; i < 4; ++i)
+        painter.drawImage(4 * s, i * s, metatiles[16 + i]);
+
+    return pixmap;
+}
+
 void FrameOrderEditorDialog::onSelectedTileChanged(const TileReference ref)
 {
+    selected_tile = ref;
+
     ui->framesListWidget->clear();
 
     const QColor dark = {64, 64, 64};
@@ -284,14 +331,6 @@ void FrameOrderEditorDialog::onSelectedTileChanged(const TileReference ref)
 
     if (ref.autotile)
     {
-        const int s = tilesize/2;
-    //  Modified RPG Maker scheme, here
-    //  0   1   2   3   16
-    //  4   5   6   7   17
-    //  8   9   10  11  18
-    //  12  13  14  15  19
-        ui->framesListWidget->setIconSize({5 * s, 4 * s});
-
         auto autotiles = autotiles_ptr.toStrongRef();
         Q_ASSERT(!autotiles.isNull());
         Q_ASSERT(autotiles->contains(ref.name));
@@ -299,28 +338,9 @@ void FrameOrderEditorDialog::onSelectedTileChanged(const TileReference ref)
 
         for (auto &frame: frames)
         {
-            QPixmap pixmap(5 * s, 4 * s);
-
-            QPainter painter(&pixmap);
-        //  background ; offshooting by tilesize/2 (aka s)
-            for (int j = 0; j < 3; ++j)
-            {
-                for (int i = 0; i < 2; ++i)
-                {
-                    painter.fillRect(i * tilesize, j * tilesize, s, s, dark);
-                    painter.fillRect(i * tilesize + s, j * tilesize, s, s, light);
-                    painter.fillRect(i * tilesize, j * tilesize + s, s, s, light);
-                    painter.fillRect(i * tilesize + s, j * tilesize + s, s, s, dark);
-                }
-            }
-        //  "regular" metatiles
-            for (int i = 0; i < 16; ++i)
-                painter.drawImage((i%4) * s, (i/4) * s, frame.metatiles[i]);
-        //  joint metatiles
-            for (int i = 0; i < 4; ++i)
-                painter.drawImage(4 * s, i * s, frame.metatiles[16 + i]);
-
-            ui->framesListWidget->addItem(new QListWidgetItem(QIcon(pixmap), ""));
+            QPixmap caption = gen_caption(frame.metatiles);
+            ui->framesListWidget->setIconSize(caption.size());
+            ui->framesListWidget->addItem(new QListWidgetItem(QIcon(caption), ""));
         }
     }
     else
@@ -347,4 +367,110 @@ void FrameOrderEditorDialog::onSelectedTileChanged(const TileReference ref)
             ui->framesListWidget->addItem(new QListWidgetItem(QIcon(pixmap), ""));
         }
     }
+
+    ui->addFramePushButton->setEnabled(true);
+}
+
+void FrameOrderEditorDialog::onSelectedFrameChanged(const int index)
+{
+    const int n = ui->framesListWidget->count();
+
+    ui->cloneFramePushButton->setEnabled(index >= 0);
+    ui->removeFramePushButton->setEnabled((index >= 0) && (n > 1));
+    ui->moveFrameUpPushButton->setEnabled(index > 0);
+    ui->moveFrameDownPushButton->setEnabled((index >= 0) && (index < n-1));
+
+    selected_frame = index;
+}
+
+static inline QImage gen_image(const QSize &size, const QColor &color)
+{
+    QImage image(size, QImage::Format_ARGB32_Premultiplied);
+    image.fill(color);
+
+    return image;
+}
+
+void FrameOrderEditorDialog::onAddFrame()
+{
+    AddRectDialog dialog(tilesize, this);
+    dialog.setWindowTitle("Add Frame");
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        const int n = ui->framesListWidget->count();
+        const int index = (selected_frame < 0)? n : selected_frame;
+
+        QPixmap caption;
+
+        Q_ASSERT(!selected_tile.name.isEmpty());
+        if (selected_tile.autotile)
+        {
+            QVector<QImage> metatiles(20);
+            for (auto &metatile: metatiles)
+                metatile = gen_image({tilesize/2, tilesize/2}, dialog.getColor());
+            caption = gen_caption(metatiles);
+        //  TODO: add frame to added frames
+        }
+        else
+        {
+            QImage frame = gen_image({tilesize, tilesize}, dialog.getColor());
+            caption = QPixmap::fromImage(frame);
+        //  TODO: add frame to added frames
+        }
+
+        ui->framesListWidget->insertItem(index + 1, new QListWidgetItem(QIcon(caption), ""));
+        ui->framesListWidget->setCurrentRow(index + 1);
+    }
+}
+
+void FrameOrderEditorDialog::onCloneFrame()
+{
+    Q_ASSERT(!selected_tile.name.isEmpty());
+
+//  TODO: add frame to added frames
+/*    if (selected_tile.autotile)
+    {}
+    else
+    {}*/
+
+    QIcon caption = ui->framesListWidget->currentItem()->icon();
+    ui->framesListWidget->insertItem(selected_frame + 1, new QListWidgetItem(caption, ""));
+    ui->framesListWidget->setCurrentRow(selected_frame + 1);
+}
+
+void FrameOrderEditorDialog::onRemoveFrame()
+{
+    const int n = ui->framesListWidget->count();
+    Q_ASSERT(0 <= selected_frame && selected_frame < n);
+
+//  TODO: remove frame from added frames
+    delete ui->framesListWidget->takeItem(selected_frame);
+    onSelectedFrameChanged((selected_frame > 0)? selected_frame-1 : 0);
+}
+
+void FrameOrderEditorDialog::onMoveFrameUp()
+{
+    Q_ASSERT(selected_frame > 0);
+
+//  TODO: move frame in the added frames
+    const int index = selected_frame;
+    ui->framesListWidget->setCurrentRow(-1);
+    auto *item = ui->framesListWidget->takeItem(index);
+    ui->framesListWidget->insertItem(index - 1, item);
+
+    ui->framesListWidget->setCurrentRow(index - 1);
+}
+
+void FrameOrderEditorDialog::onMoveFrameDown()
+{
+    const int n = ui->framesListWidget->count();
+    Q_ASSERT(0 <= selected_frame && selected_frame < n - 1);
+
+//  TODO: move frame in the added frames
+    const int index = selected_frame;
+    ui->framesListWidget->setCurrentRow(-1);
+    auto *item = ui->framesListWidget->takeItem(index);
+    ui->framesListWidget->insertItem(index + 1, item);
+
+    ui->framesListWidget->setCurrentRow(index + 1);
 }
