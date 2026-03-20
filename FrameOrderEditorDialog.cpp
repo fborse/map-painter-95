@@ -27,10 +27,10 @@ private:
 };
 
 template <typename T>
-class ReplaceTilesCommand final: public QUndoCommand, public TilesCommand<Tileset<T>>
+class FrameOrderReplaceTilesCommand final: public QUndoCommand, public TilesCommand<Tileset<T>>
 {
 public:
-    ReplaceTilesCommand(QWeakPointer<Tileset<T>> tiles, const QString &id, const T &prev, const T &next):
+    FrameOrderReplaceTilesCommand(QWeakPointer<Tileset<T>> tiles, const QString &id, const T &prev, const T &next):
         QUndoCommand(), TilesCommand<Tileset<T>>(tiles), id{id}, prev{prev}, next{next}
     {}
 
@@ -376,9 +376,9 @@ void FrameOrderEditorDialog::onAccept()
 
         undo_stack->beginMacro("Modify Frames");
         for (auto &id: prev_simple.keys())
-            undo_stack->push(new ReplaceTilesCommand<SimpleTile>(simple_tiles_ptr, id, prev_simple[id], next_simple[id]));
+            undo_stack->push(new FrameOrderReplaceTilesCommand<SimpleTile>(simple_tiles_ptr, id, prev_simple[id], next_simple[id]));
         for (auto &id: prev_auto.keys())
-            undo_stack->push(new ReplaceTilesCommand<AutoTile>(autotiles_ptr, id, prev_auto[id], next_auto[id]));
+            undo_stack->push(new FrameOrderReplaceTilesCommand<AutoTile>(autotiles_ptr, id, prev_auto[id], next_auto[id]));
         undo_stack->endMacro();
     }
 
