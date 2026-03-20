@@ -6,6 +6,42 @@
 
 #include "AddRectDialog.hpp"
 
+template <typename T>
+static inline QSharedPointer<T> lock_ptr(QWeakPointer<T> &weak)
+{
+    auto shared = weak.toStrongRef();
+    Q_ASSERT(!shared.isNull());
+
+    return shared;
+}
+
+template <typename T>
+class TilesCommand
+{
+public:
+    TilesCommand(QWeakPointer<T> tiles): tiles_ptr{tiles} {}
+    QSharedPointer<T> lockTiles() { return lock_ptr(tiles_ptr); }
+
+private:
+    QWeakPointer<T> tiles_ptr;
+};
+
+template <typename T>
+class ReplaceTilesCommand final: public QUndoCommand, public TilesCommand<Tileset<T>>
+{
+public:
+    ReplaceTilesCommand(QWeakPointer<Tileset<T>> tiles, const QString &id, const T &prev, const T &next):
+        QUndoCommand(), TilesCommand<Tileset<T>>(tiles), id{id}, prev{prev}, next{next}
+    {}
+
+    void undo() final override { (*TilesCommand<Tileset<T>>::lockTiles())[id] = prev; }
+    void redo() final override { (*TilesCommand<Tileset<T>>::lockTiles())[id] = next; }
+
+private:
+    QString id;
+    T prev, next;
+};
+
 FrameOrderTileSelectionWidget::FrameOrderTileSelectionWidget(QWidget *parent):
     QWidget(parent),
     tilesize{0},
@@ -216,7 +252,7 @@ void FrameOrderTileSelectionWidget::mousePressEvent(QMouseEvent *event)
 
 FrameOrderEditorDialog::FrameOrderEditorDialog(QWidget *parent):
     QDialog(parent), ui(new Ui::FrameOrderEditorDialog),
-    tilesize{0},
+    tilesize{0}, changed_simple_tiles{}, changed_autotiles{},
     undo_stack_ptr{nullptr},
     simple_tiles_order_ptr{nullptr}, autotiles_order_ptr{nullptr},
     simple_tiles_ptr{nullptr}, autotiles_ptr{nullptr},
@@ -278,9 +314,75 @@ void FrameOrderEditorDialog::updateTileset()
     ui->tileSelectionWidget->resize();
 }
 
+static inline bool operator==(const SimpleTile &tile1, const SimpleTile &tile2)
+{
+    return tile1.frames == tile2.frames;
+}
+
+static inline bool operator!=(const SimpleTile &tile1, const SimpleTile &tile2)
+{
+    return !(tile1 == tile2);
+}
+
+static inline bool operator==(const AutoTile &tile1, const AutoTile &tile2)
+{
+    if (tile1.frames.length() != tile2.frames.length())
+        return false;
+
+    for (int i = 0; i < tile1.frames.length(); ++i)
+        if (tile1.frames[i].metatiles != tile2.frames[i].metatiles)
+            return false;
+
+    return true;
+}
+
+static inline bool operator!=(const AutoTile &tile1, const AutoTile &tile2)
+{
+    return !(tile1 == tile2);
+}
+
+template <typename T>
+static inline auto get_prev_next(QWeakPointer<Tileset<T>> tiles_ptr, QHash<QString, T> &changes)
+{
+    auto tiles = tiles_ptr.toStrongRef();
+    Q_ASSERT(!tiles.isNull());
+
+    QHash<QString, T> prev, next;
+
+    for (auto &id: changes.keys())
+    {
+        Q_ASSERT(tiles->contains(id));
+        const auto &tile = tiles->value(id);
+
+        if (tile != changes[id])
+        {
+            prev[id] = tile;
+            next[id] = changes[id];
+        }
+    }
+
+    return QPair<decltype(prev), decltype(next)>(prev, next);
+}
+
 void FrameOrderEditorDialog::onAccept()
 {
-    accepted();
+    const auto &[prev_simple, next_simple] = get_prev_next(simple_tiles_ptr, changed_simple_tiles);
+    const auto &[prev_auto, next_auto] = get_prev_next(autotiles_ptr, changed_autotiles);
+
+    if (!prev_simple.isEmpty() || !prev_auto.isEmpty())
+    {
+        auto undo_stack = undo_stack_ptr.toStrongRef();
+        Q_ASSERT(!undo_stack.isNull());
+
+        undo_stack->beginMacro("Modify Frames");
+        for (auto &id: prev_simple.keys())
+            undo_stack->push(new ReplaceTilesCommand<SimpleTile>(simple_tiles_ptr, id, prev_simple[id], next_simple[id]));
+        for (auto &id: prev_auto.keys())
+            undo_stack->push(new ReplaceTilesCommand<AutoTile>(autotiles_ptr, id, prev_auto[id], next_auto[id]));
+        undo_stack->endMacro();
+    }
+
+    accept();
 }
 
 static inline QPixmap gen_caption(const QVector<QImage> &metatiles)
@@ -320,21 +422,45 @@ static inline QPixmap gen_caption(const QVector<QImage> &metatiles)
     return pixmap;
 }
 
+static inline QPixmap gen_caption(const QImage &tile)
+{
+    const int s = tile.width() / 2;
+
+    const QColor dark = {64, 64, 64};
+    const QColor light = {128, 128, 128};
+
+    QPixmap pixmap(tile.size());
+
+    QPainter painter(&pixmap);
+    painter.fillRect(0, 0, s, s, dark);
+    painter.fillRect(s, 0, s, s, light);
+    painter.fillRect(0, s, s, s, light);
+    painter.fillRect(s, s, s, s, dark);
+    painter.drawImage(0, 0, tile);
+
+    return pixmap;
+}
+
 void FrameOrderEditorDialog::onSelectedTileChanged(const TileReference ref)
 {
     selected_tile = ref;
 
     ui->framesListWidget->clear();
 
-    const QColor dark = {64, 64, 64};
-    const QColor light = {128, 128, 128};
-
     if (ref.autotile)
     {
-        auto autotiles = autotiles_ptr.toStrongRef();
-        Q_ASSERT(!autotiles.isNull());
-        Q_ASSERT(autotiles->contains(ref.name));
-        const auto &frames = autotiles->value(ref.name).frames;
+        QVector<AutoTile::Frame> frames;
+        if (changed_autotiles.contains(ref.name))
+        {
+            frames = changed_autotiles.value(ref.name).frames;
+        }
+        else
+        {
+            auto autotiles = autotiles_ptr.toStrongRef();
+            Q_ASSERT(!autotiles.isNull());
+            Q_ASSERT(autotiles->contains(ref.name));
+            frames = autotiles->value(ref.name).frames;
+        }
 
         for (auto &frame: frames)
         {
@@ -347,24 +473,24 @@ void FrameOrderEditorDialog::onSelectedTileChanged(const TileReference ref)
     {
         ui->framesListWidget->setIconSize({tilesize, tilesize});
 
-        auto simple_tiles = simple_tiles_ptr.toStrongRef();
-        Q_ASSERT(!simple_tiles.isNull());
-        Q_ASSERT(simple_tiles->contains(ref.name));
-        const auto &frames = simple_tiles->value(ref.name).frames;
+        QVector<QImage> frames;
+        if (changed_simple_tiles.contains(ref.name))
+        {
+            frames = changed_simple_tiles.value(ref.name).frames;
+        }
+        else
+        {
+            auto simple_tiles = simple_tiles_ptr.toStrongRef();
+            Q_ASSERT(!simple_tiles.isNull());
+            Q_ASSERT(simple_tiles->contains(ref.name));
+            frames = simple_tiles->value(ref.name).frames;
+        }
 
         for (auto &original: frames)
         {
-        //  it's relatively cheap to just redraw the background for every frame
-            QPixmap pixmap(tilesize, tilesize);
-
-            QPainter painter(&pixmap);
-            painter.fillRect(0, 0, tilesize/2, tilesize/2, dark);
-            painter.fillRect(tilesize/2, 0, tilesize/2, tilesize/2, light);
-            painter.fillRect(0, tilesize/2, tilesize/2, tilesize/2, dark);
-            painter.fillRect(tilesize/2, tilesize/2, tilesize/2, tilesize/2, dark);
-            painter.drawImage(0, 0, original);
-
-            ui->framesListWidget->addItem(new QListWidgetItem(QIcon(pixmap), ""));
+            QPixmap caption = gen_caption(original);
+            ui->framesListWidget->setIconSize(caption.size());
+            ui->framesListWidget->addItem(new QListWidgetItem(QIcon(caption), ""));
         }
     }
 
@@ -383,6 +509,28 @@ void FrameOrderEditorDialog::onSelectedFrameChanged(const int index)
     selected_frame = index;
 }
 
+void FrameOrderEditorDialog::addChangedSimpleTile(const QString &id)
+{
+    auto simple_tiles = simple_tiles_ptr.toStrongRef();
+    Q_ASSERT(!simple_tiles.isNull());
+
+    Q_ASSERT(simple_tiles->contains(id));
+    for (auto &frame: simple_tiles->value(id).frames)
+    //  .frames is already initialised by QHash's operator[]
+        changed_simple_tiles[id].frames.push_back(frame);
+}
+
+void FrameOrderEditorDialog::addChangedAutoTile(const QString &id)
+{
+    auto autotiles = autotiles_ptr.toStrongRef();
+    Q_ASSERT(!autotiles.isNull());
+
+    Q_ASSERT(autotiles->contains(id));
+    for (auto &frame: autotiles->value(id).frames)
+    //  .frames is already initialised by QHash's operator[]
+        changed_autotiles[id].frames.push_back(frame);
+}
+
 static inline QImage gen_image(const QSize &size, const QColor &color)
 {
     QImage image(size, QImage::Format_ARGB32_Premultiplied);
@@ -398,40 +546,66 @@ void FrameOrderEditorDialog::onAddFrame()
     if (dialog.exec() == QDialog::Accepted)
     {
         const int n = ui->framesListWidget->count();
-        const int index = (selected_frame < 0)? n : selected_frame;
+        const int index = (selected_frame < 0)? n : selected_frame+1;
 
         QPixmap caption;
 
-        Q_ASSERT(!selected_tile.name.isEmpty());
+        const QString id = selected_tile.name;
+        Q_ASSERT(!id.isEmpty());
         if (selected_tile.autotile)
         {
             QVector<QImage> metatiles(20);
             for (auto &metatile: metatiles)
                 metatile = gen_image({tilesize/2, tilesize/2}, dialog.getColor());
             caption = gen_caption(metatiles);
-        //  TODO: add frame to added frames
+
+            if (!changed_autotiles.contains(id))
+                addChangedAutoTile(id);
+            changed_autotiles[id].frames.insert(index, {metatiles});
         }
         else
         {
             QImage frame = gen_image({tilesize, tilesize}, dialog.getColor());
-            caption = QPixmap::fromImage(frame);
-        //  TODO: add frame to added frames
+            caption = gen_caption(frame);
+
+            if (!changed_simple_tiles.contains(id))
+                addChangedSimpleTile(id);
+            changed_simple_tiles[id].frames.insert(index, frame);
         }
 
-        ui->framesListWidget->insertItem(index + 1, new QListWidgetItem(QIcon(caption), ""));
-        ui->framesListWidget->setCurrentRow(index + 1);
+        ui->framesListWidget->insertItem(index, new QListWidgetItem(QIcon(caption), ""));
+        ui->framesListWidget->setCurrentRow(index);
     }
 }
 
+//  find a way to factorise the repeated code between the next few functions
 void FrameOrderEditorDialog::onCloneFrame()
 {
     Q_ASSERT(!selected_tile.name.isEmpty());
+    Q_ASSERT(selected_frame >= 0);
 
-//  TODO: add frame to added frames
-/*    if (selected_tile.autotile)
-    {}
+    const QString id = selected_tile.name;
+    Q_ASSERT(!id.isEmpty());
+    if (selected_tile.autotile)
+    {
+        if (!changed_autotiles.contains(id))
+            addChangedAutoTile(id);
+
+        const int n = changed_autotiles[id].frames.length();
+        Q_ASSERT(selected_frame < n);
+        const auto &frame = changed_autotiles[id].frames[selected_frame];
+        changed_autotiles[id].frames.insert(selected_frame + 1, frame);
+    }
     else
-    {}*/
+    {
+        if (!changed_simple_tiles.contains(id))
+            addChangedSimpleTile(id);
+
+        const int n = changed_simple_tiles[id].frames.length();
+        Q_ASSERT(selected_frame < n);
+        const auto &frame = changed_simple_tiles[id].frames[selected_frame];
+        changed_simple_tiles[id].frames.insert(selected_frame + 1, frame);
+    }
 
     QIcon caption = ui->framesListWidget->currentItem()->icon();
     ui->framesListWidget->insertItem(selected_frame + 1, new QListWidgetItem(caption, ""));
@@ -443,7 +617,27 @@ void FrameOrderEditorDialog::onRemoveFrame()
     const int n = ui->framesListWidget->count();
     Q_ASSERT(0 <= selected_frame && selected_frame < n);
 
-//  TODO: remove frame from added frames
+    const QString id = selected_tile.name;
+    Q_ASSERT(!id.isEmpty());
+    if (selected_tile.autotile)
+    {
+        if (!changed_autotiles.contains(id))
+            addChangedAutoTile(id);
+
+        const int n = changed_autotiles[id].frames.length();
+        Q_ASSERT(selected_frame < n);
+        changed_autotiles[id].frames.remove(selected_frame);
+    }
+    else
+    {
+        if (!changed_simple_tiles.contains(id))
+            addChangedSimpleTile(id);
+
+        const int n = changed_simple_tiles[id].frames.length();
+        Q_ASSERT(selected_frame < n);
+        changed_simple_tiles[id].frames.remove(selected_frame);
+    }
+
     delete ui->framesListWidget->takeItem(selected_frame);
     onSelectedFrameChanged((selected_frame > 0)? selected_frame-1 : 0);
 }
@@ -452,7 +646,28 @@ void FrameOrderEditorDialog::onMoveFrameUp()
 {
     Q_ASSERT(selected_frame > 0);
 
-//  TODO: move frame in the added frames
+    const QString id = selected_tile.name;
+    Q_ASSERT(!id.isEmpty());
+    if (selected_tile.autotile)
+    {
+        if (!changed_autotiles.contains(id))
+            addChangedAutoTile(id);
+
+        const int n = changed_autotiles[id].frames.length();
+        Q_ASSERT(selected_frame < n);   //  no need to check selected_frame - 1
+        changed_autotiles[id].frames.swapItemsAt(selected_frame - 1, selected_frame);
+    }
+    else
+    {
+        if (!changed_simple_tiles.contains(id))
+            addChangedSimpleTile(id);
+
+        const int n = changed_simple_tiles[id].frames.length();
+        Q_ASSERT(selected_frame < n);   //  no need to check selected_frame - 1
+        changed_simple_tiles[id].frames.swapItemsAt(selected_frame - 1, selected_frame);
+    }
+
+//  selected_frame changes when changing current row
     const int index = selected_frame;
     ui->framesListWidget->setCurrentRow(-1);
     auto *item = ui->framesListWidget->takeItem(index);
@@ -466,7 +681,28 @@ void FrameOrderEditorDialog::onMoveFrameDown()
     const int n = ui->framesListWidget->count();
     Q_ASSERT(0 <= selected_frame && selected_frame < n - 1);
 
-//  TODO: move frame in the added frames
+    const QString id = selected_tile.name;
+    Q_ASSERT(!id.isEmpty());
+    if (selected_tile.autotile)
+    {
+        if (!changed_autotiles.contains(id))
+            addChangedAutoTile(id);
+
+        const int n = changed_autotiles[id].frames.length();
+        Q_ASSERT(selected_frame + 1 < n);   //  no need to check selected_frame too
+        changed_autotiles[id].frames.swapItemsAt(selected_frame, selected_frame + 1);
+    }
+    else
+    {
+        if (!changed_simple_tiles.contains(id))
+            addChangedSimpleTile(id);
+
+        const int n = changed_simple_tiles[id].frames.length();
+        Q_ASSERT(selected_frame + 1 < n);   //  no need to check selected_frame too
+        changed_simple_tiles[id].frames.swapItemsAt(selected_frame, selected_frame + 1);
+    }
+
+//  selected_frame changes when changing current row
     const int index = selected_frame;
     ui->framesListWidget->setCurrentRow(-1);
     auto *item = ui->framesListWidget->takeItem(index);

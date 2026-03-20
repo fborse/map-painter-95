@@ -868,6 +868,9 @@ void MainWindow::onOpenFrameOrderEditor()
     dialog.setTilesize(tilesize);
     dialog.updateTileset();
     dialog.exec();
+
+    updateFramesBoxes();
+    ui->actionRemoveCurrentFrame->setEnabled(can_remove_frames(*simple_tiles, *autotiles, *selected_tiles));
 }
 
 //  convert each orientation of the selected autotiles

@@ -88,6 +88,9 @@ private:
 
     int tilesize;
 
+    QHash<QString, SimpleTile> changed_simple_tiles;
+    QHash<QString, AutoTile> changed_autotiles;
+
     QWeakPointer<QUndoStack> undo_stack_ptr;
     QWeakPointer<Names> simple_tiles_order_ptr, autotiles_order_ptr;
     QWeakPointer<SimpleTiles> simple_tiles_ptr;
@@ -96,4 +99,7 @@ private:
     TileReference selected_tile;
 
     int selected_frame;
+
+    void addChangedSimpleTile(const QString &id);
+    void addChangedAutoTile(const QString &id);
 };
