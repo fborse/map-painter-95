@@ -836,6 +836,7 @@ static inline bool is_tile_unique(const MapLayers &map_layers, const TileReferen
     for (auto &layer: map_layers)
         for (auto &row: layer)
             for (auto &tile: row)
+            //  TODO: make sure that there are no side-effects for ignoring orientation
                 if (tile == id)
                     if (++found > 1)
                         return false;

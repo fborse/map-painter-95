@@ -33,8 +33,8 @@ private:
 //  right click is really just a desktop thing => names accordingly
     std::optional<QPoint> click_origin, right_click_origin;
 
-    void paintAutoTile(QPainter &painter, const TileReference &ref, const QPoint &p);
     void paintSimpleTile(QPainter &painter, const TileReference &id, const QPoint &p);
+    void paintAutoTile(QPainter &painter, const TileReference &ref, const QPoint &p);
     void paintTileRects(QPainter &painter);
     void paintRectOutlines(QPainter &painter);
 

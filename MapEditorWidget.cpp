@@ -567,18 +567,13 @@ QHash<QPoint, TileReference> MapEditorWidget::getDrawnTiles() const
     const int sh = selected_tiles->length();
     const int sw = selected_tiles->at(0).length();
 
-    const MapLayer &layer = map_layers->at(current_layer);
-
     QHash<QPoint, TileReference> changes;
     for (int j = 0; j < h; ++j)
     {
         for (int i = 0; i < w; ++i)
         {
-            const auto prev = layer.at(y + j).at(x + i);
             const auto next = selected_tiles->at(j % sh).at(i % sw);
-
-            if (prev != next)
-                changes[{x + i, y + j}] = next;
+            changes[{x + i, y + j}] = next;
         }
     }
 
@@ -616,8 +611,14 @@ void MapEditorWidget::handleTileSetting()
     const auto changes = getDrawnTiles();
     for (auto &[i, j]: changes.keys())
     {
-        prev[{i, j, current_layer}] = layer.at(j).at(i);
-        next[{i, j, current_layer}] = changes[{i, j}];
+        const auto prev_ref = layer.at(j).at(i);
+        const auto next_ref = changes[{i, j}];
+
+        if (prev_ref != next_ref)
+        {
+            prev[{i, j, current_layer}] = prev_ref;
+            next[{i, j, current_layer}] = next_ref;
+        }
     }
     if (!next.isEmpty())
         undo_stack->push(new SetTilesCommand(map_layers, prev, next));

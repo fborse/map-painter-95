@@ -70,7 +70,13 @@ struct TileReference
     bool isEmpty() const { return name.isEmpty(); }
     operator bool() const { return !isEmpty(); }
 
-    bool operator==(const TileReference &o) const { return name == o.name && autotile == o.autotile; }
+    bool operator==(const TileReference &other) const
+    {
+        return (name == other.name)
+            && (autotile == other.autotile)
+            && (orientation == other.orientation);
+    }
+
     bool operator!=(const TileReference &o) const { return !(*this == o); }
 };
 
