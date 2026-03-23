@@ -79,7 +79,24 @@
               <item>
                <widget class="QCheckBox" name="showAboveLayersCheckBox">
                 <property name="text">
-                 <string>Show Above Layers</string>
+                 <string>Show Above</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_5">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="reorientAutoTilesCheckBox">
+                <property name="text">
+                 <string>Reorient Autotiles</string>
                 </property>
                 <property name="checked">
                  <bool>true</bool>
@@ -1458,6 +1475,7 @@
     <slot>setCurrentLayer(int)</slot>
     <slot>setShowAboveLayers(bool)</slot>
     <slot>setCurrentFrame(int)</slot>
+    <slot>setReorientAutoTiles(bool)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -2754,7 +2772,7 @@
    <slot>setShowAboveLayers(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>362</x>
+     <x>319</x>
      <y>129</y>
     </hint>
     <hint type="destinationlabel">
@@ -3192,6 +3210,22 @@
     <hint type="destinationlabel">
      <x>511</x>
      <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reorientAutoTilesCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mapEditor</receiver>
+   <slot>setReorientAutoTiles(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>419</x>
+     <y>119</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>400</x>
+     <y>242</y>
     </hint>
    </hints>
   </connection>

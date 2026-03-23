@@ -128,7 +128,7 @@ private:
 
 MapEditorWidget::MapEditorWidget(QWidget *parent):
     EditorWidget(parent),
-    show_above_layers{true},
+    show_above_layers{true}, reorient_autotiles{true},
     mouse_cursor{}, click_origin{}, right_click_origin{}
 {
     resize();
@@ -294,7 +294,10 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
         paintRectOutlines(painter);
 }
 
-static inline std::optional<TileReference> ref_at(const MapLayers &map_layers, const SetTilesCommand::Changes &next, const SetTilesCommand::Coordinates &p)
+using Coords = SetTilesCommand::Coordinates;
+using SetTilesChanges = SetTilesCommand::Changes;
+
+static inline std::optional<TileReference> ref_at(const MapLayers &map_layers, const SetTilesChanges &next, const Coords &p)
 {
     if (next.contains(p))
         return next[p];
@@ -310,7 +313,7 @@ static inline std::optional<TileReference> ref_at(const MapLayers &map_layers, c
         return map_layers[p.k][p.j][p.i];
 }
 
-static inline std::optional<QString> name_at(const MapLayers &map_layers, const SetTilesCommand::Changes &next, const SetTilesCommand::Coordinates &p)
+static inline std::optional<QString> name_at(const MapLayers &map_layers, const SetTilesChanges &next, const Coords &p)
 {
     if (const auto ref = ref_at(map_layers, next, p))
         return ref->name;
@@ -411,7 +414,7 @@ struct AutoTileDirections
         return orientation;
     }
 
-    static AutoTileDirections fromContextAt(const MapLayers &map_layers, const SetTilesCommand::Changes &next, const QString id, const SetTilesCommand::Coordinates &ijk)
+    static AutoTileDirections fromContextAt(const MapLayers &map_layers, const SetTilesChanges &next, const QString id, const Coords &ijk)
     {
         AutoTileDirections directions;
 
@@ -437,15 +440,15 @@ struct AutoTileDirections
     }
 };
 
-static inline void reorient(TileReference &ref, const MapLayers &map_layers, SetTilesCommand::Changes &next, const SetTilesCommand::Coordinates &p)
+static inline void reorient_autotile(TileReference &ref, const MapLayers &map_layers, SetTilesChanges &next, const Coords &p)
 {
     const auto directions = AutoTileDirections::fromContextAt(map_layers, next, ref.name, p);
     ref.orientation = directions.toOrientation();
 }
 
-static inline void reorient_next(SetTilesCommand::Changes &prev, SetTilesCommand::Changes &next, const QVector<SetTilesCommand::Coordinates> &original_coords, const MapLayers &map_layers)
+static inline void reorient_next(SetTilesCommand::Changes &prev, SetTilesChanges &next, const QVector<Coords> &original_coords, const MapLayers &map_layers, const bool reorient_neighbours)
 {
-    QHash<SetTilesCommand::Coordinates, AutoTileDirections> affected_neighbours;
+    QHash<Coords, AutoTileDirections> affected_neighbours;
 
     for (auto &[i, j, k]: original_coords)
     {
@@ -479,19 +482,22 @@ static inline void reorient_next(SetTilesCommand::Changes &prev, SetTilesCommand
         }
     }
 
-    for (auto &[i, j, k]: affected_neighbours.keys())
+    if (reorient_neighbours)
     {
-        auto ref = map_layers[k][j][i];
-        prev[{i, j, k}] = ref;
+        for (auto &[i, j, k]: affected_neighbours.keys())
+        {
+            auto ref = map_layers[k][j][i];
+            prev[{i, j, k}] = ref;
 
-        reorient(ref, map_layers, next, {i, j, k});
-        next[{i, j, k}] = ref;
+            reorient_autotile(ref, map_layers, next, {i, j, k});
+            next[{i, j, k}] = ref;
+        }
     }
 }
 
-static inline void reorient_prev(SetTilesCommand::Changes &prev, SetTilesCommand::Changes &next, const QVector<SetTilesCommand::Coordinates> &original_coords, const MapLayers &map_layers)
+static inline void reorient_prev(SetTilesCommand::Changes &prev, SetTilesChanges &next, const QVector<Coords> &original_coords, const MapLayers &map_layers)
 {
-    QSet<SetTilesCommand::Coordinates> affected_neighbours;
+    QSet<Coords> affected_neighbours;
 
     for (auto &[i, j, k]: original_coords)
     {
@@ -526,7 +532,7 @@ static inline void reorient_prev(SetTilesCommand::Changes &prev, SetTilesCommand
         auto ref = map_layers[k][j][i];
         prev[{i, j, k}] = ref;
 
-        reorient(ref, map_layers, next, {i, j, k});
+        reorient_autotile(ref, map_layers, next, {i, j, k});
         next[{i, j, k}] = ref;
     }
 }
@@ -565,8 +571,9 @@ void MapEditorWidget::handleTileSetting()
     if (!next.isEmpty())
     {
         const auto original_coords = next.keys();
-        reorient_next(prev, next, original_coords, *map_layers);
-        reorient_prev(prev, next, original_coords, *map_layers);
+        reorient_next(prev, next, original_coords, *map_layers, reorient_autotiles);
+        if (reorient_autotiles)
+            reorient_prev(prev, next, original_coords, *map_layers);
         undo_stack->push(new SetTilesCommand(map_layers, prev, next));
     }
 

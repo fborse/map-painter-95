@@ -17,6 +17,7 @@ public:
 
 public slots:
     void setShowAboveLayers(const bool yes) { show_above_layers = yes; update(); }
+    void setReorientAutoTiles(const bool yes) { reorient_autotiles = yes; }
 
 signals:
 //  only purposes is to tell MainWindow to refresh the relevant editor widgets
@@ -26,6 +27,7 @@ signals:
 
 private:
     bool show_above_layers;
+    bool reorient_autotiles;
 
     QPoint mouse_cursor;
 //  right click is really just a desktop thing => names accordingly
