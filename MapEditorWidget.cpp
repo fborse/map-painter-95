@@ -294,28 +294,23 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
         paintRectOutlines(painter);
 }
 
-using Coords = SetTilesCommand::Coordinates;
-using SetTilesChanges = SetTilesCommand::Changes;
-
-static inline std::optional<TileReference> ref_at(const MapLayers &map_layers, const SetTilesChanges &next, const Coords &p)
+static inline std::optional<TileReference> ref_at(const MapLayer &layer, const QHash<QPoint, TileReference> &next, const QPoint &p)
 {
     if (next.contains(p))
         return next[p];
-    else if (p.i < 0 || p.j < 0 || p.k < 0)
+    else if (p.x() < 0 || p.y() < 0)
         return {};
-    else if (p.k >= map_layers.length())
+    else if (p.y() >= layer.length())
         return {};
-    else if (p.j >= map_layers[p.k].length())
-        return {};
-    else if (p.i >= map_layers[p.k][p.j].length())
+    else if (p.x() >= layer[p.y()].length())
         return {};
     else
-        return map_layers[p.k][p.j][p.i];
+        return layer[p.y()][p.x()];
 }
 
-static inline std::optional<QString> name_at(const MapLayers &map_layers, const SetTilesChanges &next, const Coords &p)
+static inline std::optional<QString> name_at(const MapLayer &layer, const QHash<QPoint, TileReference> &next, const QPoint &p)
 {
-    if (const auto ref = ref_at(map_layers, next, p))
+    if (const auto ref = ref_at(layer, next, p))
         return ref->name;
     else
         return {};
@@ -414,135 +409,140 @@ struct AutoTileDirections
         return orientation;
     }
 
-    static AutoTileDirections fromContextAt(const MapLayers &map_layers, const SetTilesChanges &next, const QString id, const Coords &ijk)
+    static AutoTileDirections fromContextAt(const MapLayer &map_layer, const QHash<QPoint, TileReference> &changes, const QString &id, const QPoint &p)
     {
         AutoTileDirections directions;
-
-        const auto &[i, j, k] = ijk;
-        if (const auto name = name_at(map_layers, next, {i-1, j, k}))
+        const auto &[i, j] = p;
+        if (const auto name = name_at(map_layer, changes, {i-1, j}))
             directions.left = (*name == id);
-        if (const auto name = name_at(map_layers, next, {i-1, j-1, k}))
+        if (const auto name = name_at(map_layer, changes, {i-1, j-1}))
             directions.top_left = (*name == id);
-        if (const auto name = name_at(map_layers, next, {i, j-1, k}))
+        if (const auto name = name_at(map_layer, changes, {i, j-1}))
             directions.top = (*name == id);
-        if (const auto name = name_at(map_layers, next, {i+1, j-1, k}))
+        if (const auto name = name_at(map_layer, changes, {i+1, j-1}))
             directions.top_right = (*name == id);
-        if (const auto name = name_at(map_layers, next, {i+1, j, k}))
+        if (const auto name = name_at(map_layer, changes, {i+1, j}))
             directions.right = (*name == id);
-        if (const auto name = name_at(map_layers, next, {i+1, j+1, k}))
+        if (const auto name = name_at(map_layer, changes, {i+1, j+1}))
             directions.bottom_right = (*name == id);
-        if (const auto name = name_at(map_layers, next, {i, j+1, k}))
+        if (const auto name = name_at(map_layer, changes, {i, j+1}))
             directions.bottom = (*name == id);
-        if (const auto name = name_at(map_layers, next, {i-1, j+1, k}))
+        if (const auto name = name_at(map_layer, changes, {i-1, j+1}))
             directions.bottom_left = (*name == id);
 
         return directions;
     }
 };
 
-static inline void reorient_autotile(TileReference &ref, const MapLayers &map_layers, SetTilesChanges &next, const Coords &p)
+static inline void reorient_autotile(TileReference &ref, const MapLayer &map_layer, const QHash<QPoint, TileReference> &changes, const QPoint &p)
 {
-    const auto directions = AutoTileDirections::fromContextAt(map_layers, next, ref.name, p);
+    const auto directions = AutoTileDirections::fromContextAt(map_layer, changes, ref.name, p);
     ref.orientation = directions.toOrientation();
 }
 
-static inline void reorient_next(SetTilesCommand::Changes &prev, SetTilesChanges &next, const QVector<Coords> &original_coords, const MapLayers &map_layers, const bool reorient_neighbours)
+static inline void reorient_next(QHash<QPoint, TileReference> &changes, const QVector<QPoint> original_coords, const MapLayer &map_layer, const bool neighbours)
 {
-    QHash<Coords, AutoTileDirections> affected_neighbours;
+    QHash<QPoint, AutoTileDirections> affected_neighbours;
 
-    for (auto &[i, j, k]: original_coords)
+    for (auto &[i, j]: original_coords)
     {
-        auto &ref = next[{i, j, k}];
+        auto &ref = changes[{i, j}];
 
         if (ref.autotile)
         {
             const auto directions =
-                AutoTileDirections::fromContextAt(map_layers, next, ref.name, {i, j, k});
+                AutoTileDirections::fromContextAt(map_layer, changes, ref.name, {i, j});
             ref.orientation = directions.toOrientation();
 
         //  these coordinates are guaranteed valid when the boolean is true
         //  additionally, the direction values are preset to false
         //  also, "constant-time" retrieval, as opposed to original_coords.contains()
-            if (directions.left && !next.contains({i-1, j, k}))
-                affected_neighbours[{i-1, j, k}].right = true;
-            if (directions.top_left && !next.contains({i-1, j-1, k}))
-                affected_neighbours[{i-1, j-1, k}].bottom_right = true;
-            if (directions.top && !next.contains({i, j-1, k}))
-                affected_neighbours[{i, j-1, k}].bottom = true;
-            if (directions.top_right && !next.contains({i+1, j-1, k}))
-                affected_neighbours[{i+1, j-1, k}].bottom_left = true;
-            if (directions.right && !next.contains({i+1, j, k}))
-                affected_neighbours[{i+1, j, k}].left = true;
-            if (directions.bottom_right && !next.contains({i+1, j+1, k}))
-                affected_neighbours[{i+1, j+1, k}].top_left = true;
-            if (directions.bottom && !next.contains({i, j+1, k}))
-                affected_neighbours[{i, j+1, k}].top = true;
-            if (directions.bottom_left && !next.contains({i-1, j+1, k}))
-                affected_neighbours[{i-1, j+1, k}].top_right = true;
+            if (directions.left && !changes.contains({i-1, j}))
+                affected_neighbours[{i-1, j}].right = true;
+            if (directions.top_left && !changes.contains({i-1, j-1}))
+                affected_neighbours[{i-1, j-1}].bottom_right = true;
+            if (directions.top && !changes.contains({i, j-1}))
+                affected_neighbours[{i, j-1}].bottom = true;
+            if (directions.top_right && !changes.contains({i+1, j-1}))
+                affected_neighbours[{i+1, j-1}].bottom_left = true;
+            if (directions.right && !changes.contains({i+1, j}))
+                affected_neighbours[{i+1, j}].left = true;
+            if (directions.bottom_right && !changes.contains({i+1, j+1}))
+                affected_neighbours[{i+1, j+1}].top_left = true;
+            if (directions.bottom && !changes.contains({i, j+1}))
+                affected_neighbours[{i, j+1}].top = true;
+            if (directions.bottom_left && !changes.contains({i-1, j+1}))
+                affected_neighbours[{i-1, j+1}].top_right = true;
         }
     }
 
-    if (reorient_neighbours)
+    if (neighbours)
     {
-        for (auto &[i, j, k]: affected_neighbours.keys())
+        for (auto &[i, j]: affected_neighbours.keys())
         {
-            auto ref = map_layers[k][j][i];
-            prev[{i, j, k}] = ref;
-
-            reorient_autotile(ref, map_layers, next, {i, j, k});
-            next[{i, j, k}] = ref;
+            auto ref = map_layer[j][i];
+            reorient_autotile(ref, map_layer, changes, {i, j});
+            changes[{i, j}] = ref;
         }
     }
 }
 
-static inline void reorient_prev(SetTilesCommand::Changes &prev, SetTilesChanges &next, const QVector<Coords> &original_coords, const MapLayers &map_layers)
+static inline void reorient_prev(QHash<QPoint, TileReference> &changes, const QVector<QPoint> &original_coords, const MapLayer &map_layer, const bool neighbours)
 {
-    QSet<Coords> affected_neighbours;
+    QSet<QPoint> affected_neighbours;
 
-    for (auto &[i, j, k]: original_coords)
+    for (auto &[i, j]: original_coords)
     {
-        if (const auto ref = ref_at(map_layers, next, {i-1, j, k}))
-            if (ref->autotile && !next.contains({i-1, j, k}))
-                affected_neighbours.insert({i-1, j, k});
-        if (const auto ref = ref_at(map_layers, next, {i-1, j-1, k}))
-            if (ref->autotile && !next.contains({i-1, j-1, k}))
-                affected_neighbours.insert({i-1, j-1, k});
-        if (const auto ref = ref_at(map_layers, next, {i, j-1, k}))
-            if (ref->autotile && !next.contains({i, j-1, k}))
-                affected_neighbours.insert({i, j-1, k});
-        if (const auto ref = ref_at(map_layers, next, {i+1, j-1, k}))
-            if (ref->autotile && !next.contains({i+1, j-1, k}))
-                affected_neighbours.insert({i+1, j-1, k});
-        if (const auto ref = ref_at(map_layers, next, {i+1, j, k}))
-            if (ref->autotile && !next.contains({i+1, j, k}))
-                affected_neighbours.insert({i+1, j, k});
-        if (const auto ref = ref_at(map_layers, next, {i+1, j+1, k}))
-            if (ref->autotile && !next.contains({i+1, j+1, k}))
-                affected_neighbours.insert({i+1, j+1, k});
-        if (const auto ref = ref_at(map_layers, next, {i, j+1, k}))
-            if (ref->autotile && !next.contains({i, j+1, k}))
-                affected_neighbours.insert({i, j+1, k});
-        if (const auto ref = ref_at(map_layers, next, {i-1, j+1, k}))
-            if (ref->autotile && !next.contains({i-1, j+1, k}))
-                affected_neighbours.insert({i-1, j+1, k});
+        if (const auto ref = ref_at(map_layer, changes, {i-1, j}))
+            if (ref->autotile && !changes.contains({i-1, j}))
+                affected_neighbours.insert({i-1, j});
+        if (const auto ref = ref_at(map_layer, changes, {i-1, j-1}))
+            if (ref->autotile && !changes.contains({i-1, j-1}))
+                affected_neighbours.insert({i-1, j-1});
+        if (const auto ref = ref_at(map_layer, changes, {i, j-1}))
+            if (ref->autotile && !changes.contains({i, j-1}))
+                affected_neighbours.insert({i, j-1});
+        if (const auto ref = ref_at(map_layer, changes, {i+1, j-1}))
+            if (ref->autotile && !changes.contains({i+1, j-1}))
+                affected_neighbours.insert({i+1, j-1});
+        if (const auto ref = ref_at(map_layer, changes, {i+1, j}))
+            if (ref->autotile && !changes.contains({i+1, j}))
+                affected_neighbours.insert({i+1, j});
+        if (const auto ref = ref_at(map_layer, changes, {i+1, j+1}))
+            if (ref->autotile && !changes.contains({i+1, j+1}))
+                affected_neighbours.insert({i+1, j+1});
+        if (const auto ref = ref_at(map_layer, changes, {i, j+1}))
+            if (ref->autotile && !changes.contains({i, j+1}))
+                affected_neighbours.insert({i, j+1});
+        if (const auto ref = ref_at(map_layer, changes, {i-1, j+1}))
+            if (ref->autotile && !changes.contains({i-1, j+1}))
+                affected_neighbours.insert({i-1, j+1});
     }
 
-    for (auto &[i, j, k]: affected_neighbours)
+    if (neighbours)
     {
-        auto ref = map_layers[k][j][i];
-        prev[{i, j, k}] = ref;
-
-        reorient_autotile(ref, map_layers, next, {i, j, k});
-        next[{i, j, k}] = ref;
+        for (auto &[i, j]: affected_neighbours)
+        {
+            auto ref = map_layer[j][i];
+            reorient_autotile(ref, map_layer, changes, {i, j});
+            changes[{i, j}] = ref;
+        }
     }
 }
 
-void MapEditorWidget::handleTileSetting()
+static inline bool non_empty(const SelectedTiles &r)
+{
+    return r.length() > 0 && r[0].length() > 0;
+}
+
+QHash<QPoint, TileReference> MapEditorWidget::getDrawnTiles() const
 {
     Q_ASSERT(!selected_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
-    Q_ASSERT(click_origin.has_value());
     Q_ASSERT(current_layer < map_layers->length());
+
+    if (!click_origin || !non_empty(*selected_tiles))
+        return {};
 
     const QRect selection = asLocalRect(*click_origin, mouse_cursor);
     const auto &[x, y] = selection.topLeft();
@@ -553,29 +553,46 @@ void MapEditorWidget::handleTileSetting()
 
     const MapLayer &layer = map_layers->at(current_layer);
 
-    SetTilesCommand::Changes prev, next;
+    QHash<QPoint, TileReference> changes;
     for (int j = 0; j < h; ++j)
     {
         for (int i = 0; i < w; ++i)
         {
-            const auto prev_ref = layer.at(y+j).at(x+i);
-            const auto next_ref = selected_tiles->at(j % sh).at(i % sw);
+            const auto prev = layer.at(y + j).at(x + i);
+            const auto next = selected_tiles->at(j % sh).at(i % sw);
 
-            if (prev_ref != next_ref)
-            {
-                prev[{x+i, y+j, current_layer}] = prev_ref;
-                next[{x+i, y+j, current_layer}] = next_ref;
-            }
+            if (prev != next)
+                changes[{x + i, y + j}] = next;
         }
     }
-    if (!next.isEmpty())
+
+    if (!changes.isEmpty())
     {
-        const auto original_coords = next.keys();
-        reorient_next(prev, next, original_coords, *map_layers, reorient_autotiles);
-        if (reorient_autotiles)
-            reorient_prev(prev, next, original_coords, *map_layers);
-        undo_stack->push(new SetTilesCommand(map_layers, prev, next));
+        const auto original_coords = changes.keys();
+        const MapLayer &layer = map_layers->at(current_layer);
+        reorient_next(changes, original_coords, layer, reorient_autotiles);
+        reorient_prev(changes, original_coords, layer, reorient_autotiles);
     }
+
+    return changes;
+}
+
+void MapEditorWidget::handleTileSetting()
+{
+    Q_ASSERT(!map_layers.isNull());
+    Q_ASSERT(current_layer < map_layers->length());
+
+    const MapLayer &layer = map_layers->at(current_layer);
+
+    SetTilesCommand::Changes prev, next;
+    const auto changes = getDrawnTiles();
+    for (auto &[i, j]: changes.keys())
+    {
+        prev[{i, j, current_layer}] = layer.at(j).at(i);
+        next[{i, j, current_layer}] = changes[{i, j}];
+    }
+    if (!next.isEmpty())
+        undo_stack->push(new SetTilesCommand(map_layers, prev, next));
 
     emit tilesSet();
 }

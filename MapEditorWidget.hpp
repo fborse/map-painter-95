@@ -41,6 +41,9 @@ private:
 
     void paintEvent(QPaintEvent *) override;
 
+//  autotiles can involve changes outside of the drawing rect
+    QHash<QPoint, TileReference> getDrawnTiles() const;
+
     void handleTileSetting();
     void handleTileSelection();
 
