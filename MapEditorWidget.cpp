@@ -186,6 +186,14 @@ void MapEditorWidget::removeLayer(const int index)
     undo_stack->push(new RemoveLayerCommand(map_layers, index));
 }
 
+void MapEditorWidget:: paintEmptyTile(QPainter &painter, const QPoint &p)
+{
+    const auto prev = painter.compositionMode();
+    painter.setCompositionMode(QPainter::CompositionMode_Clear);
+    painter.fillRect(QRect(p, QSize(tilesize, tilesize)), Qt::black);
+    painter.setCompositionMode(prev);
+}
+
 void MapEditorWidget::paintSimpleTile(QPainter &painter, const TileReference &ref, const QPoint &p)
 {
     Q_ASSERT(!simple_tiles.isNull());
@@ -229,6 +237,8 @@ void MapEditorWidget::paintTileRects(QPainter &painter)
                 paintAutoTile(painter, drawn_tiles[p], p * tilesize);
             else if (drawn_tiles[p])
                 paintSimpleTile(painter, drawn_tiles[p], p * tilesize);
+            else
+                paintEmptyTile(painter, p * tilesize);
     }
     else if (right_click_origin)
     {
@@ -263,8 +273,20 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
 
     painter.scale(zoom, zoom);
     {
-        for (int k = 0; k <= current_layer; ++k)
+        for (int k = 0; k < current_layer; ++k)
             painter.drawImage(0, 0, getPaintedLayer(k));
+
+    //  unlike other layers, this one can benefit from a separate QPainter
+    //  in particular, it allows to get setting empty tiles displayed correctly
+        {
+            QImage painted_layer = getPaintedLayer(current_layer);
+            if (click_origin)
+            {
+                QPainter p(&painted_layer);
+                paintTileRects(p);
+            }
+            painter.drawImage(0, 0, painted_layer);
+        }
 
         if (show_above_layers)
         {
@@ -274,7 +296,7 @@ void MapEditorWidget::paintEvent(QPaintEvent *)
             painter.setOpacity(1);
         }
 
-        if (click_origin || right_click_origin)
+        if (right_click_origin)
             paintTileRects(painter);
     }
     painter.resetTransform();
