@@ -186,19 +186,19 @@ void MapEditorWidget::removeLayer(const int index)
     undo_stack->push(new RemoveLayerCommand(map_layers, index));
 }
 
-void MapEditorWidget::paintSimpleTile(QPainter &painter, const QString &id, const QPoint &xy, const QPoint &ij)
+void MapEditorWidget::paintSimpleTile(QPainter &painter, const TileReference &ref, const QPoint &p)
 {
     Q_ASSERT(!simple_tiles.isNull());
-    Q_ASSERT(simple_tiles->contains(id));
+    Q_ASSERT(simple_tiles->contains(ref.name));
 
-    const auto &frames = (*simple_tiles)[id].frames;
+    const auto &frames = (*simple_tiles)[ref.name].frames;
     const int n = frames.length();
     const int index = qMin(current_frame, n - 1);
 
-    painter.drawImage(xy + ij * tilesize, frames[index]);
+    painter.drawImage(p, frames[index]);
 }
 
-void MapEditorWidget::paintAutoTile(QPainter &painter, const TileReference &ref, const QPoint &xy, const QPoint &ij)
+void MapEditorWidget::paintAutoTile(QPainter &painter, const TileReference &ref, const QPoint &p)
 {
     Q_ASSERT(!autotiles.isNull());
     Q_ASSERT(autotiles->contains(ref.name));
@@ -207,13 +207,12 @@ void MapEditorWidget::paintAutoTile(QPainter &painter, const TileReference &ref,
     const int n = frames.length();
     const int index = qMin(current_frame, n - 1);
 
-    painter.drawImage(xy + ij * tilesize, frames[index].genTile(ref.orientation));
+    painter.drawImage(p, frames[index].genTile(ref.orientation));
 }
 
 void MapEditorWidget::paintTileRects(QPainter &painter)
 {
     Q_ASSERT(!selected_tiles.isNull());
-    Q_ASSERT(!simple_tiles.isNull());
 
     const auto click = click_origin? *click_origin : *right_click_origin;
     const QRect selection = asLocalRect(click, mouse_cursor);
@@ -223,22 +222,13 @@ void MapEditorWidget::paintTileRects(QPainter &painter)
 
     if (click_origin && !selected_tiles->isEmpty())
     {
-        const int sh = selected_tiles->length();
-        const int sw = selected_tiles->at(0).length();
+        const auto drawn_tiles = getDrawnTiles();
 
-        for (int j = 0; j < h; ++j)
-        {
-            for (int i = 0; i < w; ++i)
-            {
-                if (const auto ref = selected_tiles->at(j % sh).at(i % sw))
-                {
-                    if (ref.autotile)
-                        paintAutoTile(painter, ref, {x, y}, {i, j});
-                    else
-                        paintSimpleTile(painter, ref.name, {x, y}, {i, j});
-                }
-            }
-        }
+        for (auto &p: drawn_tiles.keys())
+            if (drawn_tiles[p].autotile)
+                paintAutoTile(painter, drawn_tiles[p], p * tilesize);
+            else if (drawn_tiles[p])
+                paintSimpleTile(painter, drawn_tiles[p], p * tilesize);
     }
     else if (right_click_origin)
     {
