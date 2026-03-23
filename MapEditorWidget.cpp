@@ -525,6 +525,32 @@ static inline bool non_empty(const SelectedTiles &r)
     return r.length() > 0 && r[0].length() > 0;
 }
 
+static inline void reorient_autotile(TileReference &ref, const QHash<QPoint, TileReference> &changes, const QPoint &p)
+{
+    const auto &[i, j] = p;
+
+//  all directions are initialised to false already
+    AutoTileDirections directions;
+    if (changes.contains({i-1, j}))
+        directions.left = (ref.name == changes[{i-1, j}].name);
+    if (changes.contains({i-1, j-1}))
+        directions.top_left = (ref.name == changes[{i-1, j-1}].name);
+    if (changes.contains({i, j-1}))
+        directions.top = (ref.name == changes[{i, j-1}].name);
+    if (changes.contains({i+1, j-1}))
+        directions.top_right = (ref.name == changes[{i+1, j-1}].name);
+    if (changes.contains({i+1, j}))
+        directions.right = (ref.name == changes[{i+1, j}].name);
+    if (changes.contains({i+1, j+1}))
+        directions.bottom_right = (ref.name == changes[{i+1, j+1}].name);
+    if (changes.contains({i, j+1}))
+        directions.bottom = (ref.name == changes[{i, j+1}].name);
+    if (changes.contains({i-1, j+1}))
+        directions.bottom_left = (ref.name == changes[{i-1, j+1}].name);
+
+    ref.orientation = directions.toOrientation();
+}
+
 QHash<QPoint, TileReference> MapEditorWidget::getDrawnTiles() const
 {
     Q_ASSERT(!selected_tiles.isNull());
@@ -558,10 +584,22 @@ QHash<QPoint, TileReference> MapEditorWidget::getDrawnTiles() const
 
     if (!changes.isEmpty())
     {
-        const auto original_coords = changes.keys();
-        const MapLayer &layer = map_layers->at(current_layer);
-        reorient_next(changes, original_coords, layer, reorient_autotiles);
-        reorient_prev(changes, original_coords, layer, reorient_autotiles);
+        if (reorient_autotiles)
+        {
+            const auto original_coords = changes.keys();
+            const MapLayer &layer = map_layers->at(current_layer);
+            reorient_next(changes, original_coords, layer, reorient_autotiles);
+            reorient_prev(changes, original_coords, layer, reorient_autotiles);
+        }
+        else
+        {
+        //  this case is much more straight-forward
+            for (auto &p: changes.keys())
+            {
+                auto &ref = changes[p];
+                reorient_autotile(ref, changes, p);
+            }
+        }
     }
 
     return changes;
