@@ -160,7 +160,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>608</width>
+                 <width>649</width>
                  <height>595</height>
                 </rect>
                </property>
@@ -255,7 +255,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>320</width>
+                 <width>279</width>
                  <height>595</height>
                 </rect>
                </property>
@@ -760,7 +760,7 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>66</width>
+                         <width>98</width>
                          <height>28</height>
                         </rect>
                        </property>
@@ -1018,6 +1018,8 @@
     <addaction name="menuRemove"/>
     <addaction name="separator"/>
     <addaction name="menuConvert"/>
+    <addaction name="separator"/>
+    <addaction name="actionFuseSelectedTiles"/>
     <addaction name="separator"/>
     <addaction name="actionOpenFrameOrderEditor"/>
    </widget>
@@ -1427,6 +1429,17 @@
     <string>Ctrl+F, Ctrl+O</string>
    </property>
   </action>
+  <action name="actionFuseSelectedTiles">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MailAttachment"/>
+   </property>
+   <property name="text">
+    <string>&amp;Fuse Selected &amp;Tiles</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F, Ctrl+T</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -1437,14 +1450,14 @@
    <slots>
     <signal>clicked(QColor)</signal>
     <signal>colorChanged(QColor)</signal>
-    <slot>setHue(double)</slot>
-    <slot>setSaturation(double)</slot>
-    <slot>setValue(double)</slot>
-    <slot>setAlpha(int)</slot>
-    <slot>setColor(QColor)</slot>
     <slot>setHue(int)</slot>
     <slot>setSaturation(int)</slot>
     <slot>setValue(int)</slot>
+    <slot>setAlpha(int)</slot>
+    <slot>setColor(QColor)</slot>
+    <slot>setHue(double)</slot>
+    <slot>setSaturation(double)</slot>
+    <slot>setValue(double)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -3229,6 +3242,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionFuseSelectedTiles</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onFuseSelectedTiles()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -3271,5 +3300,6 @@
   <slot>onConvertToAutoTiles()</slot>
   <slot>onOpenTileConverter()</slot>
   <slot>onOpenFrameOrderEditor()</slot>
+  <slot>onFuseSelectedTiles()</slot>
  </slots>
 </ui>

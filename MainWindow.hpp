@@ -46,6 +46,7 @@ public slots:
     void onOpenFrameOrderEditor();
     void onConvertToSimpleTiles();
     void onConvertToAutoTiles();
+    void onFuseSelectedTiles();
     void onOpenTileConverter();
 
     void onResizeMap();

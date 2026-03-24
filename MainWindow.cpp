@@ -85,6 +85,7 @@ MainWindow::MainWindow(QWidget *parent):
     ui->actionRemoveCurrentFrame->setEnabled(false);
     ui->actionConvertToSimpleTiles->setEnabled(false);
     ui->actionConvertToAutoTiles->setEnabled(false);
+    ui->actionFuseSelectedTiles->setEnabled(false);
     ui->actionOpenTileConverter->setEnabled(true);
 
     refreshViews();
@@ -505,6 +506,30 @@ static inline bool can_convert_to_auto(const SelectedTiles &selected_tiles)
     return not_empty(selected_tiles);
 }
 
+static inline bool can_fuse_tiles(const SelectedTiles &selected_tiles)
+{
+    bool got_simple = false, got_auto = false;
+
+    for (auto &row: selected_tiles)
+    {
+        for (auto &ref: row)
+        {
+            if (!ref)
+                return false;
+            else if (ref.autotile && got_simple)
+                return false;
+            else if (ref.autotile && !got_auto)
+                got_auto = true;
+            else if (!ref.autotile && got_auto)
+                return false;
+            else if (!ref.autotile)
+                got_simple = true;
+        }
+    }
+
+    return not_empty(selected_tiles) && !is_1x1(selected_tiles);
+}
+
 void MainWindow::onSelectedChanged()
 {
     Q_ASSERT(!simple_tiles.isNull());
@@ -522,6 +547,9 @@ void MainWindow::onSelectedChanged()
 
     ui->actionConvertToSimpleTiles->setEnabled(can_convert_to_simple(*selected_tiles));
     ui->actionConvertToAutoTiles->setEnabled(can_convert_to_auto(*selected_tiles));
+
+    ui->actionFuseSelectedTiles->setEnabled(can_fuse_tiles(*selected_tiles));
+
     ui->actionOpenTileConverter->setEnabled(!simple_tiles->isEmpty() || !autotiles->isEmpty());
 }
 
@@ -932,6 +960,42 @@ void MainWindow::onConvertToAutoTiles()
         ui->tilesetView->addAutoTile(tile);
     }
     undo_stack->endMacro();
+}
+
+template <typename T>
+static inline T fuse_tiles(const SelectedTiles &selected, const Tileset<T> &tiles)
+{
+    T tile;
+
+    for (auto &row: selected)
+    {
+        for (auto &ref: row)
+        {
+            Q_ASSERT(ref && (ref.autotile == std::is_same<T, AutoTile>::value));
+            Q_ASSERT(tiles.contains(ref.name));
+
+            tile.frames += tiles.value(ref.name).frames;
+        }
+    }
+
+    return tile;
+}
+
+void MainWindow::onFuseSelectedTiles()
+{
+    Q_ASSERT(!selected_tiles.isNull());
+    Q_ASSERT(not_empty(*selected_tiles));
+
+    if (selected_tiles->at(0).at(0).autotile)
+    {
+        Q_ASSERT(!autotiles.isNull());
+        ui->tilesetView->addAutoTile(fuse_tiles(*selected_tiles, *autotiles));
+    }
+    else
+    {
+        Q_ASSERT(!simple_tiles.isNull());
+        ui->tilesetView->addSimpleTile(fuse_tiles(*selected_tiles, *simple_tiles));
+    }
 }
 
 void MainWindow::onOpenTileConverter()
