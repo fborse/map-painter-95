@@ -433,6 +433,9 @@ void ImportSingleTileDialog::onChangeFrame()
     frame.setY(ui->ySpinBox->value());
 
     ui->tileView->update();
+    const QString str = QString("(%1, %2)").arg(frame.x()).arg(frame.y());
+    Q_ASSERT(ui->framesListWidget->item(index));
+    ui->framesListWidget->item(index)->setText(str);
 }
 
 void ImportSingleTileDialog::onFrameChanged(const QPoint new_position)

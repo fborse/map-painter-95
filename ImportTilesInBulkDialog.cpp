@@ -438,7 +438,7 @@ void ImportTilesInBulkDialog::onAddArea(const ImportTilesArea area)
     ui->rectanglesViewWidget->addArea(area);
     const QString rect = QString("(%1, %2) %3x%4 +%5+%6")
         .arg(area.x).arg(area.y)
-        .arg(area.w).arg(area.w)
+        .arg(area.w).arg(area.h)
         .arg(area.dx).arg(area.dy);
     ui->rectanglesListWidget->addItem(rect);
 
@@ -522,6 +522,12 @@ void ImportTilesInBulkDialog::onChangeArea()
     area.dy = ui->dySpinBox->value();
 
     ui->rectanglesViewWidget->update();
+    const QString str = QString("(%1, %2) %3x%4 +%5+%6")
+                             .arg(area.x).arg(area.y)
+                             .arg(area.w).arg(area.h)
+                             .arg(area.dx).arg(area.dy);
+    Q_ASSERT(ui->rectanglesListWidget->item(index));
+    ui->rectanglesListWidget->item(index)->setText(str);
 }
 
 void ImportTilesInBulkDialog::onAreaChanged(const QPoint new_position)
