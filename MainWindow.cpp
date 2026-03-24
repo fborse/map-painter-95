@@ -285,6 +285,8 @@ void MainWindow::onNew()
             updateFramesBoxes();
             refreshViews();
             ui->actionOpenTileConverter->setEnabled(false);
+            ui->mainTabWidget->setCurrentIndex(0);
+            ui->zoomMapViewDoubleSpinBox->setValue(1);
         }
     }
 }
@@ -1030,6 +1032,13 @@ static inline QDataStream &operator>>(QDataStream &stream, TileReference &ref)
     return stream;
 }
 
+static inline QDataStream &operator>>(QDataStream &stream, AutoTile::Frame &frame)
+{
+    stream >> frame.metatiles;
+
+    return stream;
+}
+
 bool MainWindow::load(const QString &path) try
 {
     QFile file(path);
@@ -1041,35 +1050,53 @@ bool MainWindow::load(const QString &path) try
     int major, minor;
     stream >> major >> minor;
 
-    int tilesize, n_columns, n_tiles;
-    stream >> tilesize >> n_columns >> n_tiles;
+    int tilesize, n_columns, n_autos, n_simples;
+    stream >> tilesize >> n_columns >> n_autos >> n_simples;
     if (tilesize < 1 || tilesize > 256)
         throw QString("Invalid tilesize %1 !").arg(tilesize);
     if (n_columns < 1 || n_columns > 16)
         throw QString("Invalid number of columns %1 !").arg(n_columns);
-    if (n_tiles < 0)
-        throw QString("Invalid number of tiles %1 !").arg(n_tiles);
+    if (n_autos < 0)
+        throw QString("Invalid number of autotiles %1").arg(n_autos);
+    if (n_simples < 0)
+        throw QString("Invalid number of tiles %1 !").arg(n_simples);
 
-    Names order;
-    SimpleTiles tiles;
-    for (int i = 0; i < n_tiles; ++i)
+    Names autos_order;
+    AutoTiles autos;
+    for (int i = 0; i < n_autos; ++i)
     {
-        TileReference ref;
+        QString id;
+        AutoTile tile;
+
+        stream >> id >> tile.frames;
+        autos_order.push_back(id);
+        autos[id] = tile;
+    }
+
+    Names simples_order;
+    SimpleTiles simples;
+    for (int i = 0; i < n_simples; ++i)
+    {
+        QString id;
         SimpleTile tile;
 
-        stream >> ref.name >> tile.frames;
-        order.push_back(ref.name);
-        tiles[ref.name] = tile;
+        stream >> id >> tile.frames;
+        simples_order.push_back(id);
+        simples[id] = tile;
     }
 
     MapLayers layers;
     stream >> layers;
 
     resetPointers();
+    Q_ASSERT(!autotiles_order.isNull());
+    *autotiles_order = std::move(autos_order);
+    Q_ASSERT(!autotiles.isNull());
+    *autotiles = std::move(autos);
     Q_ASSERT(!simple_tiles_order.isNull());
-    *simple_tiles_order = std::move(order);
+    *simple_tiles_order = std::move(simples_order);
     Q_ASSERT(!simple_tiles.isNull());
-    *simple_tiles = std::move(tiles);
+    *simple_tiles = std::move(simples);
     Q_ASSERT(!map_layers.isNull());
     *map_layers = std::move(layers);
 
@@ -1081,6 +1108,9 @@ bool MainWindow::load(const QString &path) try
     updateLayersBoxes();
     updateFramesBoxes();
     refreshViews();
+    ui->mainTabWidget->setCurrentIndex(0);
+    ui->zoomMapViewDoubleSpinBox->setValue(1);
+
     return true;
 }
 catch (const QString &errstr)
@@ -1101,6 +1131,13 @@ static inline QDataStream &operator<<(QDataStream &stream, const Orientation &o)
 static inline QDataStream &operator<<(QDataStream &stream, const TileReference &ref)
 {
     stream << ref.name << ref.autotile << ref.orientation;
+
+    return stream;
+}
+
+static inline QDataStream &operator<<(QDataStream &stream, const AutoTile::Frame &frame)
+{
+    stream << frame.metatiles;
 
     return stream;
 }
@@ -1131,10 +1168,13 @@ bool MainWindow::save(const QString &path)
     {
         const int tilesize = ui->tilesetView->getTilesize();
         const int n_columns = ui->tilesetView->getNumberOfColumns();
-        const int n_tiles = simple_tiles_order->length();
+        const int n_autotiles = autotiles_order->length();
+        const int n_simple_tiles = simple_tiles_order->length();
 
-        stream << tilesize << n_columns << n_tiles;
+        stream << tilesize << n_columns << n_autotiles << n_simple_tiles;
 
+        for (auto &id: *autotiles_order)
+            stream << id << autotiles->value(id).frames;
         for (auto &id: *simple_tiles_order)
             stream << id << simple_tiles->value(id).frames;
     }
