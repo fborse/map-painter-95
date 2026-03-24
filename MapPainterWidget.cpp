@@ -524,6 +524,53 @@ static inline bool similar(const QColor &c1, const QColor &c2, const double tole
     return (dist <= tolerance/100 * tolerance/100);
 }
 
+static inline int left_boundary(const QRect &rect, const QPoint &p, const QImage &original, const QColor &color, const int tol)
+{
+    const int y = p.y();
+
+    for (int x = p.x() - 1; x >= rect.left(); --x)
+        if (!similar(original.pixelColor({x, y}), color, tol))
+            return x + 1;
+
+    return rect.left();
+}
+
+static inline int right_boundary(const QRect &rect, const QPoint &p, const QImage &original, const QColor &color, const int tol)
+{
+    const int y = p.y();
+
+    for (int x = p.x() + 1; x <= rect.right(); ++x)
+        if (!similar(original.pixelColor({x, y}), color, tol))
+            return x - 1;
+
+    return rect.right();
+}
+
+static inline QVector<QLine> get_spans(const int l, const int r, const int y, const QImage &original, const QColor &color, const int tol)
+{
+    QVector<QLine> spans;
+
+    std::optional<int> start;
+    for (int x = l; x <= r; ++x)
+    {
+        const QColor current = original.pixelColor({x, y});
+        if (!start && similar(current, color, tol))
+        {
+            start = x;
+        }
+        else if (start && !similar(current, color, tol))
+        {
+            spans.push_back({{*start, y}, {x-1, y}});
+            start = {};
+        }
+    }
+
+    if (start)
+        spans.push_back({{*start, y}, {r, y}});
+
+    return spans;
+}
+
 void MapPainterWidget::drawFill(QImage &original) const
 {
     const QRect rect = fill_this_tile_only?
@@ -531,23 +578,26 @@ void MapPainterWidget::drawFill(QImage &original) const
       : getWidgetRect();
 
     const QColor original_color = original.pixelColor(mouse_cursor);
-    const QPoint directions[] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    if (similar(original_color, draw_color, fill_tolerance))
+        return;
 
-    QSet<QPoint> done;
-//  TODO: change QVector to a better structure
-//  QSet failed miserably by the way
-    QVector<QPoint> todo = {mouse_cursor};
+//  assuming that all lines will be left to right
+    QVector<QLine> todo = {{mouse_cursor, mouse_cursor}};
     while (!todo.isEmpty())
     {
-        const QPoint p = todo.takeAt(0);
-        original.setPixelColor(p, draw_color);
-        done.insert(p);
+        const QLine line = todo.takeAt(0);
+        const int y = line.y1();   //  or line.y2() ; doesn't matter
 
-        for (auto &d: directions)
-            if (rect.contains(p+d))
-                if (!done.contains(p+d) && !todo.contains(p+d))
-                    if (similar(original.pixelColor(p+d), original_color, fill_tolerance))
-                        todo.push_back(p+d);
+        const int l = left_boundary(rect, line.p1(), original, original_color, fill_tolerance);
+        const int r = right_boundary(rect, line.p1(), original, original_color, fill_tolerance);
+
+        for (int x = l; x <= r; ++x)
+            original.setPixelColor({x, y}, draw_color);
+
+        if (y - 1 >= 0)
+            todo += get_spans(l, r, y - 1, original, original_color, fill_tolerance);
+        if (y + 1 < rect.bottom())
+            todo += get_spans(l, r, y + 1, original, original_color, fill_tolerance);
     }
 }
 
