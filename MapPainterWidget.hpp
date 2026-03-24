@@ -159,6 +159,8 @@ private:
     void handleRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels);
     void handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPoint, QColor>> &changed_pixels);
 
+    QRect getDrawBoundaries() const;
+
     void blitSelection();
     void handleSelectionMade();
     void handleDrawChanges();

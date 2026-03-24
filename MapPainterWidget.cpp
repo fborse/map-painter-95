@@ -950,14 +950,14 @@ void MapPainterWidget::handleNonRetroactiveDrawing(const QHash<QPoint, QHash<QPo
     }
 }
 
-static inline auto get_changed_pixels(const QImage &original, const QImage &changed, const int tilesize)
+static inline auto get_changed_pixels(const QImage &original, const QImage &changed, const QRect &boundaries, const int tilesize)
 {
     QHash<QPoint, QHash<QPoint, QColor>> changes;
 
 //  please be fast (:
-    for (int j = 0; j < original.height(); ++j)
+    for (int j = boundaries.top(); j < boundaries.bottom(); ++j)
     {
-        for (int i = 0; i < original.width(); ++i)
+        for (int i = boundaries.left(); i < boundaries.right(); ++i)
         {
             const QPoint p = {i, j};
             const QPoint q = divide(p, tilesize);
@@ -981,7 +981,7 @@ void MapPainterWidget::blitSelection()
         painter.drawImage(selection_rect->topLeft(), selection_image);
     }
 
-    const auto changed_pixels = get_changed_pixels(original, drawn, tilesize);
+    const auto changed_pixels = get_changed_pixels(original, drawn, *selection_rect, tilesize);
     if (changed_pixels.isEmpty())
         return;
 
@@ -1008,7 +1008,7 @@ void MapPainterWidget::cutSelection()
         painter.fillRect(*original_rect, Qt::black);
     }
 
-    const auto changed_pixels = get_changed_pixels(original, drawn, tilesize);
+    const auto changed_pixels = get_changed_pixels(original, drawn, *original_rect, tilesize);
     if (changed_pixels.isEmpty())
         return;
 
@@ -1127,13 +1127,92 @@ void MapPainterWidget::selectAll()
     update();
 }
 
+static inline QPair<QPoint, QPoint> get_min_max(const QVector<QPoint> &points)
+{
+    if (points.isEmpty())
+        return {};
+    int minx = points[0].x(), maxx = points[0].x();
+    int miny = points[0].y(), maxy = points[0].y();
+
+    for (auto &[x, y]: points)
+    {
+        if (x < minx)
+            minx = x;
+        if (x > maxx)
+            maxx = x;
+        if (y < miny)
+            miny = y;
+        if (y > maxy)
+            maxy = y;
+    }
+
+    return {{minx, miny}, {maxx, maxy}};
+}
+
+static inline QRect to_rect(const QPair<QPoint, QPoint> &pp, const QPoint &offset)
+{
+    return QRect(pp.first - offset, pp.second + offset);
+}
+
+QRect MapPainterWidget::getDrawBoundaries() const
+{
+    const QRect draw_area(0, 0, width() / zoom + 1, height() / zoom + 1);
+
+    switch (draw_tool)
+    {
+    case PEN:
+    case ERASER:
+    case SHADER:
+        return to_rect(get_min_max(drag_points), {pen_size, pen_size})
+            .intersected(draw_area);
+    case BRUSH:
+        {
+            const auto &[w, h] = brush_pixels.size();
+            return to_rect(get_min_max(drag_points), {w + pen_size, h + pen_size})
+                .intersected(draw_area);
+        }
+    case LINE:
+    case SHAPE:
+        if (click_origin)
+            return to_rect(get_min_max({*click_origin, mouse_cursor}), {pen_size, pen_size})
+                .intersected(draw_area);
+        break;
+    case FILL:
+    //  TODO: find a way to avoid the "you're on your own, buddy" case scenario
+        if (fill_this_tile_only)
+        {
+            if (click_origin)
+            {
+                const QPoint origin = divide(*click_origin, tilesize);
+                return QRect(origin * tilesize, QSize(tilesize+1, tilesize+1));
+            }
+        }
+        else
+        {
+        //  You're on your own, buddy.
+        //  Good luck !
+            return draw_area;
+        }
+        break;
+    case AIRBRUSH:
+        return to_rect(get_min_max(airbrush_points), {pen_size, pen_size})
+            .intersected(draw_area);
+    default:
+    //  no painting happening => irrelevant
+        return {};
+    }
+
+    return {};
+}
+
 void MapPainterWidget::handleDrawChanges()
 {
     Q_ASSERT(!simple_tiles.isNull());
     Q_ASSERT(!map_layers.isNull());
 
+    const QRect boundaries = getDrawBoundaries();
     const auto changed_pixels =
-        get_changed_pixels(getPaintedLayer(current_layer), getDrawnLayer(), tilesize);
+        get_changed_pixels(getPaintedLayer(current_layer), getDrawnLayer(), boundaries, tilesize);
     if (changed_pixels.isEmpty())
         return;
 
@@ -1148,22 +1227,8 @@ static inline std::optional<QRect> path_to_rect(const QVector<QPoint> &points)
     if (points.isEmpty())
         return {};
 
-    const auto &[x0, y0] = points.front();
-    int minx = x0, miny = y0, maxx = x0, maxy = y0;
-
-    for (auto &[x, y]: points)
-    {
-        if (x < minx)
-            minx = x;
-        if (y < miny)
-            miny = y;
-        if (x > maxx)
-            maxx = x;
-        if (y > maxy)
-            maxy = y;
-    }
-
-    return QRect(QPoint(minx, miny), QPoint(maxx, maxy));
+    const auto &[p1, p2] = get_min_max(points);
+    return QRect(p1, p2);
 }
 
 static inline bool has_selection(const std::optional<QPoint> &offset, const std::optional<QRect> &rect)
