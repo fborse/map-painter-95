@@ -249,7 +249,7 @@ void MapEditorWidget::paintTileRects(QPainter &painter)
 
 void MapEditorWidget::paintRectOutlines(QPainter &painter)
 {
-    const int unit = tilesize * zoom;
+    const double unit = tilesize * zoom;
 
     const QPoint click = click_origin? *click_origin : *right_click_origin;
     const QRect selection = asLocalRect(click, mouse_cursor);
