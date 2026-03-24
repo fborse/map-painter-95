@@ -328,6 +328,11 @@ void ImportTilesInBulkWidget::mouseReleaseEvent(QMouseEvent *event)
             QRect rect = getSelectionRect();
         //  QRect(QPoint, QPoint) adds 1 to each size components
             rect.setSize(rect.size() - QSize(1, 1));
+        //  keep it above 0 though
+            if (rect.width() == 0)
+                rect.setWidth(tilesize);
+            if (rect.height() == 0)
+                rect.setHeight(tilesize);
 
             const auto &[x, y] = rect.topLeft();
         //  we want a truncating behaviour
