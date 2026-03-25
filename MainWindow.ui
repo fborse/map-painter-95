@@ -760,7 +760,7 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>98</width>
+                         <width>66</width>
                          <height>28</height>
                         </rect>
                        </property>
@@ -937,10 +937,11 @@
      <property name="title">
       <string>&amp;Import</string>
      </property>
+     <addaction name="actionImportAutotile"/>
      <addaction name="actionImportSingleTile"/>
      <addaction name="actionImportTilesInBulk"/>
      <addaction name="separator"/>
-     <addaction name="actionImportAutotile"/>
+     <addaction name="actionImportTileset"/>
     </widget>
     <widget class="QMenu" name="menuExport">
      <property name="title">
@@ -959,6 +960,7 @@
     <addaction name="menuExport"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
+    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -1351,13 +1353,13 @@
   </action>
   <action name="actionImportSingleTile">
    <property name="text">
-    <string>Single &amp;Tile...</string>
+    <string>&amp;Single Tile...</string>
    </property>
    <property name="toolTip">
     <string>Import Single Tile</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+I, Ctrl+T</string>
+    <string>Ctrl+I, Ctrl+S</string>
    </property>
   </action>
   <action name="actionAddAutoTile">
@@ -1438,6 +1440,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+F, Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actionImportTileset">
+   <property name="text">
+    <string>&amp;Tileset...</string>
+   </property>
+   <property name="toolTip">
+    <string>Import Tileset</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I, Ctrl+T</string>
    </property>
   </action>
  </widget>
@@ -3258,6 +3271,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionImportTileset</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onImportTileset()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -3301,5 +3330,6 @@
   <slot>onOpenTileConverter()</slot>
   <slot>onOpenFrameOrderEditor()</slot>
   <slot>onFuseSelectedTiles()</slot>
+  <slot>onImportTileset()</slot>
  </slots>
 </ui>

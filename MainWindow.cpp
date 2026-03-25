@@ -19,6 +19,7 @@
 #include "ExportAsTexturesDialog.hpp"
 #include "TileConverterDialog.hpp"
 #include "FrameOrderEditorDialog.hpp"
+#include "ImportTilesetDialog.hpp"
 
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow),
@@ -342,6 +343,19 @@ bool MainWindow::onSaveAs()
     return true;
 }
 
+void MainWindow::onImportAutoTile()
+{
+    const int tilesize = ui->tilesetView->getTilesize();
+
+    ImportAutoTileDialog dialog(tilesize, this);
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        ui->tilesetView->addAutoTile(dialog.getAutoTile());
+        refreshViews();
+        updateFramesBoxes();
+    }
+}
+
 void MainWindow::onImportSingleTile()
 {
     const int tilesize = ui->tilesetView->getTilesize();
@@ -372,14 +386,23 @@ void MainWindow::onImportTilesInBulk()
     }
 }
 
-void MainWindow::onImportAutoTile()
+void MainWindow::onImportTileset()
 {
-    const int tilesize = ui->tilesetView->getTilesize();
+    Q_ASSERT(!undo_stack.isNull());
 
-    ImportAutoTileDialog dialog(tilesize, this);
+    ImportTilesetDialog dialog(this);
+    const int tilesize = ui->tilesetView->getTilesize();
+    dialog.setTileSize(tilesize);
+
     if (dialog.exec() == QDialog::Accepted)
     {
-        ui->tilesetView->addAutoTile(dialog.getAutoTile());
+        undo_stack->beginMacro("Import Tileset");
+        for (auto &tile: dialog.getAddedAutoTiles().values())
+            ui->tilesetView->addAutoTile(tile);
+        for (auto &tile: dialog.getAddedSimpleTiles().values())
+            ui->tilesetView->addSimpleTile(tile);
+        undo_stack->endMacro();
+
         refreshViews();
         updateFramesBoxes();
     }

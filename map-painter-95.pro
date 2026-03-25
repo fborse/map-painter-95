@@ -25,6 +25,7 @@ SOURCES += \
     ImportAutoTileDialog.cpp \
     ImportSingleTileDialog.cpp \
     ImportTilesInBulkDialog.cpp \
+    ImportTilesetDialog.cpp \
     MapEditorWidget.cpp \
     MapPainterWidget.cpp \
     NewMapDialog.cpp \
@@ -53,6 +54,7 @@ HEADERS += \
     ImportAutoTileDialog.hpp \
     ImportSingleTileDialog.hpp \
     ImportTilesInBulkDialog.hpp \
+    ImportTilesetDialog.hpp \
     MainWindow.hpp \
     MapEditorWidget.hpp \
     MapPainterWidget.hpp \
@@ -72,6 +74,7 @@ FORMS += \
     ImportAutoTileDialog.ui \
     ImportSingleTileDialog.ui \
     ImportTilesInBulkDialog.ui \
+    ImportTilesetDialog.ui \
     MainWindow.ui \
     NewMapDialog.ui \
     ResizeMapDialog.ui \
