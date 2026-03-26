@@ -8,6 +8,8 @@ class ColorPaletteWidget: public QWidget
 public:
     explicit ColorPaletteWidget(QWidget *parent = nullptr);
 
+    void resetPalette() { colors.clear(); addColor(Qt::black); addColor(Qt::white); update(); }
+
 public slots:
     void addColor(const QColor color);
     void selectColor(const QColor color);

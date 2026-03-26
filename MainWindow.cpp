@@ -161,6 +161,10 @@ void MainWindow::resetPointers()
     simple_tiles_order->clear();
     Q_ASSERT(!simple_tiles.isNull());
     simple_tiles->clear();
+    Q_ASSERT(!autotiles_order.isNull());
+    autotiles_order->clear();
+    Q_ASSERT(!autotiles.isNull());
+    autotiles->clear();
     Q_ASSERT(!selected_tiles.isNull());
     selected_tiles->clear();
     Q_ASSERT(!map_layers.isNull());
@@ -289,6 +293,7 @@ void MainWindow::onNew()
             ui->actionOpenTileConverter->setEnabled(false);
             ui->mainTabWidget->setCurrentIndex(0);
             ui->zoomMapViewDoubleSpinBox->setValue(1);
+            ui->colorPaletteWidget->resetPalette();
         }
     }
 }
@@ -1197,6 +1202,7 @@ bool MainWindow::load(const QString &path) try
     refreshViews();
     ui->mainTabWidget->setCurrentIndex(0);
     ui->zoomMapViewDoubleSpinBox->setValue(1);
+    ui->colorPaletteWidget->resetPalette();
 
     return true;
 }
