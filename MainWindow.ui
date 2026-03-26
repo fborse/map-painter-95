@@ -417,8 +417,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>699</width>
-                <height>595</height>
+                <width>98</width>
+                <height>28</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -528,8 +528,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>225</width>
-                  <height>68</height>
+                  <width>98</width>
+                  <height>28</height>
                  </rect>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="0">
@@ -760,7 +760,7 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>66</width>
+                         <width>98</width>
                          <height>28</height>
                         </rect>
                        </property>
@@ -1444,10 +1444,10 @@
   </action>
   <action name="actionImportTileset">
    <property name="text">
-    <string>&amp;Tileset...</string>
+    <string>From Another Map Painter 95 &amp;Tileset...</string>
    </property>
    <property name="toolTip">
-    <string>Import Tileset</string>
+    <string>Import From Another Map Mainter 95 Tileset</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+I, Ctrl+T</string>
