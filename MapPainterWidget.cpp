@@ -539,7 +539,7 @@ static inline int right_boundary(const QRect &rect, const QPoint &p, const QImag
 {
     const int y = p.y();
 
-    for (int x = p.x() + 1; x <= rect.right(); ++x)
+    for (int x = p.x() + 1; x < rect.right(); ++x)
         if (!similar(original.pixelColor({x, y}), color, tol))
             return x - 1;
 
@@ -551,7 +551,7 @@ static inline QVector<QLine> get_spans(const int l, const int r, const int y, co
     QVector<QLine> spans;
 
     std::optional<int> start;
-    for (int x = l; x <= r; ++x)
+    for (int x = l; x < r; ++x)
     {
         const QColor current = original.pixelColor({x, y});
         if (!start && similar(current, color, tol))
@@ -573,9 +573,7 @@ static inline QVector<QLine> get_spans(const int l, const int r, const int y, co
 
 void MapPainterWidget::drawFill(QImage &original) const
 {
-    const QRect rect = fill_this_tile_only?
-        QRect(divide(mouse_cursor, tilesize) * tilesize, QSize(tilesize, tilesize))
-      : getWidgetRect();
+    const QRect rect = getDrawBoundaries();
 
     const QColor original_color = original.pixelColor(mouse_cursor);
     if (similar(original_color, draw_color, fill_tolerance))
@@ -591,10 +589,10 @@ void MapPainterWidget::drawFill(QImage &original) const
         const int l = left_boundary(rect, line.p1(), original, original_color, fill_tolerance);
         const int r = right_boundary(rect, line.p1(), original, original_color, fill_tolerance);
 
-        for (int x = l; x <= r; ++x)
+        for (int x = l; x < r; ++x)
             original.setPixelColor({x, y}, draw_color);
 
-        if (y - 1 >= 0)
+        if (y - 1 >= rect.top())
             todo += get_spans(l, r, y - 1, original, original_color, fill_tolerance);
         if (y + 1 < rect.bottom())
             todo += get_spans(l, r, y + 1, original, original_color, fill_tolerance);
