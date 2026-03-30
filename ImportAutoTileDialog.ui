@@ -318,14 +318,14 @@
    <slots>
     <signal>clicked(QColor)</signal>
     <signal>colorChanged(QColor)</signal>
-    <slot>setHue(double)</slot>
-    <slot>setSaturation(double)</slot>
-    <slot>setValue(double)</slot>
-    <slot>setAlpha(int)</slot>
-    <slot>setColor(QColor)</slot>
     <slot>setHue(int)</slot>
     <slot>setSaturation(int)</slot>
     <slot>setValue(int)</slot>
+    <slot>setAlpha(int)</slot>
+    <slot>setColor(QColor)</slot>
+    <slot>setHue(double)</slot>
+    <slot>setSaturation(double)</slot>
+    <slot>setValue(double)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -334,8 +334,10 @@
    <header>ImportAutoTileDialog.hpp</header>
    <container>1</container>
    <slots>
-    <signal>metatileSelected(int)</signal>
-    <slot>setSelectedMetatile(int)</slot>
+    <signal>metatileClicked(int)</signal>
+    <signal>selectionChanged()</signal>
+    <slot>setMetatileState(int,bool)</slot>
+    <slot>clearSelections()</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -344,51 +346,20 @@
    <header>ImportAutoTileDialog.hpp</header>
    <container>1</container>
    <slots>
-    <signal>metatileSelected(int)</signal>
-    <signal>metatileChanged(QPoint)</signal>
+    <signal>metatileClicked(int)</signal>
     <signal>displayedTextureChanged()</signal>
+    <signal>clearSelection()</signal>
+    <signal>metatilePositionChanged(int,QPoint)</signal>
     <slot>setZoom(double)</slot>
     <slot>setScaling(double)</slot>
     <slot>setColorKey(QColor)</slot>
     <slot>setMagnetic(bool)</slot>
-    <slot>setSelectedMetatile(int)</slot>
+    <slot>setMetatilePosition(int,QPoint)</slot>
    </slots>
   </customwidget>
  </customwidgets>
  <resources/>
  <connections>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>ImportAutoTileDialog</receiver>
-   <slot>onAccept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>227</x>
-     <y>579</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>157</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>rejected()</signal>
-   <receiver>ImportAutoTileDialog</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>295</x>
-     <y>585</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>286</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>changePathPushButton</sender>
    <signal>clicked()</signal>
@@ -486,38 +457,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>metatilesView</sender>
-   <signal>metatileSelected(int)</signal>
-   <receiver>ImportAutoTileDialog</receiver>
-   <slot>onSelectedMetatileChanged(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>104</x>
-     <y>320</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>2</x>
-     <y>320</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>autotileView</sender>
-   <signal>metatileChanged(QPoint)</signal>
-   <receiver>ImportAutoTileDialog</receiver>
-   <slot>onMetatileChanged(QPoint)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>747</x>
-     <y>376</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>797</x>
-     <y>381</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>xSpinBox</sender>
    <signal>valueChanged(int)</signal>
    <receiver>ImportAutoTileDialog</receiver>
@@ -550,34 +489,50 @@
    </hints>
   </connection>
   <connection>
-   <sender>autotileView</sender>
-   <signal>metatileSelected(int)</signal>
-   <receiver>metatilesView</receiver>
-   <slot>setSelectedMetatile(int)</slot>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>onAccept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>424</x>
-     <y>321</y>
+     <x>667</x>
+     <y>582</y>
     </hint>
     <hint type="destinationlabel">
-     <x>245</x>
-     <y>325</y>
+     <x>668</x>
+     <y>595</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>autotileView</sender>
-   <signal>metatileSelected(int)</signal>
-   <receiver>autotileView</receiver>
-   <slot>setSelectedMetatile(int)</slot>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>753</x>
-     <y>233</y>
+     <x>754</x>
+     <y>577</y>
     </hint>
     <hint type="destinationlabel">
-     <x>753</x>
-     <y>158</y>
+     <x>757</x>
+     <y>594</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>metatilesView</sender>
+   <signal>selectionChanged()</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>onSelectedMetatilesChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>64</x>
+     <y>331</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>0</x>
+     <y>330</y>
     </hint>
    </hints>
   </connection>
@@ -588,12 +543,60 @@
    <slot>redrawMetatiles()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>752</x>
-     <y>304</y>
+     <x>736</x>
+     <y>238</y>
     </hint>
     <hint type="destinationlabel">
      <x>799</x>
-     <y>304</y>
+     <y>248</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>autotileView</sender>
+   <signal>clearSelection()</signal>
+   <receiver>metatilesView</receiver>
+   <slot>clearSelections()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>407</x>
+     <y>249</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>250</x>
+     <y>269</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>autotileView</sender>
+   <signal>metatilePositionChanged(int,QPoint)</signal>
+   <receiver>autotileView</receiver>
+   <slot>setMetatilePosition(int,QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>370</x>
+     <y>183</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>417</x>
+     <y>433</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>autotileView</sender>
+   <signal>metatilePositionChanged(int,QPoint)</signal>
+   <receiver>ImportAutoTileDialog</receiver>
+   <slot>onMetatilePositionChanged(int,QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>753</x>
+     <y>387</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>797</x>
+     <y>388</y>
     </hint>
    </hints>
   </connection>
@@ -602,9 +605,9 @@
   <slot>onChangeTexturePath()</slot>
   <slot>onChangeColorKey()</slot>
   <slot>onAccept()</slot>
-  <slot>onSelectedMetatileChanged(int)</slot>
+  <slot>onSelectedMetatilesChanged()</slot>
   <slot>onChangeMetatile()</slot>
-  <slot>onMetatileChanged(QPoint)</slot>
   <slot>redrawMetatiles()</slot>
+  <slot>onMetatilePositionChanged(int,QPoint)</slot>
  </slots>
 </ui>

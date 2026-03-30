@@ -8,13 +8,44 @@
 #include <QMouseEvent>
 
 AutoTileViewWidget::AutoTileViewWidget(QWidget *parent):
-    QWidget(parent), tilesize{0}, metatiles(20), selected{-1}
+//  see Types.hpp for why 20
+    QWidget(parent), tilesize{0}, metatiles(20), selections(20, false)
 {}
+
+void AutoTileViewWidget::setMetatileState(const int index, const bool state)
+{
+    Q_ASSERT(0 <= index && index < metatiles.length());
+    selections[index] = state;
+
+    emit selectionChanged();
+    update();
+}
 
 void AutoTileViewWidget::setMetatileImage(const int index, const QImage &image)
 {
     Q_ASSERT(0 <= index && index < metatiles.length());
     metatiles[index] = image;
+    update();
+}
+
+void AutoTileViewWidget::clearSelections()
+{
+    for (auto &metatile: selections)
+        metatile = false;
+
+    emit selectionChanged();
+    update();
+}
+
+QSet<int> AutoTileViewWidget::getSelectedMetatiles() const
+{
+    QSet<int> selected;
+
+    for (int i = 0; i < selections.length(); ++i)
+        if (selections[i])
+            selected.insert(i);
+
+    return selected;
 }
 
 void AutoTileViewWidget::drawBackground(QPainter &painter)
@@ -40,24 +71,22 @@ void AutoTileViewWidget::drawMetatiles(QPainter &painter)
 {
 //  see Types.hpp for why 20
     Q_ASSERT(metatiles.length() == 20);
-
     const int s = tilesize / 2;
-//  RPG Maker scheme
-//  start with an isolated tile on the top left
-    painter.drawImage(0, 0, metatiles[0]);
-    painter.drawImage(s, 0, metatiles[3]);
-    painter.drawImage(0, s, metatiles[12]);
-    painter.drawImage(s, s, metatiles[15]);
-//  then the joint tile on the top right
-    painter.drawImage(2*s, 0, metatiles[16]);
-    painter.drawImage(3*s, 0, metatiles[17]);
-    painter.drawImage(2*s, s, metatiles[18]);
-    painter.drawImage(3*s, s, metatiles[19]);
-//  now the main part ; see Types.hpp for why 16
-    for (int i = 0; i < 16; ++i)
+
+    if (!metatiles[0].isNull())
     {
-        const QPoint p(i % 4, 2 + i / 4);
-        painter.drawImage(p * s, metatiles[i]);
+    //  RPG Maker scheme
+    //  start with an isolated tile on the top left
+        const std::array<int, 4> isolated = {0, 3, 12, 15};
+        for (size_t i = 0; i < isolated.size(); ++i)
+            painter.drawImage(QPoint(i % 2, i / 2) * s, metatiles[isolated[i]].scaled({s, s}));
+    //  then the joint tile on the top right
+        const std::array<int, 4> joints = {16, 17, 18, 19};
+        for (size_t i = 0; i < joints.size(); ++i)
+            painter.drawImage(QPoint(2 + (i % 2), i / 2) * s, metatiles[joints[i]].scaled({s, s}));
+    //  now the main part ; see Types.hpp for why 16
+        for (int i = 0; i < 16; ++i)
+            painter.drawImage(QPoint(i % 4, 2 + (i / 4)) * s, metatiles[i].scaled({s, s}));
     }
 }
 
@@ -78,6 +107,9 @@ void AutoTileViewWidget::drawGrid(QPainter &painter)
 
 static inline void draw_rect(QPainter &painter, const QPoint p, const QSize s)
 {
+    const QColor white128 = {255, 255, 255, 128};
+    painter.fillRect(QRect(p, s), white128);
+
     painter.setPen(Qt::black);
     painter.drawRect(QRect(p, s));
 
@@ -85,34 +117,27 @@ static inline void draw_rect(QPainter &painter, const QPoint p, const QSize s)
     painter.drawRect(QRect(p + QPoint(1, 1), s - QSize(2, 2)));
 }
 
-void AutoTileViewWidget::drawSelectionRect(QPainter &painter)
+void AutoTileViewWidget::drawSelectionRects(QPainter &painter)
 {
-    if (selected >= 0)
-    {
-        QPoint p(selected % 4, 2 + selected / 4);
-    //  joints are displayed on the top right
-        if (selected == 16)
-            p = {2, 0};
-        else if (selected == 17)
-            p = {3, 0};
-        else if (selected == 18)
-            p = {2, 1};
-        else if (selected == 19)
-            p = {2, 2};
+    const QSize s = {tilesize / 2, tilesize / 2};
 
-        const QSize s(tilesize/2, tilesize/2);
-        draw_rect(painter, p * (tilesize/2), s);
+//  RPG Maker scheme
+//  top-left 2x2 patch is a single isolated tile
+    const std::array<int, 4> isolated = {0, 3, 12, 15};
+    for (size_t i = 0; i < isolated.size(); ++i)
+        if (selections[isolated[i]])
+            draw_rect(painter, QPoint(i % 2, i / 2) * tilesize/2, s);
 
-    //  let's also display another cursor on the single tile if relevant
-        if (selected == 0)
-            draw_rect(painter, {0, 0}, s);
-        else if (selected == 3)
-            draw_rect(painter, {tilesize/2, 0}, s);
-        else if (selected == 12)
-            draw_rect(painter, {0, tilesize/2}, s);
-        else if (selected == 15)
-            draw_rect(painter, {tilesize/2, tilesize/2}, s);
-    }
+//  top-right 2x2 patch are the joints
+    const std::array<int, 4> joints = {16, 17, 18, 19};
+    for (size_t i = 0; i < joints.size(); ++i)
+        if (selections[16 + i])
+            draw_rect(painter, QPoint(2 + (i % 2), i / 2) * tilesize/2, s);
+
+//  bottom patch
+    for (int i = 0; i < 16; ++i)
+        if (selections[i])
+            draw_rect(painter, QPoint(i % 4, 2 + (i / 4)) * tilesize/2, s);
 }
 
 void AutoTileViewWidget::paintEvent(QPaintEvent *)
@@ -122,7 +147,7 @@ void AutoTileViewWidget::paintEvent(QPaintEvent *)
     drawBackground(painter);
     drawMetatiles(painter);
     drawGrid(painter);
-    drawSelectionRect(painter);
+    drawSelectionRects(painter);
 }
 
 //  QPoint's division operator rounds instead of truncating
@@ -137,33 +162,40 @@ void AutoTileViewWidget::mousePressEvent(QMouseEvent *event)
     {
         const auto p = divide(event->pos(), tilesize/2);
 
+        int index = -1;
     //  RPG Maker scheme ; two first rows are special
         if (p.y() < 2)
         {
         //  single tile
             if (p == QPoint(0, 0))
-                emit metatileSelected(0);
+                index = 0;
             else if (p == QPoint(1, 0))
-                emit metatileSelected(3);
+                index = 3;
             else if (p == QPoint(0, 1))
-                emit metatileSelected(12);
+                index = 12;
             else if (p == QPoint(1,1))
-                emit metatileSelected(15);
+                index = 15;
         //  joints
             if (p == QPoint(2, 0))
-                emit metatileSelected(16);
+                index = 16;
             else if (p == QPoint(3, 0))
-                emit metatileSelected(17);
+                index = 17;
             else if (p == QPoint(2, 1))
-                emit metatileSelected(18);
+                index = 18;
             else if (p == QPoint(3, 1))
-                emit metatileSelected(19);
+                index = 19;
         }
         else
         {
         //  the widget has 4 columns
-            emit metatileSelected(p.x() + (p.y() - 2) * 4);
+            index = p.x() + (p.y() - 2) * 4;
         }
+
+        Q_ASSERT(0 <= index && index < 20);
+        selections[index] = !selections[index];
+        emit selectionChanged();
+
+        update();
     }
 }
 
@@ -171,8 +203,8 @@ ImportAutoTileWidget::ImportAutoTileWidget(QWidget *parent):
     QWidget(parent),
     tilesize{0}, original_texture{}, metatiles(20),
     zoom{1}, scaling{1}, color_key{}, magnetic{true},
-    selected{-1}, displayed_texture{},
-    mouse_cursor{}, click_origin{}
+    selected{}, displayed_texture{},
+    mouse_cursor{}, rect_origin{}, move_origins{}
 {
     setFixedSize(0, 0);
 }
@@ -212,6 +244,13 @@ void ImportAutoTileWidget::setTexture(const QString &path)
 {
     original_texture = load_texture(path);
     updateDisplayedTexture();
+}
+
+void ImportAutoTileWidget::setMetatilePosition(const int index, const QPoint new_position)
+{
+//  see Types.hpp for why 20
+    Q_ASSERT(0 <= index && index < 20);
+    metatiles[index] = new_position;
 }
 
 void ImportAutoTileWidget::setTilesize(const int size)
@@ -287,7 +326,7 @@ void ImportAutoTileWidget::drawBackground(QPainter &painter)
     }
 }
 
-void ImportAutoTileWidget::drawMetatiles(QPainter &painter)
+void ImportAutoTileWidget::drawMetatileRects(QPainter &painter)
 {
     const int unit = tilesize/2 * zoom;
 
@@ -298,9 +337,9 @@ void ImportAutoTileWidget::drawMetatiles(QPainter &painter)
     {
         const QRect rect(metatiles[i] * zoom, QSize(unit, unit));
 
-        painter.setPen((i == selected)? Qt::white : white192);
+        painter.setPen(selected.contains(i)? Qt::white : white192);
         painter.drawRect(rect);
-        painter.fillRect(rect, (i == selected)? white192 : white128);
+        painter.fillRect(rect, selected.contains(i)? white192 : white128);
     }
 }
 
@@ -320,6 +359,27 @@ void ImportAutoTileWidget::drawGrid(QPainter &painter)
         painter.fillRect((i+1) * unit - 1, 0, 1, height(), white128);
 }
 
+static inline QRect to_rect(const QPoint &p1, const QPoint &p2)
+{
+    return {
+        qMin(p1.x(), p2.x()), qMin(p1.y(), p2.y()),
+        qAbs(p1.x() - p2.x()), qAbs(p1.y() - p2.y())
+    };
+}
+
+void ImportAutoTileWidget::drawSelectionOutline(QPainter &painter)
+{
+    if (rect_origin)
+    {
+        painter.setPen(Qt::black);
+        painter.drawRect(to_rect(*rect_origin, mouse_cursor));
+
+        const QPoint p = {1, 1};
+        painter.setPen(Qt::white);
+        painter.drawRect(to_rect(*rect_origin + p, mouse_cursor - p));
+    }
+}
+
 void ImportAutoTileWidget::drawSnapPoints(QPainter &painter, const int unit)
 {
     for (int j = 0; j < height() / unit + 1; ++j)
@@ -336,8 +396,9 @@ void ImportAutoTileWidget::paintEvent(QPaintEvent *)
     painter.drawImage(0, 0, displayed_texture);
     painter.resetTransform();
 
-    drawMetatiles(painter);
+    drawMetatileRects(painter);
     drawGrid(painter);
+    drawSelectionOutline(painter);
 
     if (magnetic)
         drawSnapPoints(painter, tilesize/2 * zoom);
@@ -347,32 +408,32 @@ void ImportAutoTileWidget::mouseMoveEvent(QMouseEvent *event)
 {
     mouse_cursor = divide(event->pos(), zoom);
 
-    if (click_origin)
+    if (!move_origins.isEmpty())
     {
-        Q_ASSERT(selected >= 0);
+        for (auto &i: selected)
+        {
+            QPoint new_position = mouse_cursor - move_origins[i];
+            if (magnetic)
+            //  rounding is wanted here
+                new_position = (new_position / (tilesize/2)) * (tilesize/2);
 
-        QPoint new_position = mouse_cursor - *click_origin;
-        if (magnetic)
-        //  rounding is wanted here
-            new_position = (new_position / (tilesize/2)) * (tilesize/2);
-
-        emit metatileChanged(new_position);
+            emit metatilePositionChanged(i, new_position);
+        }
     }
 
     update();
 }
 
-static inline std::optional<int> rect_at(const QVector<QPoint> &metatiles, const QPoint &p, const int unit)
+static inline QSet<int> rects_at(const QVector<QPoint> &metatiles, const QPoint &p, const int unit)
 {
+    QSet<int> found;
+
+    const QRect r = {{}, QSize(unit, unit)};
     for (int i = 0; i < metatiles.length(); ++i)
-    {
-        const QRect rect(metatiles[i], QSize(unit, unit));
+        if (r.translated(metatiles[i]).contains(p))
+            found.insert(i);
 
-        if (rect.contains(p))
-            return i;
-    }
-
-    return {};
+    return found;
 }
 
 void ImportAutoTileWidget::mousePressEvent(QMouseEvent *event)
@@ -381,14 +442,30 @@ void ImportAutoTileWidget::mousePressEvent(QMouseEvent *event)
     {
         mouse_cursor = divide(event->pos(), zoom);
 
-        if (const auto idx = rect_at(metatiles, mouse_cursor, tilesize/2))
+        const QSet<int> found = rects_at(metatiles, mouse_cursor, tilesize/2);
+        if (!found.isEmpty())
         {
-            emit metatileSelected(*idx);
-            click_origin = mouse_cursor - metatiles[*idx];
+            if (selected.intersects(found))
+            {
+                move_origins.clear();
+                for (auto &index: selected)
+                    move_origins[index] = mouse_cursor - metatiles[index];
+            }
+            else
+            {
+                move_origins.clear();
+                emit clearSelection();
+                for (auto &index: found)
+                {
+                    move_origins[index] = mouse_cursor - metatiles[index];
+                    emit metatileClicked(index);
+                }
+            }
         }
         else
         {
-            emit metatileSelected(-1);
+            rect_origin = mouse_cursor;
+            emit clearSelection();
         }
     }
 
@@ -398,7 +475,20 @@ void ImportAutoTileWidget::mousePressEvent(QMouseEvent *event)
 void ImportAutoTileWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
-        click_origin = {};
+    {
+        if (rect_origin)
+        {
+            const QRect r = to_rect(*rect_origin, mouse_cursor);
+
+            emit clearSelection();
+            for (int i = 0; i < metatiles.length(); ++i)
+                if (r.contains(QRect(metatiles[i], QSize(tilesize/2, tilesize/2))))
+                    emit metatileClicked(i);
+        }
+
+        rect_origin = {};
+        move_origins.clear();
+    }
 
     update();
 }
@@ -409,9 +499,18 @@ ImportAutoTileDialog::ImportAutoTileDialog(const int tilesize, QWidget *parent):
 {
     ui->setupUi(this);
 
-    ui->metatilesView->setTilesize(tilesize);
+    ui->metatilesView->setTilesize((tilesize/2 < 32)? 2*tilesize : tilesize);
     ui->autotileView->setTilesize(tilesize);
     ui->colorKeyWidget->setColor(Qt::transparent);
+
+//  currying setMetatilestate since Qt Designer doesn't have a handy tool for that
+    connect(ui->autotileView, &ImportAutoTileWidget::metatileClicked, [&] (const int index) {
+        ui->metatilesView->setMetatileState(index, true);
+    });
+//  same here
+    connect(ui->autotileView, &ImportAutoTileWidget::metatilePositionChanged, [&] (const int, const QPoint new_position) {
+        onMetatileChanged(new_position);
+    });
 
     enableMetatilesWidgets(false);
     enableMetatileWidgets(false);
@@ -446,7 +545,7 @@ void ImportAutoTileDialog::onChangeTexturePath()
         QImage texture(path);
     //  see Types.hpp for why 20
         for (int i = 0; i < 20; ++i)
-            ui->metatilesView->setMetatileImage(i, texture.copy(0, 0, tilesize/2, tilesize/2));
+            ui->metatilesView->setMetatileImage(i, texture.copy(0, 0, tilesize, tilesize));
 
         ui->autotileView->setTexture(path);
     }
@@ -505,42 +604,52 @@ static inline void set_value(QSpinBox *widget, const int value)
     widget->blockSignals(false);
 }
 
-void ImportAutoTileDialog::onSelectedMetatileChanged(const int index)
+void ImportAutoTileDialog::onSelectedMetatilesChanged()
 {
-//  see Types.hpp for why 20
-    Q_ASSERT(index < 20);
+    const QSet<int> selected = ui->metatilesView->getSelectedMetatiles();
+    enableMetatileWidgets(selected.count() == 1);
 
-    enableMetatileWidgets((index >= 0));
-
-    ui->autotileView->setSelectedMetatile(index);
-    if (index >= 0)
+    if (selected.count() == 1)
     {
-        set_value(ui->xSpinBox, 0);
-        set_value(ui->ySpinBox, 0);
+        const int index = *selected.cbegin();
+    //  see Types.hpp for why 20
+        Q_ASSERT(0 <= index && index < 20);
+
+        const auto &[x, y] = ui->autotileView->getMetatileAt(index);
+        set_value(ui->xSpinBox, x);
+        set_value(ui->ySpinBox, y);
     }
+
+    ui->autotileView->setSelectedMetatiles(selected);
+}
+
+void ImportAutoTileDialog::onMetatilePositionChanged(const int index, const QPoint new_position)
+{
+    const auto &img = ui->autotileView->getDisplayedTexture();
+
+    const QRect r = {new_position, QSize(tilesize/2, tilesize/2)};
+    ui->metatilesView->setMetatileImage(index, img.copy(r));
 }
 
 void ImportAutoTileDialog::onChangeMetatile()
 {
-    const int index = ui->metatilesView->getSelectedMetatile();
-    Q_ASSERT(0 <= index);
+    const QSet<int> selected = ui->metatilesView->getSelectedMetatiles();
+    Q_ASSERT(selected.count() == 1);
+    const int index = *selected.cbegin();
+//  see Types.hpp for why 20
+    Q_ASSERT(0 <= index && index < 20);
 
     QPoint &p = ui->autotileView->getMetatileAt(index);
     p.setX(ui->xSpinBox->value());
     p.setY(ui->ySpinBox->value());
 
     ui->autotileView->update();
-
-    const QSize s = {tilesize/2, tilesize/2};
-    const auto &img = ui->autotileView->getDisplayedTexture();
-    ui->metatilesView->setMetatileImage(index, img.copy(QRect(p, s)));
-    ui->metatilesView->update();
 }
 
 void ImportAutoTileDialog::onMetatileChanged(const QPoint new_position)
 {
-    ui->xSpinBox->setValue(new_position.x());
-    ui->ySpinBox->setValue(new_position.y());
+    set_value(ui->xSpinBox, new_position.x());
+    set_value(ui->ySpinBox, new_position.y());
 }
 
 void ImportAutoTileDialog::redrawMetatiles()
