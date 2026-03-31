@@ -60,6 +60,11 @@ public slots:
     void onRotate90CCW();
     void onScale();
 
+    void onAddNewColorToPalette();
+    void onRemoveSelectedColorFromPalette();
+    void onSaveColorPalette();
+    void onLoadColorPalette();
+
     void onSelectedChanged();
 
 //  centralises undo/redo changes

@@ -3,6 +3,7 @@
 
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QColorDialog>
 #include <QCloseEvent>
 #include <QClipboard>
 #include <QScrollBar>
@@ -88,6 +89,8 @@ MainWindow::MainWindow(QWidget *parent):
     ui->actionConvertToAutoTiles->setEnabled(false);
     ui->actionFuseSelectedTiles->setEnabled(false);
     ui->actionOpenTileConverter->setEnabled(true);
+
+    ui->actionRemoveSelectedColorFromPalette->setEnabled(false);
 
     refreshViews();
     updateLayersBoxes();
@@ -1108,6 +1111,74 @@ void MainWindow::onScale()
 
     if (dialog.exec() == QDialog::Accepted)
         ui->mapPainter->scaleSelection(dialog.getHorizontalFactor(), dialog.getVerticalFactor());
+}
+
+void MainWindow::onAddNewColorToPalette()
+{
+    const char *title = "Select a color to add !";
+    const QColor selected = ui->colorSelectionWidget->getColor();
+    const QColor next = QColorDialog::getColor(selected, this, tr(title));
+
+    if (next.isValid())
+        ui->colorPaletteWidget->addColor(next);
+}
+
+void MainWindow::onRemoveSelectedColorFromPalette()
+{
+    const auto selected = ui->colorPaletteWidget->getSelectedColor();
+    Q_ASSERT(selected.has_value());
+    ui->colorPaletteWidget->removeSelectedColor();
+}
+
+void MainWindow::onSaveColorPalette()
+{
+    const char *title = "Select a file where to save the palette !";
+    const char *ext = "Color Palettes (*.p95)";
+    const QString path = QFileDialog::getSaveFileName(this, tr(title), QString(), tr(ext));
+
+    if (!path.isEmpty())
+    {
+        const QVector<QColor> palette = ui->colorPaletteWidget->getColors();
+
+        QFile file(path);
+        if (!file.open(QIODevice::WriteOnly))
+        {
+            const char *title = "Could not save the palette";
+            const char *msg = "Could not write '%1' !";
+
+            QMessageBox::warning(this, tr(title), tr(msg).arg(path));
+            return;
+        }
+
+        QDataStream stream(&file);
+        stream << palette;
+    }
+}
+
+void MainWindow::onLoadColorPalette()
+{
+    const char *title = "Select a file from which to load the palette !";
+    const char *ext = "Color Palettes (*.p95)";
+    const QString path = QFileDialog::getOpenFileName(this, tr(title), QString(), tr(ext));
+
+    if (!path.isEmpty())
+    {
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly))
+        {
+            const char *title = "Could not load the palette";
+            const char *msg = "Could read from '%1' !";
+
+            QMessageBox::warning(this, tr(title), tr(msg).arg(path));
+            return;
+        }
+
+        QDataStream stream(&file);
+        QVector<QColor> palette;
+        stream >> palette;
+
+        ui->colorPaletteWidget->setColors(palette);
+    }
 }
 
 static inline QDataStream &operator>>(QDataStream &stream, Orientation &o)

@@ -417,8 +417,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>98</width>
-                <height>28</height>
+                <width>699</width>
+                <height>595</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -528,8 +528,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>98</width>
-                  <height>28</height>
+                  <width>225</width>
+                  <height>68</height>
                  </rect>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="0">
@@ -760,7 +760,7 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>98</width>
+                         <width>66</width>
                          <height>28</height>
                         </rect>
                        </property>
@@ -1050,7 +1050,18 @@
      <addaction name="separator"/>
      <addaction name="actionScale"/>
     </widget>
+    <widget class="QMenu" name="menuColorPalette">
+     <property name="title">
+      <string>Color Palette</string>
+     </property>
+     <addaction name="actionAddNewColorToPalette"/>
+     <addaction name="actionRemoveSelectedColorFromPalette"/>
+     <addaction name="separator"/>
+     <addaction name="actionSaveColorPalette"/>
+     <addaction name="actionLoadColorPalette"/>
+    </widget>
     <addaction name="menuSelection"/>
+    <addaction name="menuColorPalette"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -1453,6 +1464,62 @@
     <string>Ctrl+I, Ctrl+T</string>
    </property>
   </action>
+  <action name="actionAddNewColorToPalette">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ListAdd"/>
+   </property>
+   <property name="text">
+    <string>&amp;Add New Color...</string>
+   </property>
+   <property name="toolTip">
+    <string>Add A New Color To The Color Palette</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P, Ctrl+Shift+A</string>
+   </property>
+  </action>
+  <action name="actionSaveColorPalette">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentSave"/>
+   </property>
+   <property name="text">
+    <string>&amp;Save Color Palette...</string>
+   </property>
+   <property name="toolTip">
+    <string>Save Color Palette To File</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P, Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionLoadColorPalette">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
+   </property>
+   <property name="text">
+    <string>&amp;Load Color Palette...</string>
+   </property>
+   <property name="toolTip">
+    <string>Load Color Palette From File</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P, Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionRemoveSelectedColorFromPalette">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ListRemove"/>
+   </property>
+   <property name="text">
+    <string>&amp;Remove Color</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove Color From Color Palette</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P, Ctrl+R</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -1565,6 +1632,7 @@
    <container>1</container>
    <slots>
     <signal>colorSelected(QColor)</signal>
+    <signal>canRemoveSelected(bool)</signal>
     <slot>addColor(QColor)</slot>
     <slot>selectColor(QColor)</slot>
    </slots>
@@ -1714,8 +1782,8 @@
      <y>130</y>
     </hint>
     <hint type="destinationlabel">
-     <x>687</x>
-     <y>218</y>
+     <x>981</x>
+     <y>348</y>
     </hint>
    </hints>
   </connection>
@@ -1762,7 +1830,7 @@
      <y>174</y>
     </hint>
     <hint type="destinationlabel">
-     <x>590</x>
+     <x>681</x>
      <y>131</y>
     </hint>
    </hints>
@@ -1774,7 +1842,7 @@
    <slot>setZoom(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>590</x>
+     <x>681</x>
      <y>131</y>
     </hint>
     <hint type="destinationlabel">
@@ -3058,8 +3126,8 @@
      <y>118</y>
     </hint>
     <hint type="destinationlabel">
-     <x>610</x>
-     <y>118</y>
+     <x>681</x>
+     <y>131</y>
     </hint>
    </hints>
   </connection>
@@ -3070,8 +3138,8 @@
    <slot>setValue(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>610</x>
-     <y>118</y>
+     <x>681</x>
+     <y>131</y>
     </hint>
     <hint type="destinationlabel">
      <x>701</x>
@@ -3287,6 +3355,86 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionAddNewColorToPalette</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onAddNewColorToPalette()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionRemoveSelectedColorFromPalette</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onRemoveSelectedColorFromPalette()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionSaveColorPalette</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onSaveColorPalette()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionLoadColorPalette</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onLoadColorPalette()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colorPaletteWidget</sender>
+   <signal>canRemoveSelected(bool)</signal>
+   <receiver>actionRemoveSelectedColorFromPalette</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>877</x>
+     <y>359</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onNew()</slot>
@@ -3331,5 +3479,9 @@
   <slot>onOpenFrameOrderEditor()</slot>
   <slot>onFuseSelectedTiles()</slot>
   <slot>onImportTileset()</slot>
+  <slot>onAddNewColorToPalette()</slot>
+  <slot>onRemoveSelectedColorFromPalette()</slot>
+  <slot>onSaveColorPalette()</slot>
+  <slot>onLoadColorPalette()</slot>
  </slots>
 </ui>
