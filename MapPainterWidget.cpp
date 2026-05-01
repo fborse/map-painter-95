@@ -575,7 +575,7 @@ void MapPainterWidget::drawFill(QImage &original) const
 {
     const QRect rect = getDrawBoundaries();
 
-    const QColor original_color = original.pixelColor(mouse_cursor);
+    const QColor original_color = original.pixelColor(mouse_cursor).toHsv();
     if (similar(original_color, draw_color, fill_tolerance))
         return;
 
