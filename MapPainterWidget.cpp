@@ -541,7 +541,7 @@ static inline int right_boundary(const QRect &rect, const QPoint &p, const QImag
 
     for (int x = p.x() + 1; x < rect.right(); ++x)
         if (!similar(original.pixelColor({x, y}), color, tol))
-            return x - 1;
+            return x;
 
     return rect.right();
 }
